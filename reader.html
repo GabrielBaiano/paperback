@@ -116,19 +116,19 @@ body {
     stroke: currentcolor;
     stroke-width: 2px;
 }
-/* Open Rooms Discovery */
-#open-rooms-section {
+/* Personal Active Rooms Dashboard */
+#your-rooms-section {
     width: 100%;
     max-width: 480px;
     margin-top: 4px;
 }
-#open-rooms-list {
+#your-rooms-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     width: 100%;
 }
-.open-room-card {
+.your-room-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -142,32 +142,32 @@ body {
     position: relative;
     overflow: hidden;
 }
-.open-room-card:hover {
+.your-room-card:hover {
     background: rgba(255,255,255,0.07);
     border-color: rgba(128,128,128,0.35);
     transform: translateY(-2px);
 }
-.open-room-card-title {
+.your-room-card-title {
     font-size: 0.85rem;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.open-room-card-author {
+.your-room-card-author {
     font-size: 0.75rem;
     opacity: 0.5;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.open-room-card-footer {
+.your-room-card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-top: 6px;
 }
-.open-room-online-badge {
+.your-room-online-badge {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -175,7 +175,7 @@ body {
     font-weight: 600;
     color: #4caf50;
 }
-.open-room-online-dot {
+.your-room-online-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -186,11 +186,11 @@ body {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.35; }
 }
-.open-room-join-hint {
+.your-room-join-hint {
     font-size: 0.7rem;
     opacity: 0.35;
 }
-.open-rooms-loading {
+.your-rooms-loading {
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
@@ -200,12 +200,12 @@ body {
     opacity: 0.45;
     padding: 16px 0;
 }
-.open-rooms-spinner {
+.your-rooms-spinner {
     animation: spin 1s linear infinite;
     transform-origin: center;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.open-rooms-empty {
+.your-rooms-empty {
     grid-column: 1 / -1;
     text-align: center;
     font-size: 0.82rem;
@@ -460,15 +460,15 @@ body {
                 </button>
             </div>
 
-            <!-- Open Rooms Discovery -->
-            <div id="open-rooms-section">
+            <!-- Your Active Rooms -->
+            <div id="your-rooms-section" style="display: none;">
                 <div class="drop-target-divider">
-                    <span>or browse open rooms</span>
+                    <span>or your active rooms</span>
                 </div>
-                <div id="open-rooms-list">
-                    <div class="open-rooms-loading">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="open-rooms-spinner"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" /></svg>
-                        Loading rooms...
+                <div id="your-rooms-list">
+                    <div class="your-rooms-loading">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="your-rooms-spinner"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                        Loading your rooms...
                     </div>
                 </div>
             </div>

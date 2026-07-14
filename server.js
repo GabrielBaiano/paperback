@@ -280,6 +280,17 @@ app.get('/api/my-rooms', async (req, res) => {
                 hasBook = fs.existsSync(physicalPath);
             }
             
+            // Count distinct readers that joined this room historically
+            const memberCountRow = await dbGet(
+                'SELECT COUNT(DISTINCT discord_id) as count FROM room_members WHERE room_id = ?',
+                [room.room_id]
+            );
+            const memberCount = memberCountRow ? memberCountRow.count : 0;
+
+            // Count live online readers in this room right now from in-memory clients
+            const onlineCount = Array.from(clients.values())
+                .filter(c => c.roomId === room.room_id).length;
+
             return {
                 roomId: room.room_id,
                 bookPath,
@@ -287,7 +298,9 @@ app.get('/api/my-rooms', async (req, res) => {
                 author: room.author,
                 createdAt: room.created_at,
                 lastActive: room.last_active,
-                hasBook
+                hasBook,
+                memberCount,
+                onlineCount
             };
         }));
         
@@ -324,13 +337,13 @@ app.post('/api/rooms', upload.single('book'), async (req, res) => {
                 return res.status(429).json({ error: 'Rate limit exceeded: You can only create up to 5 rooms per hour.' });
             }
 
-            // 2. Active rooms limit check (Max 10 active rooms containing books)
+            // 2. Active rooms limit check (Max 4 active rooms containing books)
             const activeCountRow = await dbGet(
                 "SELECT COUNT(*) as count FROM rooms WHERE creator_id = ? AND book_path IS NOT NULL AND book_path != ''",
                 [user.discord_id]
             );
-            if (activeCountRow && activeCountRow.count >= 10) {
-                return res.status(400).json({ error: 'Active rooms limit exceeded: You can have at most 10 active rooms at the same time.' });
+            if (activeCountRow && activeCountRow.count >= 4) {
+                return res.status(400).json({ error: 'Active rooms limit exceeded: You can have at most 4 active rooms at the same time.' });
             }
         } catch (err) {
             console.error('[Security Check Error]', err);
@@ -388,6 +401,31 @@ app.get('/api/rooms/:roomId', async (req, res) => {
             return res.status(404).json({ error: 'Room not found' });
         }
 
+        // Limit user active room participation to 4 rooms maximum
+        const user = await getAuthUser(req);
+        if (user) {
+            if (!isLimitExempt(user)) {
+                // Check if user is already a member
+                const isMember = await dbGet(
+                    'SELECT 1 FROM room_members WHERE room_id = ? AND discord_id = ?',
+                    [room.room_id, user.discord_id]
+                );
+
+                if (!isMember && room.book_path !== '') {
+                    const participationCountRow = await dbGet(`
+                        SELECT COUNT(DISTINCT r.room_id) as count
+                        FROM rooms r
+                        JOIN room_members rm ON r.room_id = rm.room_id
+                        WHERE rm.discord_id = ? AND r.book_path IS NOT NULL AND r.book_path != ''
+                    `, [user.discord_id]);
+
+                    if (participationCountRow && participationCountRow.count >= 4) {
+                        return res.status(400).json({ error: 'Participation limit exceeded: You cannot participate in more than 4 active rooms at the same time.' });
+                    }
+                }
+            }
+        }
+
         // Reset countdown by updating last_active
         const nowStr = new Date().toISOString();
         await dbRun('UPDATE rooms SET last_active = ? WHERE room_id = ?', [nowStr, room.room_id]);
@@ -437,40 +475,7 @@ app.get('/api/rooms/:roomId', async (req, res) => {
     }
 });
 
-// Public room discovery — no auth needed, returns active rooms with online reader counts
-app.get('/api/public-rooms', async (req, res) => {
-    try {
-        const rooms = await dbAll(`
-            SELECT r.room_id, r.title, r.author, r.last_active,
-                   COUNT(DISTINCT rm.discord_id) as member_count
-            FROM rooms r
-            LEFT JOIN room_members rm ON rm.room_id = r.room_id
-            WHERE r.last_active > datetime('now', '-24 hours')
-            GROUP BY r.room_id
-            ORDER BY r.last_active DESC
-            LIMIT 4
-        `);
 
-        // Annotate with live online count from in-memory clients map
-        const result = rooms.map(room => {
-            const onlineCount = Array.from(clients.values())
-                .filter(c => c.roomId === room.room_id).length;
-            return {
-                roomId: room.room_id,
-                title: room.title || 'Untitled Book',
-                author: room.author || 'Unknown Author',
-                memberCount: room.member_count || 0,
-                onlineCount,
-                lastActive: room.last_active
-            };
-        });
-
-        res.json(result);
-    } catch (err) {
-        console.error('[API] Failed to fetch public rooms:', err);
-        res.status(500).json({ error: 'Failed to fetch rooms' });
-    }
-});
 
 // Re-upload a book for an expired room session
 app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) => {
@@ -615,6 +620,40 @@ async function handleJoin(ws, wsId, data, user) {
     if (!room) {
         ws.send(JSON.stringify({ type: 'error', message: 'Room not found' }));
         return;
+    }
+
+    // Limit room to a maximum of 8 simultaneous readers
+    const activeReaders = Array.from(clients.values()).filter(c => c.roomId === roomId);
+    if (activeReaders.length >= 8) {
+        const isAlreadyConnected = activeReaders.some(c => c.discordId === user.discord_id);
+        if (!isAlreadyConnected) {
+            ws.send(JSON.stringify({ type: 'error', message: 'This room is full (maximum 8 readers).' }));
+            setTimeout(() => ws.close(), 100);
+            return;
+        }
+    }
+
+    // Limit user active room participation to 4 rooms maximum
+    if (!isLimitExempt(user)) {
+        const isMember = await dbGet(
+            'SELECT 1 FROM room_members WHERE room_id = ? AND discord_id = ?',
+            [roomId, user.discord_id]
+        );
+
+        if (!isMember) {
+            const participationCountRow = await dbGet(`
+                SELECT COUNT(DISTINCT r.room_id) as count
+                FROM rooms r
+                JOIN room_members rm ON r.room_id = rm.room_id
+                WHERE rm.discord_id = ? AND r.book_path IS NOT NULL AND r.book_path != ''
+            `, [user.discord_id]);
+
+            if (participationCountRow && participationCountRow.count >= 4) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Participation limit exceeded: You cannot participate in more than 4 active rooms at the same time.' }));
+                setTimeout(() => ws.close(), 100);
+                return;
+            }
+        }
     }
 
     // Update room last_active to reset countdown

@@ -502,6 +502,10 @@ function handleWSMessage(data) {
             
         case 'error':
             alert(data.message);
+            if (data.message && data.message.includes('full')) {
+                intentionalClose = true;
+                window.location.href = window.location.origin + window.location.pathname;
+            }
             break;
     }
 }
@@ -1353,38 +1357,46 @@ async function loadHistoryList() {
     }
 }
 
-// Open Rooms Discovery on landing page
-async function loadOpenRooms() {
-    const list = document.getElementById('open-rooms-list');
-    if (!list) return;
+// Active personal rooms for the logged-in user on the landing page dashboard
+async function loadMyRooms() {
+    const section = document.getElementById('your-rooms-section');
+    const list = document.getElementById('your-rooms-list');
+    if (!list || !section) return;
 
     try {
-        const res = await fetch('/api/public-rooms');
+        const res = await fetch('/api/my-rooms');
         if (!res.ok) throw new Error('Failed');
         const rooms = await res.json();
 
         list.innerHTML = '';
 
-        if (!rooms || rooms.length === 0) {
-            list.innerHTML = '<div class="open-rooms-empty">No open rooms right now. Create one!</div>';
+        // Show only the 4 most recent active rooms (where a book still exists)
+        const activeRooms = (rooms || [])
+            .filter(room => room.hasBook)
+            .slice(0, 4);
+
+        if (activeRooms.length === 0) {
+            section.style.display = 'none'; // Hide section completely if no active personal rooms
             return;
         }
 
-        rooms.forEach(room => {
+        section.style.display = 'block'; // Show section if there are active personal rooms
+
+        activeRooms.forEach(room => {
             const card = document.createElement('button');
-            card.className = 'open-room-card';
-            card.title = `Join "${room.title}"`;
+            card.className = 'your-room-card';
+            card.title = `Resume reading "${room.title}"`;
 
             const onlineText = room.onlineCount > 0
-                ? `<span class="open-room-online-badge"><span class="open-room-online-dot"></span>${room.onlineCount} reading</span>`
-                : `<span class="open-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
+                ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`
+                : `<span class="your-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
 
             card.innerHTML = `
-                <div class="open-room-card-title">${room.title}</div>
-                <div class="open-room-card-author">${room.author}</div>
-                <div class="open-room-card-footer">
+                <div class="your-room-card-title">${room.title}</div>
+                <div class="your-room-card-author">${room.author}</div>
+                <div class="your-room-card-footer">
                     ${onlineText}
-                    <span class="open-room-join-hint">Join →</span>
+                    <span class="your-room-join-hint">Open →</span>
                 </div>
             `;
 
@@ -1396,9 +1408,8 @@ async function loadOpenRooms() {
             list.appendChild(card);
         });
     } catch (err) {
-        console.warn('[Book Club] Could not load open rooms:', err);
-        const list = document.getElementById('open-rooms-list');
-        if (list) list.innerHTML = '<div class="open-rooms-empty">Could not load rooms.</div>';
+        console.warn('[Book Club] Could not load user rooms:', err);
+        section.style.display = 'none';
     }
 }
 
@@ -1583,8 +1594,8 @@ async function checkAuth() {
             initAutoReconnect();
             initHelpModal();
             initIdleDetector();
-            loadOpenRooms();
-            setInterval(loadOpenRooms, 30000);
+            loadMyRooms();
+            setInterval(loadMyRooms, 30000);
         } else {
             // Show landing screen, hide main app welcome screen
             const landingText = $('#bc-landing-text');
