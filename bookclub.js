@@ -563,38 +563,32 @@ function createFloatingMenu() {
     selectionMenu.className = 'bc-selection-menu';
     selectionMenu.style.display = 'none';
 
-    // Color dots
-    const colors = ['#fff066', '#ff8fab', '#7cd6ff', '#85e3b3']; // yellow, pink, blue, green
-    colors.forEach(col => {
-        const dot = document.createElement('div');
-        dot.className = 'bc-color-dot';
-        dot.style.backgroundColor = col;
-        dot.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            selectedColor = col;
-            executeHighlight();
-        });
-        selectionMenu.appendChild(dot);
+    const highlightBtn = document.createElement('button');
+    highlightBtn.className = 'bc-menu-btn bc-menu-btn-primary';
+    highlightBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.62 12L12 4.67 14.38 12H9.62zM11 2L5.5 18H8l1.12-3h5.76L16 18h2.5L13 2h-2z"/></svg> Highlight`;
+    highlightBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        executeHighlight();
     });
 
     const commentBtn = document.createElement('button');
     commentBtn.className = 'bc-menu-btn';
-    commentBtn.innerText = 'Comment';
+    commentBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg> Comment`;
     commentBtn.style.borderLeft = '1px solid rgba(128, 128, 128, 0.3)';
     commentBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        selectedColor = '#fff066'; // Default color on comment
         executeComment();
     });
 
     const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'bc-menu-btn';
-    cancelBtn.innerText = 'Close';
+    cancelBtn.className = 'bc-menu-btn bc-menu-btn-ghost';
+    cancelBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
     cancelBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
         hideSelectionMenu();
     });
 
+    selectionMenu.appendChild(highlightBtn);
     selectionMenu.appendChild(commentBtn);
     selectionMenu.appendChild(cancelBtn);
     document.body.appendChild(selectionMenu);
@@ -661,7 +655,7 @@ function executeHighlight() {
             type: 'add_highlight',
             cfi,
             text,
-            highlightColor: selectedColor
+            highlightColor: myColor  // always use the user's own color
         }));
         
         // Deselect
@@ -685,17 +679,17 @@ function executeComment() {
             type: 'add_highlight',
             cfi,
             text,
-            highlightColor: selectedColor
+            highlightColor: myColor  // always use the user's own color
         }));
 
         // Deselect
         const selection = lastSelectionDetails.doc.defaultView.getSelection();
         if (selection) selection.removeAllRanges();
         
-        // Open commenting right away
+        // Open commenting right away once server confirms highlight
         setTimeout(() => {
             openCommentThread(cfi);
-        }, 100);
+        }, 150);
     } catch (e) {
         console.error('[Book Club] Failed to extract CFI:', e);
     }
@@ -845,20 +839,29 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
 
     // Intercept show-annotation event (highlight clicked)
     reader.view.addEventListener('show-annotation', (e) => {
-        const cfi = e.detail.value;
+        const cfi = e.detail?.value ?? e.detail?.annotation?.value;
         if (cfi && activeHighlights[cfi]) {
             openCommentThread(cfi);
         }
     });
 
-    // Hook existing draw-annotation in case reader.js fires it
+    // draw-annotation: render the highlight with the stored color
     reader.view.addEventListener('draw-annotation', e => {
         const { draw, annotation } = e.detail;
-        const { color } = annotation;
-        draw(globalThis.reader.view.renderer.constructor.Overlayer?.highlight || (el => {
-            el.style.backgroundColor = color;
-            el.style.opacity = '0.3';
-        }), { color });
+        const color = annotation.color || '#FFD700';
+        // Use the Overlayer.highlight if available, otherwise manual style
+        const Overlayer = globalThis.reader?.view?.renderer?.constructor?.Overlayer
+            ?? globalThis.Overlayer;
+        if (Overlayer?.highlight) {
+            draw(Overlayer.highlight, { color });
+        } else {
+            draw((el) => {
+                el.style.backgroundColor = color;
+                el.style.opacity = '0.35';
+                el.style.borderRadius = '2px';
+                el.style.cursor = 'pointer';
+            }, { color });
+        }
     });
 });
 
@@ -872,6 +875,19 @@ function initColorPicker() {
     colorInput.value = myColor;
 
     function applyColor(color) {
+        // Block if another active member already has this exact color
+        const colorLower = color.toLowerCase();
+        const takenBy = Object.values(activeMembers).find(
+            m => m.color && m.color.toLowerCase() === colorLower && m.name !== myName
+        );
+        if (takenBy) {
+            // Shake the picker visually
+            presetsContainer.classList.add('bc-color-taken-shake');
+            setTimeout(() => presetsContainer.classList.remove('bc-color-taken-shake'), 500);
+            colorInput.value = myColor; // revert input
+            return;
+        }
+
         myColor = color;
         localStorage.setItem('bc-color', myColor);
         colorInput.value = myColor;

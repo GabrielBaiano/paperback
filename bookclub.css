@@ -529,11 +529,11 @@
     background: Canvas;
     color: CanvasText;
     border: 1px solid rgba(128, 128, 128, 0.4);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 6px;
+    padding: 4px;
     display: flex;
-    gap: 6px;
+    gap: 2px;
     align-items: center;
     pointer-events: auto;
 }
@@ -544,25 +544,50 @@
     font-family: inherit;
     font-size: 0.8rem;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background 0.2s;
+    padding: 5px 10px;
+    border-radius: 6px;
+    transition: background 0.15s;
     color: CanvasText;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
 }
 
 .bc-menu-btn:hover {
-    background: var(--active-bg);
+    background: rgba(128, 128, 128, 0.12);
 }
 
-.bc-color-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1px solid rgba(128, 128, 128, 0.3);
-    cursor: pointer;
-    transition: transform 0.1s;
+.bc-menu-btn-primary {
+    background: CanvasText;
+    color: Canvas;
+    font-weight: 600;
 }
 
-.bc-color-dot:hover {
-    transform: scale(1.2);
+.bc-menu-btn-primary:hover {
+    background: CanvasText;
+    opacity: 0.85;
+}
+
+.bc-menu-btn-ghost {
+    padding: 5px 7px;
+    opacity: 0.5;
+}
+
+.bc-menu-btn-ghost:hover {
+    opacity: 1;
+    background: rgba(128, 128, 128, 0.12);
+}
+
+/* Shake animation when a color is already taken */
+@keyframes bc-shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+}
+
+.bc-color-taken-shake {
+    animation: bc-shake 0.4s ease;
 }
