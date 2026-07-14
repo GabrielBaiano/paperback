@@ -293,6 +293,38 @@ function handleWSMessage(data) {
     }
 }
 
+// Render progress bar markers (colored dots per member)
+function renderProgressMarkers() {
+    const container = $('#bc-progress-markers');
+    if (!container) return;
+    container.innerHTML = '';
+
+    for (const [id, member] of Object.entries(activeMembers)) {
+        if (member.fraction == null) continue;
+        const pct = member.fraction * 100;
+
+        const dot = document.createElement('div');
+        dot.className = 'bc-progress-dot';
+        dot.style.left = `${pct}%`;
+        dot.style.backgroundColor = member.color;
+
+        // Tooltip label on hover
+        const label = document.createElement('div');
+        label.className = 'bc-progress-dot-label';
+        label.textContent = `${member.name} · ${Math.round(pct)}%`;
+        dot.appendChild(label);
+
+        // Click to teleport
+        if (id !== myId && member.cfi) {
+            dot.addEventListener('click', () => {
+                globalThis.reader?.view?.goTo(member.cfi);
+            });
+        }
+
+        container.appendChild(dot);
+    }
+}
+
 // Render members list
 function renderMembersList() {
     const list = $('#bc-members-list');
@@ -305,7 +337,7 @@ function renderMembersList() {
         const item = document.createElement('div');
         item.className = 'bc-member-item';
         
-        const pct = member.fraction ? Math.round(member.fraction * 100) : 0;
+        const pct = member.fraction != null ? Math.round(member.fraction * 100) : 0;
         
         item.innerHTML = `
             <div class="bc-member-left">
@@ -321,6 +353,7 @@ function renderMembersList() {
     }
     
     $('#bc-member-count').innerText = count;
+    renderProgressMarkers();
 
     // Teleport click handlers
     list.querySelectorAll('.bc-teleport-btn').forEach(btn => {
@@ -650,6 +683,12 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
     // Listen for progress changes (relocate event)
     reader.view.addEventListener('relocate', (e) => {
         const { cfi, fraction } = e.detail;
+        // Update self locally so sidebar % is immediate
+        if (myId && activeMembers[myId]) {
+            activeMembers[myId].cfi = cfi;
+            activeMembers[myId].fraction = fraction;
+            renderMembersList();
+        }
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
                 type: 'relocate',

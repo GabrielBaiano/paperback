@@ -83,9 +83,15 @@ body {
 #nav-bar {
     bottom: 0;
 }
-#progress-slider {
+#bc-progress-track {
     flex-grow: 1;
     margin: 0 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+#progress-slider {
+    width: 100%;
     visibility: hidden;
 }
 #side-bar {
@@ -355,8 +361,11 @@ body {
             <path d="M 15 6 L 9 12 L 15 18"/>
         </svg>
     </button>
-    <input id="progress-slider" type="range" min="0" max="1" step="any" list="tick-marks">
-    <datalist id="tick-marks"></datalist>
+    <div id="bc-progress-track">
+        <input id="progress-slider" type="range" min="0" max="1" step="any" list="tick-marks">
+        <datalist id="tick-marks"></datalist>
+        <div id="bc-progress-markers"></div>
+    </div>
     <button id="right-button" aria-label="Go right">
         <svg class="icon" width="24" height="24" aria-hidden="true">
             <path d="M 9 6 L 15 12 L 9 18"/>
