@@ -1343,6 +1343,55 @@ async function loadHistoryList() {
     }
 }
 
+// Open Rooms Discovery on landing page
+async function loadOpenRooms() {
+    const list = document.getElementById('open-rooms-list');
+    if (!list) return;
+
+    try {
+        const res = await fetch('/api/public-rooms');
+        if (!res.ok) throw new Error('Failed');
+        const rooms = await res.json();
+
+        list.innerHTML = '';
+
+        if (!rooms || rooms.length === 0) {
+            list.innerHTML = '<div class="open-rooms-empty">No open rooms right now. Create one!</div>';
+            return;
+        }
+
+        rooms.forEach(room => {
+            const card = document.createElement('button');
+            card.className = 'open-room-card';
+            card.title = `Join "${room.title}"`;
+
+            const onlineText = room.onlineCount > 0
+                ? `<span class="open-room-online-badge"><span class="open-room-online-dot"></span>${room.onlineCount} reading</span>`
+                : `<span class="open-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
+
+            card.innerHTML = `
+                <div class="open-room-card-title">${room.title}</div>
+                <div class="open-room-card-author">${room.author}</div>
+                <div class="open-room-card-footer">
+                    ${onlineText}
+                    <span class="open-room-join-hint">Join →</span>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                const url = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
+                window.location.href = url;
+            });
+
+            list.appendChild(card);
+        });
+    } catch (err) {
+        console.warn('[Book Club] Could not load open rooms:', err);
+        const list = document.getElementById('open-rooms-list');
+        if (list) list.innerHTML = '<div class="open-rooms-empty">Could not load rooms.</div>';
+    }
+}
+
 // Help & About modal
 function initHelpModal() {
     const helpBtn = $('#help-button');
@@ -1461,6 +1510,8 @@ async function checkAuth() {
             loadHistoryList();
             initAutoReconnect();
             initHelpModal();
+            loadOpenRooms();
+            setInterval(loadOpenRooms, 30000);
         } else {
             // Show landing screen, hide main app welcome screen
             const landingText = $('#bc-landing-text');

@@ -437,6 +437,41 @@ app.get('/api/rooms/:roomId', async (req, res) => {
     }
 });
 
+// Public room discovery — no auth needed, returns active rooms with online reader counts
+app.get('/api/public-rooms', async (req, res) => {
+    try {
+        const rooms = await dbAll(`
+            SELECT r.room_id, r.title, r.author, r.last_active,
+                   COUNT(DISTINCT rm.discord_id) as member_count
+            FROM rooms r
+            LEFT JOIN room_members rm ON rm.room_id = r.room_id
+            WHERE r.last_active > datetime('now', '-24 hours')
+            GROUP BY r.room_id
+            ORDER BY r.last_active DESC
+            LIMIT 20
+        `);
+
+        // Annotate with live online count from in-memory clients map
+        const result = rooms.map(room => {
+            const onlineCount = Array.from(clients.values())
+                .filter(c => c.roomId === room.room_id).length;
+            return {
+                roomId: room.room_id,
+                title: room.title || 'Untitled Book',
+                author: room.author || 'Unknown Author',
+                memberCount: room.member_count || 0,
+                onlineCount,
+                lastActive: room.last_active
+            };
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[API] Failed to fetch public rooms:', err);
+        res.status(500).json({ error: 'Failed to fetch rooms' });
+    }
+});
+
 // Re-upload a book for an expired room session
 app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) => {
     const user = await getAuthUser(req);
