@@ -1399,10 +1399,6 @@ async function loadMyRooms() {
         activeRooms.forEach(room => {
             const card = document.createElement('div');
             card.className = 'your-room-card bc-card';
-            card.style.padding = '14px';
-            card.style.cursor = 'pointer';
-            card.style.textAlign = 'left';
-            card.style.position = 'relative';
 
             const onlineText = room.onlineCount > 0
                 ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`

@@ -1126,7 +1126,7 @@
 }
 
 #bc-shelf-modal {
-    max-width: 420px;
+    max-width: 440px;
     width: 90%;
     max-height: 80vh;
     display: flex;
@@ -1139,6 +1139,25 @@
     animation: bc-modal-fade 0.2s ease-out;
 }
 
+#bc-shelf-modal-body {
+    padding: 16px 20px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+#your-rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
 /* Home Shelf Button Hover Effects */
 #bc-home-shelf-btn {
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1149,6 +1168,26 @@
 #bc-home-shelf-btn:hover {
     background: rgba(255, 255, 255, 0.09);
     border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.your-room-card {
+    margin-bottom: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+    border-radius: 10px;
+    padding: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.your-room-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
 }
 
@@ -1168,13 +1207,11 @@
     word-break: break-word;
 }
 
-
-
 /* Shelf Card Quick Actions */
 .your-room-actions {
     display: flex;
-    gap: 6px;
-    margin-top: 6px;
+    gap: 8px;
+    margin-top: 14px;
 }
 
 .your-room-action-btn {
@@ -1223,8 +1260,4 @@
     background: rgba(255, 152, 0, 0.14);
     border-color: rgba(255, 152, 0, 0.45);
     color: #ffb74d;
-}
-
-.your-room-card {
-    width: 100%;
 }
