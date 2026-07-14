@@ -137,18 +137,35 @@ function handleJoin(ws, wsId, data) {
         return;
     }
 
+    // Ensure unique color in the room
+    let finalColor = color;
+    const takenColors = Object.values(room.members).map(m => m.color.toLowerCase());
+    if (takenColors.includes(finalColor.toLowerCase())) {
+        const presets = [
+            '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
+            '#03a9f4', '#00bcd4', '#009688', '#259b24', 
+            '#ff9800', '#ff5722', '#795548', '#607d8b'
+        ];
+        const available = presets.find(p => !takenColors.includes(p.toLowerCase()));
+        if (available) {
+            finalColor = available;
+        } else {
+            finalColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+        }
+    }
+
     // Register client info
-    clients.set(ws, { roomId, name, color, wsId });
+    clients.set(ws, { roomId, name, color: finalColor, wsId });
 
     // Add to room members
     room.members[wsId] = {
         name,
-        color,
+        color: finalColor,
         cfi: null,
         fraction: 0
     };
 
-    console.log(`[Join] ${name} joined Room: ${roomId}`);
+    console.log(`[Join] ${name} joined Room: ${roomId} with color ${finalColor}`);
 
     // Send current state to joining user
     ws.send(JSON.stringify({
@@ -202,6 +219,14 @@ function handleUpdateIdentity(ws, data) {
             client.name = name;
         }
         if (color) {
+            // Block color change if another active member already has it
+            const takenColors = Object.entries(room.members)
+                .filter(([id]) => id !== wsId)
+                .map(([, m]) => m.color.toLowerCase());
+            if (takenColors.includes(color.toLowerCase())) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Color already taken!' }));
+                return;
+            }
             room.members[wsId].color = color;
             client.color = color;
         }

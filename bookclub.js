@@ -1,4 +1,4 @@
-/* Book Club Client-Side Collaboration Logic */
+import { Overlayer } from './overlayer.js';
 
 const $ = document.querySelector.bind(document);
 
@@ -20,6 +20,7 @@ let intentionalClose = false;
 let activeMembers = {};
 let activeHighlights = {};
 let activeCommentCfi = null;
+let pendingCommentCfi = null;
 let selectionMenu = null;
 let selectedColor = myColor;
 
@@ -254,6 +255,24 @@ function handleWSMessage(data) {
             myId = data.yourId;
             activeMembers = data.members;
             activeHighlights = data.highlights;
+
+            // Check if our own color got reassigned by server due to conflict
+            if (activeMembers[myId] && activeMembers[myId].color !== myColor) {
+                myColor = activeMembers[myId].color;
+                localStorage.setItem('bc-color', myColor);
+                updateSliderThumbColor();
+                const colorInput = $('#bc-color-input');
+                if (colorInput) colorInput.value = myColor;
+                
+                // Re-select color presets in sidebar
+                const presetsContainer = $('#bc-color-presets');
+                if (presetsContainer) {
+                    presetsContainer.querySelectorAll('.bc-color-swatch').forEach(s => {
+                        s.classList.toggle('selected', s.dataset.color === myColor);
+                    });
+                }
+            }
+
             renderMembersList();
             renderAllHighlights();
             break;
@@ -286,8 +305,11 @@ function handleWSMessage(data) {
         case 'highlight_added':
             activeHighlights[data.highlight.cfi] = data.highlight;
             drawHighlightOnView(data.highlight);
-            if (activeCommentCfi === data.highlight.cfi) {
-                openCommentThread(data.highlight.cfi);
+            
+            // If we have a pending comment open action for this CFI
+            if (data.cfi === pendingCommentCfi) {
+                pendingCommentCfi = null;
+                openCommentThread(data.cfi);
             }
             break;
             
@@ -498,12 +520,12 @@ function renderMembersList() {
 }
 
 // Inject highlight rendering in Foliate
-function drawHighlightOnView(highlight) {
+async function drawHighlightOnView(highlight) {
     const reader = globalThis.reader;
     if (!reader || !reader.view) return;
 
     try {
-        const { index } = reader.view.resolveNavigation(highlight.cfi);
+        const { index } = await reader.view.resolveNavigation(highlight.cfi);
         const annotation = {
             value: highlight.cfi,
             color: highlight.highlightColor || highlight.userColor || '#FFD700',
@@ -521,22 +543,22 @@ function drawHighlightOnView(highlight) {
         if (!exists) {
             list.push(annotation);
             reader.annotationsByValue.set(highlight.cfi, annotation);
-            reader.view.addAnnotation(annotation);
+            await reader.view.addAnnotation(annotation);
         }
     } catch (e) {
         console.error('[Book Club] Error rendering highlight:', e);
     }
 }
 
-function removeHighlightFromView(cfi) {
+async function removeHighlightFromView(cfi) {
     const reader = globalThis.reader;
     if (!reader || !reader.view) return;
 
     try {
-        const { index } = reader.view.resolveNavigation(cfi);
+        const { index } = await reader.view.resolveNavigation(cfi);
         const annotation = reader.annotationsByValue.get(cfi);
         if (annotation) {
-            reader.view.deleteAnnotation(annotation);
+            await reader.view.deleteAnnotation(annotation);
             reader.annotationsByValue.delete(cfi);
             
             const list = reader.annotations.get(index);
@@ -564,6 +586,7 @@ function createFloatingMenu() {
     selectionMenu.style.display = 'none';
 
     const highlightBtn = document.createElement('button');
+    highlightBtn.id = 'bc-floating-highlight-btn';
     highlightBtn.className = 'bc-menu-btn bc-menu-btn-primary';
     highlightBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.62 12L12 4.67 14.38 12H9.62zM11 2L5.5 18H8l1.12-3h5.76L16 18h2.5L13 2h-2z"/></svg> Highlight`;
     highlightBtn.addEventListener('mousedown', (e) => {
@@ -572,6 +595,7 @@ function createFloatingMenu() {
     });
 
     const commentBtn = document.createElement('button');
+    commentBtn.id = 'bc-floating-comment-btn';
     commentBtn.className = 'bc-menu-btn';
     commentBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg> Comment`;
     commentBtn.style.borderLeft = '1px solid rgba(128, 128, 128, 0.3)';
@@ -634,6 +658,17 @@ function handleTextSelection(doc, index, event) {
         selectionMenu.style.top = `${parentTop - 45}px`;
         selectionMenu.style.left = `${parentLeft}px`;
         selectionMenu.style.display = 'flex';
+
+        // Style the buttons dynamically with user's current color
+        const highlightBtn = $('#bc-floating-highlight-btn');
+        if (highlightBtn) {
+            highlightBtn.style.backgroundColor = myColor;
+            highlightBtn.style.color = '#ffffff';
+        }
+        const commentBtn = $('#bc-floating-comment-btn');
+        if (commentBtn) {
+            commentBtn.style.color = myColor;
+        }
     } catch (e) {
         console.error('[Book Club] Text selection error:', e);
     }
@@ -674,6 +709,7 @@ function executeComment() {
     const { index, range, text } = lastSelectionDetails;
     try {
         const cfi = globalThis.reader.view.getCFI(index, range);
+        pendingCommentCfi = cfi; // Mark as pending thread opening once server responds
         
         ws.send(JSON.stringify({
             type: 'add_highlight',
@@ -685,11 +721,6 @@ function executeComment() {
         // Deselect
         const selection = lastSelectionDetails.doc.defaultView.getSelection();
         if (selection) selection.removeAllRanges();
-        
-        // Open commenting right away once server confirms highlight
-        setTimeout(() => {
-            openCommentThread(cfi);
-        }, 150);
     } catch (e) {
         console.error('[Book Club] Failed to extract CFI:', e);
     }
@@ -835,6 +866,20 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
         doc.addEventListener('keyup', (event) => {
             handleTextSelection(doc, index, event);
         });
+
+        // Mouse hover over highlighted text inside doc to open comment panel
+        doc.addEventListener('mousemove', (e) => {
+            const overlayerObj = globalThis.reader?.view?.renderer?.getContents()
+                ?.find(x => x.index === index && x.overlayer);
+            if (overlayerObj?.overlayer) {
+                const [cfi] = overlayerObj.overlayer.hitTest({ x: e.clientX, y: e.clientY });
+                if (cfi && !cfi.startsWith('search-') && activeHighlights[cfi]) {
+                    if (activeCommentCfi !== cfi) {
+                        openCommentThread(cfi);
+                    }
+                }
+            }
+        });
     });
 
     // Intercept show-annotation event (highlight clicked)
@@ -849,9 +894,8 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
     reader.view.addEventListener('draw-annotation', e => {
         const { draw, annotation } = e.detail;
         const color = annotation.color || '#FFD700';
-        // Use the Overlayer.highlight if available, otherwise manual style
-        const Overlayer = globalThis.reader?.view?.renderer?.constructor?.Overlayer
-            ?? globalThis.Overlayer;
+        
+        // Use native Overlayer.highlight from overlayer.js module
         if (Overlayer?.highlight) {
             draw(Overlayer.highlight, { color });
         } else {
