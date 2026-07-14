@@ -607,7 +607,7 @@ async function handleJoin(ws, wsId, data, user) {
 
     // Load active room members from DB
     const membersRows = await dbAll(`
-        SELECT rm.discord_id, rm.cfi, rm.fraction, u.username, u.avatar_url, u.color
+        SELECT rm.discord_id, rm.cfi, rm.fraction, rm.chapter, u.username, u.avatar_url, u.color
         FROM room_members rm
         JOIN users u ON rm.discord_id = u.discord_id
         WHERE rm.room_id = ?
@@ -629,6 +629,7 @@ async function handleJoin(ws, wsId, data, user) {
             avatarUrl: row.avatar_url,
             cfi: row.cfi,
             fraction: row.fraction,
+            chapter: row.chapter || '',
             isOnline: !!activeClient
         };
     });
@@ -663,6 +664,12 @@ async function handleJoin(ws, wsId, data, user) {
         yourId: wsId
     }));
 
+    // Fetch this joining member's saved progress to broadcast it correctly
+    const myProgress = await dbGet(`
+        SELECT cfi, fraction, chapter FROM room_members 
+        WHERE room_id = ? AND discord_id = ?
+    `, [roomId, user.discord_id]);
+
     // Broadcast member joined to others online in the same room
     broadcastToRoom(roomId, ws, {
         type: 'member_joined',
@@ -671,8 +678,9 @@ async function handleJoin(ws, wsId, data, user) {
             name: user.username,
             color: user.color,
             avatarUrl: user.avatar_url,
-            cfi: null,
-            fraction: 0,
+            cfi: myProgress ? myProgress.cfi : null,
+            fraction: myProgress ? myProgress.fraction : 0,
+            chapter: (myProgress && myProgress.chapter) ? myProgress.chapter : '',
             isOnline: true
         }
     });
@@ -683,19 +691,20 @@ async function handleRelocate(ws, data, user) {
     if (!client) return;
 
     const { roomId, wsId } = client;
-    const { cfi, fraction } = data;
+    const { cfi, fraction, chapter } = data;
 
     await dbRun(`
         UPDATE room_members
-        SET cfi = ?, fraction = ?, last_active = ?
+        SET cfi = ?, fraction = ?, last_active = ?, chapter = ?
         WHERE room_id = ? AND discord_id = ?
-    `, [cfi, fraction, new Date().toISOString(), roomId, user.discord_id]);
+    `, [cfi, fraction, new Date().toISOString(), chapter || '', roomId, user.discord_id]);
 
     broadcastToRoom(roomId, ws, {
         type: 'member_relocated',
         wsId,
         cfi,
-        fraction
+        fraction,
+        chapter: chapter || ''
     });
 }
 

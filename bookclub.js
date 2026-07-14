@@ -437,6 +437,7 @@ function handleWSMessage(data) {
             if (activeMembers[data.wsId]) {
                 activeMembers[data.wsId].cfi = data.cfi;
                 activeMembers[data.wsId].fraction = data.fraction;
+                activeMembers[data.wsId].chapter = data.chapter || '';
                 renderMembersList();
             }
             break;
@@ -648,9 +649,12 @@ function renderMembersList() {
         item.innerHTML = `
             <div class="bc-member-left">
                 <span class="bc-avatar" style="background-color: ${member.color};"></span>
-                <span class="bc-member-name">${member.name} ${isMe ? '(You)' : ''}</span>
+                <div style="display: flex; flex-direction: column; min-width: 0;">
+                    <span class="bc-member-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;" title="${member.name}">${member.name} ${isMe ? '(You)' : ''}</span>
+                    ${member.chapter ? `<span class="bc-member-chapter" style="font-size: 0.7rem; color: GrayText; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; margin-top: 1px;" title="${member.chapter}">${member.chapter}</span>` : ''}
+                </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                 <span class="bc-member-progress">${pct}%</span>
                 ${(!isMe && member.cfi) ? `<button class="bc-teleport-btn" data-cfi="${member.cfi}">Go to</button>` : ''}
             </div>
@@ -1082,18 +1086,22 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
             hoverPopover.style.display = 'none';
         }
 
-        const { cfi, fraction } = e.detail;
+        const { cfi, fraction, tocItem } = e.detail;
+        const chapter = tocItem?.label || '';
+
         // Update self locally so sidebar % is immediate
         if (myId && activeMembers[myId]) {
             activeMembers[myId].cfi = cfi;
             activeMembers[myId].fraction = fraction;
+            activeMembers[myId].chapter = chapter;
             renderMembersList();
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
                 type: 'relocate',
                 cfi,
-                fraction
+                fraction,
+                chapter
             }));
         }
     });

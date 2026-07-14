@@ -89,6 +89,12 @@ db.serialize(() => {
             console.error('[DB Migration Warning] Failed to add creator_id:', err.message);
         }
     });
+
+    db.run("ALTER TABLE room_members ADD COLUMN chapter TEXT", (err) => {
+        if (err && !err.message.includes("duplicate column name")) {
+            console.error('[DB Migration Warning] Failed to add chapter to room_members:', err.message);
+        }
+    });
 });
 
 // Helper functions for promise-based SQLite calls
