@@ -6,80 +6,67 @@
 
 <p align="center">
   <strong>A clean, fast, and lightweight collaborative e-book reader in the browser.</strong><br>
-  <em>Built for readers who love sharing books with friends.</em>
+  <em>Read books together with your friends, partners, or book clubs in real-time.</em>
 </p>
 
 <p align="center">
-  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Launch%20App-Paperback-007acc?style=for-the-badge&logo=rocket" alt="Launch App"></a>
-  <a href="https://github.com/GabrielBaiano/paperback"><img src="https://img.shields.io/badge/License-MIT-4caf50?style=for-the-badge" alt="License"></a>
-  <a href="https://buymeacoffee.com/gabrielngal"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
+  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Website-Live-brightgreen.svg" alt="Website"></a>
+  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Demo-Online-orange.svg" alt="Demo"></a>
+  <a href="https://github.com/GabrielBaiano/paperback"><img src="https://img.shields.io/github/license/GabrielBaiano/paperback.svg" alt="License"></a>
+  <a href="https://buymeacoffee.com/gabrielngal"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow.svg" alt="Buy Me A Coffee"></a>
 </p>
 
 ---
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [How It Works (For Readers)](#how-it-works-for-readers)
-- [Book Expiration and Highlights](#book-expiration-and-highlights)
+- [How to Use (Quick Start)](#how-to-use-quick-start)
+- [Book Expiration and Highlights (FAQ)](#book-expiration-and-highlights-faq)
 - [Credits and Attribution](#credits-and-attribution)
 - [Key Features](#key-features)
-- [Architecture](#architecture)
-- [Performance](#performance)
-- [Installation](#installation)
-- [Usage Examples](#usage-examples)
-- [API Reference](#api-reference)
-- [Development](#development)
-- [Deployment](#deployment)
+- [Developer Setup](#developer-setup)
 - [Support](#support)
-- [Contributing](#contributing)
 - [License](#license)
 
 ## Introduction
-Paperback is a high-performance web-based collaborative e-book reader. It forks the clean, browser-native EPUB rendering capabilities of Foliate-JS and extends it with real-time multiplayer synchronization, shared highlights, comments, and secure Discord authentication.
+Paperback is a free web application that allows multiple people to read e-books together in real-time. Whether you are running a virtual book club, studying textbook chapters with classmates, or sharing a novel with a long-distance partner, Paperback synchronizes your reading positions, highlights, and annotations instantly.
 
-## How It Works (For Readers)
-Paperback is designed to make reading with friends as seamless as possible:
-1. **Connect your Profile**: Click "Connect with Discord" to log in. This allows your friends to see your username and avatar while reading.
-2. **Create a Room**: Upload an EPUB file of the book you want to read. Once uploaded, a unique Room Code will be generated.
-3. **Invite Friends**: Copy the Room Code or the invite link and share it with your friends. Once they join, they can see your current page position, highlights, and comments in real-time.
-4. **Collaborate**: Highlight any text to select a color, write inline annotations, and view other readers' comments in the sidebar.
+## How to Use (Quick Start)
+Getting started with Paperback is simple and requires no software installation:
+1. **Log In**: Visit the website and click "Connect with Discord". This links your reading profile so friends can identify you in the room.
+2. **Create a Room**: Upload an EPUB file of the book you want to read. The app will immediately open the reader and generate a unique Room Code.
+3. **Share the Code**: Copy the room URL or code and send it to your friends.
+4. **Read Together**: As soon as your friends join, you will see their progress markers on the page. Highlight text to choose a color or write inline comments that everyone in the room can see instantly.
 
-## Book Expiration and Highlights
-To keep infrastructure costs completely free, Paperback operates on an ephemeral storage policy:
-- **Automatic Pruning**: Book files are automatically deleted from our secure cloud storage after **24 hours of inactivity** (meaning no one has opened the room or read the book for 24 hours).
-- **Your Highlights are Safe**: Deleting the book file **never** deletes your notes, highlights, or comments. Those are permanently stored in our database.
-- **Easy Recovery**: If you open an expired room, Paperback will prompt you to drag and drop the required EPUB file. Once you provide the file, the session is restored instantly, and everyone can resume reading where they left off.
+## Book Expiration and Highlights (FAQ)
+
+### Do my books stay online forever?
+To keep server and storage costs at absolute zero, book files are automatically removed after **24 hours of inactivity** (meaning 24 hours without anyone opening the room or reading). 
+
+### Will I lose my highlights and notes if a book expires?
+**No.** All of your highlights, colored markers, notes, and progress coordinates are stored permanently in our database. Deleting the book file never deletes your annotations.
+
+### How do I restore an expired session?
+If you open an expired room, Paperback will show a welcome prompt asking you to drop or choose the required EPUB file. Once you provide the file, the book is uploaded again and you can resume reading immediately with all your highlights intact.
 
 ## Credits and Attribution
-Paperback is a fork of [foliate-js](https://github.com/johnfactotum/foliate-js), the brilliant browser-native book rendering library created by [John Factotum](https://github.com/johnfactotum). We are incredibly grateful for his open-source work that forms the foundation of this collaborative reader.
+Paperback is a fork of the amazing [foliate-js](https://github.com/johnfactotum/foliate-js) library created by [John Factotum](https://github.com/johnfactotum). Foliate-JS provides the high-performance, browser-native rendering engine for EPUB, MOBI, and FB2 formats that Paperback builds upon. We are incredibly grateful for his work.
 
 ## Key Features
-- **Discord OAuth2 Integration**: Secure, single-click login using Discord profiles, showing reader avatars directly in the reading rooms.
-- **Real-Time Collaboration**: Sychronized WebSocket broker broadcasts members' reading locations (CFI page hashes) live, rendering dynamic progress metrics.
-- **Shared Highlights & Notes**: Create colored highlights, add inline comments, and view annotations placed by friends instantly while reading.
-- **Ephemeral Cloud Storage**: Save bandwidth and disk space with a hybrid storage engine that uploads EPUB books to Supabase Storage, generating secure 24-hour signed URLs for downloads, with an automatic background cleanup task for inactive rooms.
-- **Session Restoring Prompt**: If a book expires after 24 hours of inactivity, the database keeps highlights intact, and the UI prompts the reader to drag/select the EPUB file to restore the session instantly.
+- **Discord Integration**: Single-click secure login displaying user avatars and custom colors in the reader.
+- **Live Location Sync**: WebSocket synchronization displays page markers and progression indicators for all active readers.
+- **Shared Highlights**: Highlight passages and add inline notes that sync in real-time.
+- **Zero-Bandwidth Downloads**: Ephemeral files are uploaded to Supabase Storage and served via signed CDN links directly to the client's browser.
+- **Reading History**: Access your recently opened active and expired rooms directly from the home dashboard.
 
-## Architecture
-This project follows a clean Client-Server pattern.
-- **Core Engine**: Foliate-JS epub rendering engine running locally in the browser to parse EPUB, FB2, and MOBI files.
-- **Backend Broker**: Express.js web server and ws WebSocket server running on Node.js.
-- **Database**: SQLite database persisting users, rooms, reading position, and highlight comments.
-- **Storage Adapter**: Hybrid storage layer uploading to Supabase Storage (Object Storage) or falling back to Fly.io local disk.
-
-## Performance
-We take performance seriously.
-- **Lightweight DB Records**: Progress coordinates and highlight JSON payloads are less than 1KB, ensuring sub-millisecond query execution.
-- **Zero-Bandwidth Downloads**: When using Supabase Storage, book downloads are routed directly through Supabase's high-speed CDN, saving the application server's network bandwidth.
-- **Clean Disk Footprint**: Inactive book files are automatically pruned by a background task after 24 hours of inactivity, keeping storage costs at absolute zero.
-
-## Installation
+## Developer Setup
+If you want to run Paperback locally or deploy your own instance:
 
 ### Prerequisites
 - Node.js >= 20.0.0
 - npm
 
-### Setup
+### Installation
 ```bash
 # Clone the repository
 git clone https://github.com/GabrielBaiano/paperback.git
@@ -88,70 +75,29 @@ git clone https://github.com/GabrielBaiano/paperback.git
 npm install
 ```
 
-## Usage Examples
-
-### Local Development (Mock Mode)
-To run the server locally without configuring third-party Discord API keys or Supabase Storage:
-1. Start the server:
-   ```bash
-   npm start
-   ```
-2. Open `http://localhost:3080` in your browser.
-3. Click "Connect with Discord" to log in instantly with a development mock profile. All files will be saved to the local `uploads` directory.
-
-### Production Environment Variables
-Configure these variables in your `.env` or cloud provider panel (such as Fly.io secrets) to enable OAuth2 and Cloud Storage:
-```env
-# Discord OAuth Credentials
-DISCORD_CLIENT_ID=your_discord_client_id
-DISCORD_CLIENT_SECRET=your_discord_client_secret
-DISCORD_REDIRECT_URI=https://your-domain.com/api/auth/discord/callback
-
-# JWT Token Secret
-JWT_SECRET=your_jwt_signing_key
-
-# Supabase Credentials (Optional - Falls back to local disk if omitted)
-SUPABASE_URL=https://your-supabase-project.supabase.co
-SUPABASE_KEY=your_supabase_service_role_secret
-
-# Whitelisted Admins (Comma-separated Discord usernames for infinite room creation)
-ADMIN_USERS=gabrielbaiano_
-```
-
-## API Reference
-The backend exposes the following REST API endpoints:
-- `GET /api/auth/discord` - Initiates the Discord OAuth authentication flow.
-- `GET /api/auth/discord/callback` - Processes OAuth callback and issues secure HTTP-only cookies.
-- `GET /api/auth/me` - Retrieves the authenticated user profile.
-- `POST /api/auth/logout` - Clears the authentication token cookie.
-- `POST /api/rooms` - Creates a new reading room (accepts EPUB multipart upload).
-- `GET /api/rooms/:roomId` - Returns room metadata and verifies if the book file exists.
-- `POST /api/rooms/:roomId/reupload` - Restores an expired reading session with a fresh book file.
-- `GET /api/my-rooms` - Lists rooms in which the user is active (history).
-
-## Development
-To start contributing to the development:
+### Running Locally (Mock Mode)
+You can start a local development server without setting up Discord credentials or cloud storage:
 ```bash
 npm start
 ```
+Open `http://localhost:3080`. Logging in will automatically use a mock profile, and uploaded books will be saved to the local `uploads` directory.
 
-## Deployment
-This project is configured for easy deployment on **Fly.io** using the provided `Dockerfile` and `fly.toml`:
-```bash
-# Log in to Fly.io
-fly auth login
-
-# Deploy the application
-fly deploy
+### Environment Variables
+Configure these in your production host (such as Fly.io) to enable full features:
+```env
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URI=https://your-domain.com/api/auth/discord/callback
+JWT_SECRET=your_jwt_signing_key
+SUPABASE_URL=https://your-supabase-project.supabase.co
+SUPABASE_KEY=your_supabase_service_role_secret
+ADMIN_USERS=gabrielbaiano_
 ```
 
 ## Support
 If you find Paperback helpful and want to support its active development, you can buy me a coffee!
 
 Quer me ajudar? [Buy me a coffee!](https://buymeacoffee.com/gabrielngal)
-
-## Contributing
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.
