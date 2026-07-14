@@ -405,13 +405,14 @@ function handleWSMessage(data) {
                 myColor = activeMembers[myId].color;
                 localStorage.setItem('bc-color', myColor);
                 updateSliderThumbColor();
-                const colorInput = $('#bc-color-input');
-                if (colorInput) colorInput.value = myColor;
                 
-                // Re-select color presets in sidebar
-                const presetsContainer = $('#bc-color-presets');
-                if (presetsContainer) {
-                    presetsContainer.querySelectorAll('.bc-color-swatch').forEach(s => {
+                const dropdownBtn = $('#bc-color-dropdown-btn');
+                if (dropdownBtn) dropdownBtn.style.backgroundColor = myColor;
+                
+                // Re-select color presets in sidebar dropdown
+                const dropdownMenu = $('#bc-color-dropdown-menu');
+                if (dropdownMenu) {
+                    dropdownMenu.querySelectorAll('.bc-color-swatch').forEach(s => {
                         s.classList.toggle('selected', s.dataset.color === myColor);
                     });
                 }
@@ -1178,11 +1179,26 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
 // App Entry Point
 function initColorPicker() {
     const presets = PRESET_COLORS;
-    const presetsContainer = $('#bc-color-presets');
-    const colorInput = $('#bc-color-input');
+    const dropdownBtn = $('#bc-color-dropdown-btn');
+    const dropdownMenu = $('#bc-color-dropdown-menu');
 
-    // Set native input to current color
-    colorInput.value = myColor;
+    if (!dropdownBtn || !dropdownMenu) return;
+
+    // Set initial background color of the trigger button
+    dropdownBtn.style.backgroundColor = myColor;
+
+    // Toggle dropdown menu display on click
+    dropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown menu when clicking anywhere else on page
+    document.addEventListener('click', (e) => {
+        if (!dropdownMenu.contains(e.target) && e.target !== dropdownBtn) {
+            dropdownMenu.classList.remove('show');
+        }
+    });
 
     function applyColor(color) {
         // Block if another active member already has this exact color
@@ -1191,32 +1207,34 @@ function initColorPicker() {
             m => m.color && m.color.toLowerCase() === colorLower && m.name !== myName
         );
         if (takenBy) {
-            // Shake the picker visually
-            presetsContainer.classList.add('bc-color-taken-shake');
-            setTimeout(() => presetsContainer.classList.remove('bc-color-taken-shake'), 500);
-            colorInput.value = myColor; // revert input
+            // Shake the trigger button visually as feedback
+            dropdownBtn.classList.add('bc-color-taken-shake');
+            setTimeout(() => dropdownBtn.classList.remove('bc-color-taken-shake'), 500);
             return;
         }
 
         myColor = color;
         localStorage.setItem('bc-color', myColor);
-        colorInput.value = myColor;
+        dropdownBtn.style.backgroundColor = myColor;
         updateSliderThumbColor();
 
-        // Update selected swatch highlight
-        presetsContainer.querySelectorAll('.bc-color-swatch').forEach(s => {
+        // Update selected swatch highlight in dropdown
+        dropdownMenu.querySelectorAll('.bc-color-swatch').forEach(s => {
             s.classList.toggle('selected', s.dataset.color === myColor);
         });
 
-        // Update nick input border color as live preview
+        // Update nick input border color if exists as live preview
         const nickInput = $('#bc-nick-input');
         if (nickInput) nickInput.style.borderColor = myColor;
 
         // Send update via WS — no reconnect needed
         sendIdentityUpdate();
+
+        // Close dropdown after selection
+        dropdownMenu.classList.remove('show');
     }
 
-    // Render preset swatches
+    // Render preset swatches inside the dropdown grid
     presets.forEach(color => {
         const swatch = document.createElement('div');
         swatch.className = 'bc-color-swatch';
@@ -1224,11 +1242,8 @@ function initColorPicker() {
         swatch.style.backgroundColor = color;
         if (color === myColor) swatch.classList.add('selected');
         swatch.addEventListener('click', () => applyColor(color));
-        presetsContainer.appendChild(swatch);
+        dropdownMenu.appendChild(swatch);
     });
-
-    // Native color picker for custom color
-    colorInput.addEventListener('input', (e) => applyColor(e.target.value));
 }
 
 // Check Discord login status

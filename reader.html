@@ -433,16 +433,20 @@ body {
                 </div>
             </div>
             <div id="bc-identity-section" class="bc-card bc-profile-card">
-                <div class="bc-profile-row">
-                    <img id="bc-my-avatar" class="bc-profile-avatar" src="" alt="Avatar">
-                    <div class="bc-profile-details">
-                        <span id="bc-my-username" class="bc-profile-username">-----</span>
-                        <button id="bc-logout-btn" class="bc-logout-link-btn">Logout</button>
+                <div class="bc-profile-row" style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                        <img id="bc-my-avatar" class="bc-profile-avatar" src="" alt="Avatar">
+                        <div class="bc-profile-details" style="display: flex; flex-direction: column; min-width: 0;">
+                            <span id="bc-my-username" class="bc-profile-username" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;">-----</span>
+                            <button id="bc-logout-btn" class="bc-logout-link-btn">Logout</button>
+                        </div>
                     </div>
-                </div>
-                <div class="bc-color-picker-row" style="margin-top: 12px; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 12px;">
-                    <div class="bc-color-presets" id="bc-color-presets"></div>
-                    <input type="color" id="bc-color-input" title="Custom color">
+                    
+                    <!-- Single color dropdown on the right -->
+                    <div class="bc-color-dropdown-container">
+                        <button id="bc-color-dropdown-btn" class="bc-color-dropdown-trigger" title="Change Color"></button>
+                        <div id="bc-color-dropdown-menu" class="bc-color-dropdown-menu"></div>
+                    </div>
                 </div>
             </div>
 
