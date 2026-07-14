@@ -58,7 +58,14 @@ const storage = supabase
     });
 const upload = multer({
     storage,
-    limits: { fileSize: 20 * 1024 * 1024 } // Limit files to 20MB to prevent server abuse
+    limits: { fileSize: 20 * 1024 * 1024 }, // Limit files to 20MB to prevent server abuse
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext !== '.epub') {
+            return cb(new Error('Only EPUB files (.epub) are allowed.'));
+        }
+        cb(null, true);
+    }
 });
 
 app.use(express.json());
@@ -858,6 +865,9 @@ app.use((err, req, res, next) => {
             return res.status(400).json({ error: 'File too large. Maximum allowed size is 20MB.' });
         }
         return res.status(400).json({ error: `Upload error: ${err.message}` });
+    }
+    if (err.message === 'Only EPUB files (.epub) are allowed.') {
+        return res.status(400).json({ error: err.message });
     }
     console.error('[Unhandled Server Error]', err);
     res.status(500).json({ error: err.message || 'Internal Server Error' });
