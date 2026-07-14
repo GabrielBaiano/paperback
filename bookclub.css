@@ -1,0 +1,389 @@
+/* Book Club CSS Stylesheet */
+
+/* Tab Layout */
+.sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    background: Canvas;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: GrayText;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.tab-btn:hover {
+    color: CanvasText;
+    background: var(--active-bg);
+}
+
+.tab-btn.active {
+    color: CanvasText;
+    border-bottom: 2px solid currentColor;
+}
+
+.tab-content {
+    display: none;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Utilities */
+.bc-btn {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: Canvas;
+    color: CanvasText;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bc-btn:hover {
+    background: var(--active-bg);
+}
+
+.bc-btn-primary {
+    background: currentColor;
+    color: Canvas;
+    border-color: transparent;
+}
+
+.bc-btn-primary:hover {
+    opacity: 0.9;
+}
+
+.bc-btn-sm {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.bc-card {
+    background: var(--active-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.bc-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: GrayText;
+    font-size: 0.8rem;
+    margin: 16px 0;
+}
+
+.bc-divider::before,
+.bc-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.bc-divider span {
+    padding: 0 10px;
+}
+
+/* Setup Panel */
+#bc-setup-panel h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+#bc-setup-panel p {
+    color: GrayText;
+    font-size: 0.9rem;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.bc-join-form {
+    display: flex;
+    gap: 8px;
+}
+
+.bc-join-form input,
+.bc-input-group input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: Canvas;
+    color: CanvasText;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+/* Room Panel */
+.bc-info-card {
+    background: var(--active-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid currentColor;
+}
+
+.bc-room-badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: GrayText;
+}
+
+.bc-room-id-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#bc-room-id-val {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+#bc-copy-link-btn {
+    background: none;
+    border: none;
+    color: currentColor;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0;
+    text-decoration: underline;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bc-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.bc-section-title {
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: GrayText;
+    margin-bottom: 8px;
+    margin-top: 16px;
+    letter-spacing: 0.5px;
+}
+
+/* Members List */
+.bc-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bc-member-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--active-bg);
+    font-size: 0.9rem;
+}
+
+.bc-member-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bc-avatar {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.bc-member-name {
+    font-weight: 500;
+}
+
+.bc-member-progress {
+    font-size: 0.75rem;
+    color: GrayText;
+}
+
+.bc-teleport-btn {
+    background: none;
+    border: none;
+    color: GrayText;
+    cursor: pointer;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.bc-teleport-btn:hover {
+    color: CanvasText;
+}
+
+/* Comment Thread & Highlights */
+.bc-placeholder-text {
+    font-size: 0.85rem;
+    color: GrayText;
+    text-align: center;
+    padding: 16px;
+    border: 1px dashed rgba(128, 128, 128, 0.3);
+    border-radius: 8px;
+}
+
+.bc-highlight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.bc-highlight-author {
+    font-size: 0.75rem;
+    color: GrayText;
+}
+
+.bc-delete-btn {
+    background: none;
+    border: none;
+    color: #ff5e5e;
+    cursor: pointer;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.bc-highlight-quote {
+    font-style: italic;
+    font-size: 0.85rem;
+    border-left: 2px solid currentColor;
+    padding-left: 8px;
+    color: GrayText;
+    margin-bottom: 12px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.bc-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    padding-bottom: 12px;
+}
+
+.bc-comment-item {
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(128, 128, 128, 0.1);
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+.bc-comment-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: GrayText;
+}
+
+.bc-comment-user {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bc-comment-text {
+    word-break: break-word;
+}
+
+.bc-comment-form textarea {
+    width: 100%;
+    height: 50px;
+    padding: 6px;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: Canvas;
+    color: CanvasText;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    resize: none;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+
+/* Floating Selection Menu */
+.bc-selection-menu {
+    position: absolute;
+    z-index: 9999;
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.bc-menu-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    color: CanvasText;
+}
+
+.bc-menu-btn:hover {
+    background: var(--active-bg);
+}
+
+.bc-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.bc-color-dot:hover {
+    transform: scale(1.2);
+}
