@@ -26,9 +26,12 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
 // Configure multer for file uploads
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = fs.existsSync('/data')
+    ? '/data/uploads'
+    : path.join(__dirname, 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({

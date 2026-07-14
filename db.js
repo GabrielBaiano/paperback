@@ -1,16 +1,22 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, 'foliate_jam.db');
+// Check if /data directory exists (common persistent volume mount path in production like Fly.io)
+const dataDirExists = fs.existsSync('/data');
+const dbPath = dataDirExists 
+    ? '/data/foliate_jam.db' 
+    : path.join(__dirname, 'foliate_jam.db');
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('[DB] Failed to open SQLite database:', err);
     } else {
-        console.log('[DB] SQLite database connected successfully.');
+        console.log('[DB] SQLite database connected successfully. Path:', dbPath);
     }
 });
 
