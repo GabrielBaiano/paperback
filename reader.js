@@ -230,11 +230,28 @@ class Reader {
 }
 
 const open = async file => {
-    document.body.removeChild($('#drop-target'))
+    if (window.showLoading) {
+        window.showLoading('Opening book...');
+    }
+    try {
+        const dropTarget = $('#drop-target');
+        if (dropTarget && dropTarget.parentNode) {
+            dropTarget.parentNode.removeChild(dropTarget);
+        }
+    } catch (e) {
+        console.warn('Could not remove drop-target:', e);
+    }
     const reader = new Reader()
     reader.currentFile = file
     globalThis.reader = reader
-    await reader.open(file)
+    try {
+        await reader.open(file)
+    } catch (err) {
+        if (window.hideLoading) {
+            window.hideLoading();
+        }
+        throw err;
+    }
     window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
 }
 globalThis.openBook = open

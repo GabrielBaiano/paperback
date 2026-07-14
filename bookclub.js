@@ -1508,6 +1508,7 @@ async function loadMyRooms() {
                     e.stopPropagation();
                     const confirmDel = confirm(`Are you sure you want to delete the room "${room.title}"?\nThis will permanently delete the book file and all highlights/comments!`);
                     if (confirmDel) {
+                        showLoading('Deleting room...');
                         fetch(`/api/rooms/${room.roomId}`, { method: 'DELETE' })
                             .then(res => res.json())
                             .then(data => {
@@ -1521,6 +1522,9 @@ async function loadMyRooms() {
                             .catch(err => {
                                 console.error('Delete error:', err);
                                 alert('Error deleting room');
+                            })
+                            .finally(() => {
+                                hideLoading();
                             });
                     }
                 });
@@ -1533,6 +1537,7 @@ async function loadMyRooms() {
                     e.stopPropagation();
                     const confirmLeave = confirm(`Are you sure you want to leave the room "${room.title}"?`);
                     if (confirmLeave) {
+                        showLoading('Leaving room...');
                         fetch(`/api/rooms/${room.roomId}/leave`, { method: 'POST' })
                             .then(res => res.json())
                             .then(data => {
@@ -1546,6 +1551,9 @@ async function loadMyRooms() {
                             .catch(err => {
                                 console.error('Leave error:', err);
                                 alert('Error leaving room');
+                            })
+                            .finally(() => {
+                                hideLoading();
                             });
                     }
                 });
