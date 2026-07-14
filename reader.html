@@ -35,6 +35,72 @@ body {
 }
 #drop-target h1 {
     font-weight: 900;
+    margin-bottom: 4px;
+}
+.drop-target-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: 380px;
+    width: 100%;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+.drop-target-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 20px 0 16px;
+    color: GrayText;
+    font-size: 0.85rem;
+    gap: 10px;
+}
+.drop-target-divider::before,
+.drop-target-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(128, 128, 128, 0.3);
+}
+.drop-target-join {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+}
+.drop-target-join input {
+    flex: 1;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-radius: 8px;
+    background: Canvas;
+    color: CanvasText;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+.drop-target-join input:focus {
+    border-color: CanvasText;
+}
+.drop-target-join button {
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    background: CanvasText;
+    color: Canvas;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+.drop-target-join button:hover {
+    opacity: 0.75;
 }
 #file-button {
     font: inherit;
@@ -260,12 +326,25 @@ body {
 </style>
 <input type="file" id="file-input" hidden>
 <div id="drop-target" class="filter">
-    <div>
+    <div class="drop-target-inner">
         <svg class="icon empty-state-icon" width="72" height="72" aria-hidden="true">
             <path d="M36 18s-6-6-12-6-15 6-15 6v42s9-6 15-6 12 6 12 6c4-4 8-6 12-6s12 2 15 6V18c-6-4-12-6-15-6-4 0-8 2-12 6m0 0v42"/>
         </svg>
-        <h1>Drop a book here!</h1>
-        <p>Or <button id="file-button">choose a file</button> to open it.</p>
+        <h1>Arraste um livro aqui!</h1>
+        <p>Ou <button id="file-button">escolha um arquivo</button> para abrir.</p>
+
+        <div class="drop-target-divider">
+            <span>ou entre em uma sala existente</span>
+        </div>
+
+        <div class="drop-target-join">
+            <input type="text" id="drop-join-input" placeholder="Código da Sala (ex: a1b2c3d4e)">
+            <button id="drop-join-btn" aria-label="Entrar na sala">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M13 6l6 6-6 6"/>
+                </svg>
+            </button>
+        </div>
     </div>
 </div>
 <div id="dimming-overlay" aria-hidden="true"></div>

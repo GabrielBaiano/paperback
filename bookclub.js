@@ -179,6 +179,29 @@ function initSetupEvents() {
             sendIdentityUpdate();
         }
     });
+
+    // Drop-target join button (home screen — before book is loaded)
+    const dropJoinBtn = $('#drop-join-btn');
+    const dropJoinInput = $('#drop-join-input');
+    if (dropJoinBtn && dropJoinInput) {
+        const doJoin = () => {
+            let val = dropJoinInput.value.trim();
+            if (!val) return;
+            // Support pasting the full invite URL — extract just the room param
+            try {
+                const parsed = new URL(val);
+                const roomParam = parsed.searchParams.get('room');
+                if (roomParam) val = roomParam;
+            } catch (_) { /* not a URL, use as-is */ }
+            if (val && val !== 'null') {
+                window.location.href = `${window.location.pathname}?room=${val}`;
+            }
+        };
+        dropJoinBtn.addEventListener('click', doJoin);
+        dropJoinInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doJoin();
+        });
+    }
 }
 
 // WebSocket connection management
