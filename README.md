@@ -105,10 +105,25 @@ Want to support Paperback? Buy me a coffee!
 </a>
 
 ### Share the Project
-If you love reading books collaboratively with Paperback, help us spread the word! You can share the link with friends, invite them to your rooms, or tweet about it:
+If you love reading books collaboratively with Paperback, help us spread the word! You can share the link with friends, invite them to your rooms, or share it on your favorite platforms:
 
-<a href="https://twitter.com/intent/tweet?text=Check%20out%20Paperback,%20a%20clean%20and%20lightweight%20collaborative%20e-book%20reader%20in%20the%20browser!%20https://github.com/GabrielBaiano/paperback" target="_blank">
-  <img src="https://img.shields.io/badge/Share%20on-Twitter-1da1f2.svg?logo=twitter&logoColor=white&style=flat-square" alt="Share on Twitter" />
+<a href="https://twitter.com/intent/tweet?text=Check%20out%20Paperback,%20a%20clean%20and%20lightweight%20collaborative%20e-book%20reader%20in%20the%20browser!%20https://paperback.fly.dev/" target="_blank">
+  <img src="https://img.shields.io/badge/Twitter-1da1f2.svg?logo=twitter&logoColor=white&style=flat-square" alt="Share on Twitter" />
+</a>
+<a href="https://t.me/share/url?url=https://paperback.fly.dev/&text=Check%20out%20Paperback,%20a%20clean%20collaborative%20e-book%20reader%20in%20the%20browser!" target="_blank">
+  <img src="https://img.shields.io/badge/Telegram-26a5e4.svg?logo=telegram&logoColor=white&style=flat-square" alt="Share on Telegram" />
+</a>
+<a href="https://api.whatsapp.com/send?text=Check%20out%20Paperback,%20a%20clean%20collaborative%20e-book%20reader%20in%20the%20browser!%20https://paperback.fly.dev/" target="_blank">
+  <img src="https://img.shields.io/badge/WhatsApp-25d366.svg?logo=whatsapp&logoColor=white&style=flat-square" alt="Share on WhatsApp" />
+</a>
+<a href="https://www.reddit.com/submit?url=https://paperback.fly.dev/&title=Paperback%20-%20Collaborative%20E-Book%20Reader%20in%20the%20Browser" target="_blank">
+  <img src="https://img.shields.io/badge/Reddit-ff4500.svg?logo=reddit&logoColor=white&style=flat-square" alt="Share on Reddit" />
+</a>
+<a href="https://news.ycombinator.com/submitlink?u=https://paperback.fly.dev/&t=Paperback%20-%20Collaborative%20E-Book%20Reader%20in%20the%20Browser" target="_blank">
+  <img src="https://img.shields.io/badge/Hacker%20News-ff6600.svg?logo=y-combinator&logoColor=white&style=flat-square" alt="Share on Hacker News" />
+</a>
+<a href="https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/GabrielBaiano/paperback" target="_blank">
+  <img src="https://img.shields.io/badge/LinkedIn-0077b5.svg?logo=linkedin&logoColor=white&style=flat-square" alt="Share on LinkedIn" />
 </a>
 
 ### Help Us Improve
