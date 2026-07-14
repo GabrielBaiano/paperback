@@ -1432,8 +1432,8 @@ async function loadMyRooms() {
             }
 
             card.innerHTML = `
-                <div class="your-room-card-title" style="font-weight: 600; color: #fff; margin-bottom: 2px;">${room.title}</div>
-                <div class="your-room-card-author" style="font-size: 0.76rem; color: rgba(255,255,255,0.4); margin-bottom: 8px;">${room.author}</div>
+                <div class="your-room-card-title">${room.title}</div>
+                <div class="your-room-card-author">${room.author}</div>
                 <div class="your-room-card-footer">
                     ${onlineText}
                 </div>

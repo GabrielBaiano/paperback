@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data: https://cdn.discordapp.com; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
 <title>Paperback</title>
-<link rel="stylesheet" href="bookclub.css?v=3">
+<link rel="stylesheet" href="bookclub.css?v=4">
 <style>
 :root {
     --active-bg: rgba(0, 0, 0, .05);
@@ -587,7 +587,7 @@ body {
                 </svg>
             </button>
         </div>
-        <div id="bc-shelf-modal-body" style="padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+        <div id="bc-shelf-modal-body" style="padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
             <div id="your-rooms-list" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                 <!-- Dynamically populated -->
             </div>
@@ -595,5 +595,5 @@ body {
     </div>
 </div>
 
-<script src="reader.js?v=3" type="module"></script>
-<script src="bookclub.js?v=3" type="module"></script>
+<script src="reader.js?v=4" type="module"></script>
+<script src="bookclub.js?v=4" type="module"></script>
