@@ -49,7 +49,7 @@ async function checkRoomParam() {
     const params = new URLSearchParams(window.location.search);
     const urlRoomId = params.get('room');
     
-    if (urlRoomId) {
+    if (urlRoomId && urlRoomId !== 'null' && urlRoomId !== 'undefined') {
         roomId = urlRoomId;
         try {
             const res = await fetch(`/api/rooms/${roomId}`);
