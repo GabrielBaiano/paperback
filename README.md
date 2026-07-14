@@ -19,14 +19,14 @@
 ---
 
 ## Table of Contents
-› [Introduction](#introduction)
-› [How to Use (Quick Start)](#how-to-use-quick-start)
-› [Book Expiration and Highlights (FAQ)](#book-expiration-and-highlights-faq)
-› [Credits and Attribution](#credits-and-attribution)
-› [Key Features](#key-features)
-› [Developer Setup](#developer-setup)
-› [Support](#support)
-› [License](#license)
+- [Introduction](#introduction)
+- [How to Use (Quick Start)](#how-to-use-quick-start)
+- [Book Expiration and Highlights (FAQ)](#book-expiration-and-highlights-faq)
+- [Credits and Attribution](#credits-and-attribution)
+- [Key Features](#key-features)
+- [Developer Setup](#developer-setup)
+- [Support](#support)
+- [License](#license)
 
 ## Introduction
 Paperback is a free web application that allows multiple people to read e-books together in real-time. Whether you are running a virtual book club, studying textbook chapters with classmates, or sharing a novel with a long-distance partner, Paperback synchronizes your reading positions, highlights, and annotations instantly.
