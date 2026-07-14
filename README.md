@@ -141,5 +141,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
   Want to support Paperback? <a href="https://buymeacoffee.com/gabrielngal">Buy me a coffee!</a>
 </p>
 <p align="center">
+  Made with ❤️ and the help of <a href="https://github.com/matiassingers/awesome-readme">Awesome-Readme</a>
+</p>
+<p align="center">
   Made by <a href="https://github.com/GabrielBaiano">Gabriel Baiano</a>
 </p>
