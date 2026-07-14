@@ -246,7 +246,7 @@ function handleAddHighlight(ws, data) {
     if (!client) return;
 
     const { roomId, name, color } = client;
-    const { cfi, text, highlightColor } = data;
+    const { cfi, text, highlightColor, note } = data;
     const room = rooms.get(roomId);
 
     if (room) {
@@ -256,12 +256,14 @@ function handleAddHighlight(ws, data) {
             userName: name,
             userColor: color,
             highlightColor: highlightColor || color,
+            note: note || '',
             comments: [],
             timestamp: new Date().toISOString()
         };
 
         broadcastToRoom(roomId, null, {
             type: 'highlight_added',
+            cfi,
             highlight: room.highlights[cfi]
         });
     }

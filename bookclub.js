@@ -313,27 +313,6 @@ function handleWSMessage(data) {
             if (hCfi && data.highlight) {
                 activeHighlights[hCfi] = data.highlight;
                 drawHighlightOnView(data.highlight);
-                
-                // If we have a pending comment open action for this CFI
-                if (hCfi === pendingCommentCfi) {
-                    pendingCommentCfi = null;
-                    openCommentThread(hCfi);
-                }
-                renderActivityFeed();
-            }
-            break;
-            
-        case 'comment_added':
-            if (activeHighlights[data.cfi]) {
-                activeHighlights[data.cfi].comments.push(data.comment);
-                if (activeCommentCfi === data.cfi) {
-                    renderComments();
-                }
-                // Refresh hover popover if it's currently showing this CFI
-                if (hoverPopover && hoverPopover.style.display !== 'none' && hoverPopover.dataset.cfi === data.cfi) {
-                    renderHoverPopoverComments(data.cfi);
-                }
-                renderActivityFeed();
             }
             break;
             
@@ -341,17 +320,6 @@ function handleWSMessage(data) {
             if (activeHighlights[data.cfi]) {
                 removeHighlightFromView(data.cfi);
                 delete activeHighlights[data.cfi];
-            }
-            if (activeCommentCfi === data.cfi) {
-                closeCommentThread();
-            }
-            
-        case 'comment_added':
-            if (activeHighlights[data.cfi]) {
-                activeHighlights[data.cfi].comments.push(data.comment);
-                if (activeCommentCfi === data.cfi) {
-                    renderComments();
-                }
             }
             break;
             
@@ -764,7 +732,7 @@ function executeComment() {
     }
 }
 
-// Floating Composer Popover UI
+// Floating Composer Popover UI (to enter single note)
 function showFloatingComposer(cfi, highlightText, top, left) {
     if (floatingComposer) floatingComposer.remove();
 
@@ -775,7 +743,7 @@ function showFloatingComposer(cfi, highlightText, top, left) {
     floatingComposer.style.setProperty('--my-color', myColor);
 
     const textarea = document.createElement('textarea');
-    textarea.placeholder = 'Write something about this passage...';
+    textarea.placeholder = 'Write a comment / note about this passage...';
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -795,47 +763,23 @@ function showFloatingComposer(cfi, highlightText, top, left) {
 
     const sendBtn = document.createElement('button');
     sendBtn.className = 'bc-btn bc-btn-sm bc-btn-primary';
-    sendBtn.innerText = 'Send';
+    sendBtn.innerText = 'Save';
     sendBtn.style.backgroundColor = myColor;
     sendBtn.style.color = '#ffffff';
     sendBtn.addEventListener('click', () => {
         const val = textarea.value.trim();
         if (!val) return;
 
-        pendingCommentCfi = cfi;
-        pendingCommentText = val;
-
-        // Send highlight message
+        // Send highlight message WITH the note directly
         ws.send(JSON.stringify({
             type: 'add_highlight',
             cfi,
             text: highlightText,
-            highlightColor: myColor
+            highlightColor: myColor,
+            note: val
         }));
 
-        // Send comment message once we receive highlight confirmation (handled below)
-        const checkConfirm = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'highlight_added' && data.cfi === cfi) {
-                    ws.send(JSON.stringify({
-                        type: 'add_comment',
-                        cfi: cfi,
-                        commentText: val
-                    }));
-                    ws.removeEventListener('message', checkConfirm);
-                    pendingCommentText = null;
-                }
-            } catch (err) {}
-        };
-        ws.addEventListener('message', checkConfirm);
-
         hideFloatingComposer();
-        
-        // Open the sidebar thread right away
-        setTimeout(() => {
-            openCommentThread(cfi);
-        }, 150);
     });
 
     actions.appendChild(cancelBtn);
@@ -887,47 +831,40 @@ function showHoverCommentsPopover(cfi, range, iframe, e) {
     hoverPopover.style.top = `${top - hoverPopover.offsetHeight - 10}px`;
     hoverPopover.style.left = `${left}px`;
     
-    // Render contents
+    const isOwner = highlight.userName === myName;
+
+    // Render contents (Header, Highlight Quote, Note, Delete button)
     hoverPopover.innerHTML = `
         <div class="bc-popover-header">
-            <span class="bc-popover-author-dot" style="background-color: ${highlight.userColor};"></span>
+            <span class="bc-popover-author-dot" style="background-color: ${highlight.userColor || 'gray'};"></span>
             <span class="bc-popover-author">${highlight.userName}</span>
+            ${isOwner ? `<button class="bc-popover-delete-btn" title="Delete Highlight">✕</button>` : ''}
         </div>
         <div class="bc-popover-quote">"${highlight.text}"</div>
-        <div class="bc-popover-comments" id="bc-popover-comments-list"></div>
+        ${highlight.note ? `<div class="bc-popover-note" style="--bc-highlight-color: ${highlight.highlightColor || 'gray'}">${highlight.note}</div>` : ''}
     `;
 
-    renderHoverPopoverComments(cfi);
+    // Wire up delete button if present
+    const deleteBtn = hoverPopover.querySelector('.bc-popover-delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete this highlight?')) {
+                ws.send(JSON.stringify({
+                    type: 'delete_highlight',
+                    cfi
+                }));
+                hideHoverCommentsPopover();
+            }
+        });
+    }
 
     hoverPopover.style.display = 'flex';
     // Trigger fade in animation
     setTimeout(() => {
         hoverPopover.classList.add('show');
-        // Reposition correctly since height might have changed after rendering comments
+        // Reposition correctly since height might have changed after rendering
         hoverPopover.style.top = `${top - hoverPopover.offsetHeight - 10}px`;
     }, 10);
-}
-
-function renderHoverPopoverComments(cfi) {
-    const listContainer = document.getElementById('bc-popover-comments-list');
-    if (!listContainer) return;
-    listContainer.innerHTML = '';
-
-    const highlight = activeHighlights[cfi];
-    if (!highlight || !highlight.comments || highlight.comments.length === 0) {
-        listContainer.innerHTML = `<div style="font-size: 0.75rem; color: GrayText; text-align: center; padding: 4px;">No comments yet.</div>`;
-        return;
-    }
-
-    highlight.comments.forEach(comment => {
-        const item = document.createElement('div');
-        item.className = 'bc-popover-comment';
-        item.innerHTML = `
-            <div class="bc-popover-comment-user" style="color: ${comment.userColor};">${comment.userName}</div>
-            <div class="bc-popover-comment-text">${comment.text}</div>
-        `;
-        listContainer.appendChild(item);
-    });
 }
 
 function hideHoverCommentsPopover() {
@@ -945,166 +882,57 @@ function hideHoverCommentsPopover() {
 }
 
 
-// Open Comment Sidebar
-function openCommentThread(cfi) {
-    activeCommentCfi = cfi;
-    const highlight = activeHighlights[cfi];
-    
-    if (!highlight) {
-        console.warn(`[Book Club] Highlight not found for CFI: ${cfi}`);
-        return;
-    }
+// Inject highlight rendering in Foliate
+async function drawHighlightOnView(highlight) {
+    const reader = globalThis.reader;
+    if (!reader || !reader.view) return;
 
-    // Switch to Book Club Tab
-    $('#tab-bookclub').click();
+    try {
+        const { index } = await reader.view.resolveNavigation(highlight.cfi);
+        const annotation = {
+            value: highlight.cfi,
+            color: highlight.highlightColor || highlight.userColor || '#FFD700',
+            userName: highlight.userName,
+            note: highlight.note // Save the note directly in the annotation
+        };
 
-    $('#bc-feed-panel').style.display = 'none';
-    $('#bc-comments-container').style.display = 'block';
-    
-    $('#bc-highlight-author').innerText = `Highlighted by ${highlight.userName}`;
-    $('#bc-selected-highlight-text').innerText = `"${highlight.text}"`;
-    $('#bc-selected-highlight-text').style.borderColor = highlight.highlightColor || highlight.userColor;
-
-    // Show delete button only if it belongs to current user or if host
-    const isOwner = highlight.userName === myName;
-    $('#bc-delete-highlight-btn').style.display = isOwner ? 'block' : 'none';
-
-    renderComments();
-}
-
-function closeCommentThread() {
-    activeCommentCfi = null;
-    $('#bc-feed-panel').style.display = 'flex';
-    $('#bc-comments-container').style.display = 'none';
-    renderActivityFeed();
-}
-
-// Render the Chronological Activity Feed
-function renderActivityFeed() {
-    const feed = $('#bc-activity-feed');
-    if (!feed) return;
-    feed.innerHTML = '';
-
-    const highlights = Object.values(activeHighlights);
-    if (highlights.length === 0) {
-        feed.innerHTML = `<div style="font-size: 0.8rem; color: GrayText; text-align: center; padding: 24px 8px; border: 1px dashed rgba(128,128,128,0.25); border-radius: 8px;">No activity yet. Highlight text in the book to start a discussion!</div>`;
-        return;
-    }
-
-    // Sort highlights by timestamp descending (newest first)
-    highlights.sort((a, b) => {
-        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-        return timeB - timeA;
-    });
-
-    highlights.forEach(h => {
-        const card = document.createElement('div');
-        card.className = 'bc-feed-card';
-        
-        // Click to open thread and teleport to cfi position
-        card.addEventListener('click', () => {
-            openCommentThread(h.cfi);
-            if (globalThis.reader) {
-                globalThis.reader.view.goTo(h.cfi);
-            }
-        });
-
-        const timeStr = h.timestamp 
-            ? new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : '';
-
-        card.innerHTML = `
-            <div class="bc-feed-card-header">
-                <span class="bc-feed-dot" style="background-color: ${h.userColor || 'gray'};"></span>
-                <span class="bc-feed-author">${h.userName}</span>
-                <span class="bc-feed-time">${timeStr}</span>
-            </div>
-            <div class="bc-feed-quote">"${h.text}"</div>
-            ${h.comments && h.comments.length > 0 ? `
-                <div class="bc-feed-comments-preview">
-                    💬 ${h.comments.length} comment${h.comments.length > 1 ? 's' : ''} (latest: ${h.comments[h.comments.length - 1].userName})
-                </div>
-            ` : `
-                <div class="bc-feed-comments-preview" style="opacity: 0.55;">
-                    💬 Add comment...
-                </div>
-            `}
-        `;
-        feed.appendChild(card);
-    });
-}
-
-function renderComments() {
-    const list = $('#bc-comments-list');
-    list.innerHTML = '';
-    
-    const highlight = activeHighlights[activeCommentCfi];
-    if (!highlight) return;
-
-    highlight.comments.forEach(comment => {
-        const item = document.createElement('div');
-        item.className = 'bc-comment-item';
-        
-        const dateStr = new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        item.innerHTML = `
-            <div class="bc-comment-meta">
-                <span class="bc-comment-user" style="color: ${comment.userColor};">${comment.userName}</span>
-                <span>${dateStr}</span>
-            </div>
-            <div class="bc-comment-text">${comment.text}</div>
-        `;
-        list.appendChild(item);
-    });
-    
-    list.scrollTop = list.scrollHeight;
-}
-
-function initCommentFormEvents() {
-    // Back to feed button
-    const closeBtn = $('#bc-close-thread-btn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            closeCommentThread();
-        });
-    }
-
-    // Send comment button
-    $('#bc-send-comment-btn').addEventListener('click', () => {
-        const input = $('#bc-comment-input');
-        const text = input.value.trim();
-        
-        if (!text || !activeCommentCfi || !ws || ws.readyState !== WebSocket.OPEN) return;
-        
-        ws.send(JSON.stringify({
-            type: 'add_comment',
-            cfi: activeCommentCfi,
-            commentText: text
-        }));
-        
-        input.value = '';
-    });
-
-    // Enter to submit comment
-    $('#bc-comment-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            $('#bc-send-comment-btn').click();
+        // Cache in reader
+        if (!reader.annotations.has(index)) {
+            reader.annotations.set(index, []);
         }
-    });
+        
+        // Avoid duplicate annotations
+        const list = reader.annotations.get(index);
+        const exists = list.some(a => a.value === highlight.cfi);
+        if (!exists) {
+            list.push(annotation);
+            reader.annotationsByValue.set(highlight.cfi, annotation);
+            await reader.view.addAnnotation(annotation);
+        }
+    } catch (e) {
+        console.error('[Book Club] Error rendering highlight:', e);
+    }
+}
 
-    // Delete highlight button
-    $('#bc-delete-highlight-btn').addEventListener('click', () => {
-        if (activeCommentCfi && ws && ws.readyState === WebSocket.OPEN) {
-            if (confirm('Are you sure you want to delete this highlight and its comments?')) {
-                ws.send(JSON.stringify({
-                    type: 'delete_highlight',
-                    cfi: activeCommentCfi
-                }));
+async function removeHighlightFromView(cfi) {
+    const reader = globalThis.reader;
+    if (!reader || !reader.view) return;
+
+    try {
+        const { index } = await reader.view.resolveNavigation(cfi);
+        const annotation = reader.annotationsByValue.get(cfi);
+        if (annotation) {
+            await reader.view.deleteAnnotation(annotation);
+            reader.annotationsByValue.delete(cfi);
+            
+            const list = reader.annotations.get(index);
+            if (list) {
+                reader.annotations.set(index, list.filter(a => a.value !== cfi));
             }
         }
-    });
+    } catch (e) {
+        console.error('[Book Club] Error removing highlight:', e);
+    }
 }
 
 window.addEventListener('book-opened', ({ detail: reader }) => {
@@ -1113,6 +941,11 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
     if (roomId) {
         showRoomPanel();
         connectWebSocket();
+        
+        // Wait a small moment to ensure reader.view is ready before rendering existing highlights
+        setTimeout(() => {
+            renderAllHighlights();
+        }, 100);
     } else {
         showSetupPanel();
     }
@@ -1142,9 +975,9 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
         }
     });
 
-    // Listen for section document load event to inject text selection listeners
+    // Listen for section document load event to inject text selection and hover listeners
     reader.view.addEventListener('load', ({ detail: { doc, index } }) => {
-        console.log(`[Book Club] Loaded section ${index}. Injecting selection handler.`);
+        console.log(`[Book Club] Loaded section ${index}. Injecting selection/hover handlers.`);
         
         // Selection change listener
         doc.addEventListener('mouseup', (event) => {
@@ -1155,7 +988,7 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
             handleTextSelection(doc, index, event);
         });
 
-        // Mouse hover over highlighted text inside doc to open comment panel
+        // Mouse hover over highlighted text inside doc to open comment popover
         doc.addEventListener('mousemove', (e) => {
             const overlayerObj = globalThis.reader?.view?.renderer?.getContents()
                 ?.find(x => x.index === index && x.overlayer);
@@ -1176,7 +1009,12 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
     reader.view.addEventListener('show-annotation', (e) => {
         const cfi = e.detail?.value ?? e.detail?.annotation?.value;
         if (cfi && activeHighlights[cfi]) {
-            openCommentThread(cfi);
+            // Find overlayer of current page to get iframe frame element
+            const overlayerObj = globalThis.reader?.view?.renderer?.getContents()
+                ?.find(x => x.overlayer);
+            if (overlayerObj?.overlayer && e.detail.range) {
+                showHoverCommentsPopover(cfi, e.detail.range, overlayerObj.doc.defaultView.frameElement);
+            }
         }
     });
 
