@@ -56,7 +56,10 @@ const storage = supabase
             cb(null, uniqueSuffix + path.extname(file.originalname));
         }
     });
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 20 * 1024 * 1024 } // Limit files to 20MB to prevent server abuse
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -222,6 +225,72 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true });
 });
 
+// Admin and limits bypass check
+function isLimitExempt(user) {
+    if (!user) return false;
+    const admins = process.env.ADMIN_USERS ? process.env.ADMIN_USERS.split(',').map(u => u.trim()) : [];
+    return admins.includes(user.username) || user.username === 'gabrielbaiano_';
+}
+
+// Get rooms for the logged-in user (rooms they created or joined)
+app.get('/api/my-rooms', async (req, res) => {
+    const user = await getAuthUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required.' });
+    }
+    
+    try {
+        // Find rooms where the user is either the creator OR has progress records OR has highlights
+        const rooms = await dbAll(`
+            SELECT DISTINCT r.* FROM rooms r
+            LEFT JOIN room_members m ON r.room_id = m.room_id
+            LEFT JOIN highlights h ON r.room_id = h.room_id
+            WHERE r.creator_id = ? OR m.discord_id = ? OR h.discord_id = ?
+            ORDER BY r.last_active DESC
+        `, [user.discord_id, user.discord_id, user.discord_id]);
+        
+        // Resolve signed URLs or local path checks dynamically
+        const resolvedRooms = await Promise.all(rooms.map(async (room) => {
+            let bookPath = room.book_path;
+            let hasBook = false;
+            
+            if (room.book_path.startsWith('supabase://')) {
+                if (supabase) {
+                    const fileKey = room.book_path.replace('supabase://', '');
+                    const { data: files } = await supabase.storage.from('books').list('', { search: fileKey });
+                    const fileExists = files && files.some(f => f.name === fileKey);
+                    if (fileExists) {
+                        const { data: signedData } = await supabase.storage.from('books').createSignedUrl(fileKey, 86400);
+                        if (signedData && signedData.signedUrl) {
+                            bookPath = signedData.signedUrl;
+                            hasBook = true;
+                        }
+                    }
+                }
+            } else {
+                const filename = path.basename(room.book_path);
+                const physicalPath = path.join(uploadDir, filename);
+                hasBook = fs.existsSync(physicalPath);
+            }
+            
+            return {
+                roomId: room.room_id,
+                bookPath,
+                title: room.title,
+                author: room.author,
+                createdAt: room.created_at,
+                lastActive: room.last_active,
+                hasBook
+            };
+        }));
+        
+        res.json(resolvedRooms);
+    } catch (e) {
+        console.error('[API Error] Failed to fetch user rooms:', e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // --- Book Club SQLite Rooms API ---
 
 // Create Room via epub upload
@@ -233,6 +302,32 @@ app.post('/api/rooms', upload.single('book'), async (req, res) => {
 
     if (!req.file) {
         return res.status(400).json({ error: 'No book file uploaded' });
+    }
+
+    // Security Limits (Excludes Whitelisted Admins like gabrielbaiano_)
+    if (!isLimitExempt(user)) {
+        try {
+            // 1. Hourly rate-limit check (Max 5 rooms per hour)
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const hourlyCountRow = await dbGet(
+                'SELECT COUNT(*) as count FROM rooms WHERE creator_id = ? AND created_at > ?',
+                [user.discord_id, oneHourAgo]
+            );
+            if (hourlyCountRow && hourlyCountRow.count >= 5) {
+                return res.status(429).json({ error: 'Rate limit exceeded: You can only create up to 5 rooms per hour.' });
+            }
+
+            // 2. Active rooms limit check (Max 10 active rooms containing books)
+            const activeCountRow = await dbGet(
+                "SELECT COUNT(*) as count FROM rooms WHERE creator_id = ? AND book_path IS NOT NULL AND book_path != ''",
+                [user.discord_id]
+            );
+            if (activeCountRow && activeCountRow.count >= 10) {
+                return res.status(400).json({ error: 'Active rooms limit exceeded: You can have at most 10 active rooms at the same time.' });
+            }
+        } catch (err) {
+            console.error('[Security Check Error]', err);
+        }
     }
 
     const roomId = Math.random().toString(36).substring(2, 11);
@@ -264,10 +359,11 @@ app.post('/api/rooms', upload.single('book'), async (req, res) => {
             console.log(`[Local Uploaded] Room ID: ${roomId}, File: ${req.file.filename}`);
         }
 
+        const nowStr = new Date().toISOString();
         await dbRun(`
-            INSERT INTO rooms (room_id, book_path, filename, title, author, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, [roomId, bookPath, req.file.originalname, title, author, new Date().toISOString()]);
+            INSERT INTO rooms (room_id, book_path, filename, title, author, created_at, last_active, creator_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [roomId, bookPath, req.file.originalname, title, author, nowStr, nowStr, user.discord_id]);
 
         console.log(`[Room Created] Room ID: ${roomId}, Book: ${title}`);
         res.json({ roomId, bookPath, title, author });
@@ -284,6 +380,10 @@ app.get('/api/rooms/:roomId', async (req, res) => {
         if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
+
+        // Reset countdown by updating last_active
+        const nowStr = new Date().toISOString();
+        await dbRun('UPDATE rooms SET last_active = ? WHERE room_id = ?', [nowStr, room.room_id]);
         
         let bookPath = room.book_path;
         let hasBook = false;
@@ -373,7 +473,8 @@ app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) 
             console.log(`[Local Restored] Room ID: ${roomId}, File: ${req.file.filename}`);
         }
 
-        await dbRun('UPDATE rooms SET book_path = ? WHERE room_id = ?', [bookPath, roomId]);
+        const nowStr = new Date().toISOString();
+        await dbRun('UPDATE rooms SET book_path = ?, last_active = ? WHERE room_id = ?', [bookPath, nowStr, roomId]);
 
         // If upload is to Supabase, generate signed link immediately to return
         let returnPath = bookPath;
@@ -470,6 +571,9 @@ async function handleJoin(ws, wsId, data, user) {
         ws.send(JSON.stringify({ type: 'error', message: 'Room not found' }));
         return;
     }
+
+    // Update room last_active to reset countdown
+    await dbRun('UPDATE rooms SET last_active = ? WHERE room_id = ?', [new Date().toISOString(), roomId]);
 
     // Register active client info
     clients.set(ws, {
@@ -690,69 +794,58 @@ function startPruningTask() {
     
     setInterval(async () => {
         console.log('[Pruner] Running file pruning check...');
-        const now = Date.now();
+        const cutoffTime = new Date(Date.now() - ONE_DAY_MS).toISOString();
         
-        // 1. Supabase Pruning
-        if (supabase) {
-            try {
-                // List files in the books bucket
-                const { data: files, error } = await supabase.storage
-                    .from('books')
-                    .list('', { limit: 100 });
+        try {
+            // Find rooms where last_active is older than 24 hours (or last_active is empty)
+            // and book_path is not empty.
+            const inactiveRooms = await dbAll(
+                "SELECT room_id, book_path FROM rooms WHERE (last_active < ? OR last_active IS NULL OR last_active = '') AND book_path != ''",
+                [cutoffTime]
+            );
+            
+            if (inactiveRooms && inactiveRooms.length > 0) {
+                console.log(`[Pruner] Found ${inactiveRooms.length} expired room sessions to prune.`);
                 
-                if (error) {
-                    console.error('[Pruner Error] Failed to list Supabase files:', error);
-                } else if (files && files.length > 0) {
-                    const filesToDelete = files
-                        .filter(f => {
-                            const createdTime = new Date(f.created_at).getTime();
-                            const age = now - createdTime;
-                            return age > ONE_DAY_MS;
-                        })
-                        .map(f => f.name);
-                    
-                    if (filesToDelete.length > 0) {
-                        console.log(`[Pruner] Deleting ${filesToDelete.length} inactive files from Supabase Storage:`, filesToDelete);
-                        const { error: removeError } = await supabase.storage
-                            .from('books')
-                            .remove(filesToDelete);
-                        
-                        if (removeError) {
-                            console.error('[Pruner Error] Failed to delete files from Supabase:', removeError);
-                        } else {
-                            console.log('[Pruner] Successfully pruned inactive files from Supabase Storage.');
+                const supabaseKeysToDelete = [];
+                
+                for (const room of inactiveRooms) {
+                    if (room.book_path.startsWith('supabase://')) {
+                        const fileKey = room.book_path.replace('supabase://', '');
+                        supabaseKeysToDelete.push(fileKey);
+                    } else {
+                        // Local file deletion
+                        const filename = path.basename(room.book_path);
+                        const filePath = path.join(uploadDir, filename);
+                        if (fs.existsSync(filePath)) {
+                            fs.unlink(filePath, (err) => {
+                                if (!err) console.log(`[Pruner] Deleted local inactive book: ${filename}`);
+                            });
                         }
                     }
-                }
-            } catch (e) {
-                console.error('[Pruner Error] Supabase pruning error:', e);
-            }
-        }
-        
-        // 2. Local Fallback Pruning
-        fs.readdir(uploadDir, (err, files) => {
-            if (err) {
-                // Ignore if uploadDir doesn't exist or can't be read
-                return;
-            }
-            
-            files.forEach(file => {
-                const filePath = path.join(uploadDir, file);
-                fs.stat(filePath, (statErr, stats) => {
-                    if (statErr) return;
                     
-                    const age = now - stats.mtimeMs;
-                    if (age > ONE_DAY_MS) {
-                        console.log(`[Pruner] Local file ${file} is inactive. Deleting...`);
-                        fs.unlink(filePath, unlinkErr => {
-                            if (!unlinkErr) {
-                                console.log(`[Pruner] Successfully deleted local inactive book file: ${file}`);
-                            }
-                        });
+                    // Update room in db to clear book_path reference to indicate it's expired
+                    // We keep filename/title/author so we can prompt for reupload!
+                    await dbRun("UPDATE rooms SET book_path = '' WHERE room_id = ?", [room.room_id]);
+                }
+                
+                // Delete from Supabase in bulk
+                if (supabase && supabaseKeysToDelete.length > 0) {
+                    console.log('[Pruner] Deleting from Supabase Storage:', supabaseKeysToDelete);
+                    const { error } = await supabase.storage
+                        .from('books')
+                        .remove(supabaseKeysToDelete);
+                    
+                    if (error) {
+                        console.error('[Pruner Error] Failed to delete from Supabase Storage:', error);
+                    } else {
+                        console.log('[Pruner] Successfully pruned files from Supabase Storage.');
                     }
-                });
-            });
-        });
+                }
+            }
+        } catch (e) {
+            console.error('[Pruner Error] Pruning task encountered an error:', e);
+        }
     }, 60 * 60 * 1000); // Check every 1 hour
 }
 

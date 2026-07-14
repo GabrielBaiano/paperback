@@ -58,6 +58,7 @@ async function checkRoomParam() {
     
     if (urlRoomId && urlRoomId !== 'null' && urlRoomId !== 'undefined') {
         roomId = urlRoomId;
+        localStorage.setItem('redirect_room', urlRoomId); // Store redirect room code immediately
         try {
             const res = await fetch(`/api/rooms/${roomId}`);
             if (res.ok) {
@@ -1100,6 +1101,82 @@ function initColorPicker() {
 let myDiscordId = null;
 let myAvatarUrl = null;
 
+// Load recent reading history from server
+async function loadHistoryList() {
+    const historyPanel = $('#bc-history-panel');
+    const historyList = $('#bc-history-list');
+    if (!historyPanel || !historyList) return;
+
+    try {
+        const res = await fetch('/api/my-rooms');
+        if (res.ok) {
+            const rooms = await res.json();
+            if (rooms && rooms.length > 0) {
+                historyPanel.style.display = 'block';
+                historyList.innerHTML = '';
+                
+                rooms.forEach(room => {
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'bc-card';
+                    roomCard.style.padding = '10px';
+                    roomCard.style.cursor = 'pointer';
+                    roomCard.style.transition = 'transform 0.2s, background-color 0.2s';
+                    roomCard.style.display = 'flex';
+                    roomCard.style.flexDirection = 'column';
+                    roomCard.style.gap = '4px';
+                    roomCard.style.border = '1px solid rgba(128,128,128,0.15)';
+                    
+                    const titleText = room.title || 'Untitled Book';
+                    const authorText = room.author || 'Unknown Author';
+                    const badgeText = room.hasBook ? 'Active' : 'Expired';
+                    const badgeColor = room.hasBook ? '#259b24' : '#ff9800';
+                    
+                    roomCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 0.9em; max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${titleText}</strong>
+                            <span style="font-size: 0.75em; padding: 2px 6px; border-radius: 4px; background-color: ${badgeColor}; color: white; font-weight: bold;">${badgeText}</span>
+                        </div>
+                        <span style="font-size: 0.8em; opacity: 0.7;">${authorText}</span>
+                        <span style="font-size: 0.75em; opacity: 0.5; font-family: monospace;">Code: ${room.roomId}</span>
+                    `;
+                    
+                    roomCard.addEventListener('mouseenter', () => {
+                        roomCard.style.backgroundColor = 'rgba(128, 128, 128, 0.08)';
+                        roomCard.style.transform = 'translateY(-1px)';
+                    });
+                    roomCard.addEventListener('mouseleave', () => {
+                        roomCard.style.backgroundColor = '';
+                        roomCard.style.transform = 'none';
+                    });
+                    
+                    roomCard.addEventListener('click', () => {
+                        const newUrl = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
+                        window.location.href = newUrl;
+                    });
+                    
+                    historyList.appendChild(roomCard);
+                });
+            } else {
+                historyPanel.style.display = 'none';
+            }
+        }
+    } catch (err) {
+        console.error('[Book Club] Failed to load reading history:', err);
+    }
+}
+
+// Auto-reconnect WebSocket on visibility state changes (e.g. app switching on mobile)
+function initAutoReconnect() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && roomId) {
+            if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+                console.log('[Book Club] App returned to foreground. Auto-reconnecting WebSocket...');
+                connectWebSocket();
+            }
+        }
+    });
+}
+
 async function checkAuth() {
     try {
         const res = await fetch('/api/auth/me');
@@ -1160,11 +1237,22 @@ async function checkAuth() {
             const appContent = $('#bc-app-content');
             if (appContent) appContent.style.display = 'flex';
 
+            // Check if we have a saved redirect room from localStorage
+            const redirectRoom = localStorage.getItem('redirect_room');
+            if (redirectRoom) {
+                localStorage.removeItem('redirect_room');
+                const newUrl = `${window.location.origin}${window.location.pathname}?room=${redirectRoom}`;
+                window.history.replaceState({ roomId: redirectRoom }, document.title, newUrl);
+                roomId = redirectRoom;
+            }
+
             // Now run other client initiations
             initTabs();
             initSetupEvents();
             initColorPicker();
             checkRoomParam();
+            loadHistoryList();
+            initAutoReconnect();
         } else {
             // Show landing screen, hide main app welcome screen
             const landingText = $('#bc-landing-text');

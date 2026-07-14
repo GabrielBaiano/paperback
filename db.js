@@ -41,7 +41,9 @@ db.serialize(() => {
             filename TEXT NOT NULL,
             title TEXT,
             author TEXT,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            last_active TEXT,
+            creator_id TEXT
         )
     `);
 
@@ -74,6 +76,19 @@ db.serialize(() => {
             FOREIGN KEY (discord_id) REFERENCES users(discord_id) ON DELETE CASCADE
         )
     `);
+
+    // Run Alter Table migrations safely to avoid crashes on existing databases
+    db.run("ALTER TABLE rooms ADD COLUMN last_active TEXT", (err) => {
+        if (err && !err.message.includes("duplicate column name")) {
+            console.error('[DB Migration Warning] Failed to add last_active:', err.message);
+        }
+    });
+
+    db.run("ALTER TABLE rooms ADD COLUMN creator_id TEXT", (err) => {
+        if (err && !err.message.includes("duplicate column name")) {
+            console.error('[DB Migration Warning] Failed to add creator_id:', err.message);
+        }
+    });
 });
 
 // Helper functions for promise-based SQLite calls
