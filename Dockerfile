@@ -22,7 +22,8 @@ RUN apt-get update -qq && \
 
 # Install node modules
 COPY package-lock.json package.json ./
-RUN npm ci --include=dev --build-from-source
+RUN npm ci --include=dev
+RUN npm rebuild sqlite3 --build-from-source
 
 # Copy application code
 COPY . .
