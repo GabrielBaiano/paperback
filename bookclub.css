@@ -1,75 +1,9 @@
 /* Book Club CSS Stylesheet */
 
-/* Custom Progress Slider (stripping browser defaults cleanly) */
+/* Style native slider thumb color dynamically using accent-color */
 #progress-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    background: transparent;
-    cursor: pointer;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    position: relative;
-    z-index: 5; /* Sit on top of markers so it is draggable */
+    accent-color: var(--bc-user-color, gray) !important;
 }
-
-#progress-slider:focus {
-    outline: none;
-}
-
-/* Custom Webkit Track */
-#progress-slider::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(128, 128, 128, 0.25);
-    border-radius: 2px;
-    border: none;
-}
-
-/* Custom Webkit Thumb (User's own indicator, larger: 18px) */
-#progress-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px; /* Larger than guest dots */
-    height: 18px;
-    border-radius: 50%;
-    background: var(--bc-user-color, gray) !important;
-    border: 3px solid Canvas !important;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-    margin-top: -7px; /* Center Webkit thumb on 4px track */
-    transition: transform 0.1s ease;
-}
-
-#progress-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-}
-
-/* Custom Firefox Track */
-#progress-slider::-moz-range-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(128, 128, 128, 0.25);
-    border-radius: 2px;
-    border: none;
-}
-
-/* Custom Firefox Thumb (User's own indicator, larger: 18px) */
-#progress-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--bc-user-color, gray) !important;
-    border: 3px solid Canvas !important;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-    transition: transform 0.15s ease;
-    box-sizing: border-box;
-}
-
-#progress-slider::-moz-range-thumb:hover {
-    transform: scale(1.15);
-}
-
 /* Progress Bar Markers */
 #bc-progress-markers {
     position: absolute;
@@ -102,18 +36,6 @@
     cursor: pointer;
     transition: transform 0.2s ease;
     position: relative;
-}
-
-/* Custom Chapter Tick Marks */
-.bc-progress-tick {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 2px;
-    height: 8px;
-    background-color: rgba(128, 128, 128, 0.4);
-    z-index: 1;
-    pointer-events: none;
 }
 
 .bc-progress-dot-wrapper:hover .bc-progress-dot {
