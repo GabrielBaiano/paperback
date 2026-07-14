@@ -24,7 +24,6 @@ const wss = new WebSocketServer({ server });
 const JWT_SECRET = process.env.JWT_SECRET || 'foliate-jam-super-secret-key-12345';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'http://localhost:3080/api/auth/discord/callback';
 
 // Configure multer for file uploads
 const uploadDir = path.join(__dirname, 'uploads');
@@ -101,7 +100,11 @@ app.get('/api/auth/discord', async (req, res) => {
         return res.redirect('/');
     }
 
-    const authUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+    const host = req.headers.host;
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const redirectUri = process.env.DISCORD_REDIRECT_URI || `${protocol}://${host}/api/auth/discord/callback`;
+
+    const authUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
     res.redirect(authUrl);
 });
 
@@ -112,6 +115,10 @@ app.get('/api/auth/discord/callback', async (req, res) => {
         return res.status(400).send('Authorization code missing');
     }
 
+    const host = req.headers.host;
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const redirectUri = process.env.DISCORD_REDIRECT_URI || `${protocol}://${host}/api/auth/discord/callback`;
+
     try {
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
@@ -120,7 +127,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
                 client_secret: DISCORD_CLIENT_SECRET,
                 grant_type: 'authorization_code',
                 code,
-                redirect_uri: DISCORD_REDIRECT_URI
+                redirect_uri: redirectUri
             }),
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
