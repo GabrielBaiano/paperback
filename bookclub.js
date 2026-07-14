@@ -1085,9 +1085,11 @@ async function checkAuth() {
                 });
             }
 
-            // Hide landing overlay
-            const landing = $('#bc-landing-overlay');
-            if (landing) landing.style.display = 'none';
+            // Show main app welcome screen, hide landing screen
+            const landingInner = $('#bc-landing-inner');
+            if (landingInner) landingInner.style.display = 'none';
+            const appInner = $('#bc-app-inner');
+            if (appInner) appInner.style.display = 'flex';
 
             // Now run other client initiations
             initTabs();
@@ -1095,9 +1097,11 @@ async function checkAuth() {
             initColorPicker();
             checkRoomParam();
         } else {
-            // Show landing overlay
-            const landing = $('#bc-landing-overlay');
-            if (landing) landing.style.display = 'flex';
+            // Show landing screen, hide main app welcome screen
+            const landingInner = $('#bc-landing-inner');
+            if (landingInner) landingInner.style.display = 'flex';
+            const appInner = $('#bc-app-inner');
+            if (appInner) appInner.style.display = 'none';
         }
     } catch (e) {
         console.error('[Book Club] Auth check failed:', e);
