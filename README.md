@@ -50,7 +50,7 @@ To keep server and storage costs at absolute zero, book files are automatically 
 If you open an expired room, Paperback will show a welcome prompt asking you to drop or choose the required EPUB file. Once you provide the file, the book is uploaded again and you can resume reading immediately with all your highlights intact.
 
 ## Credits and Attribution
-Paperback is a fork of the amazing [foliate-js](https://github.com/johnfactotum/foliate-js) library created by [John Factotum](https://github.com/johnfactotum). Foliate-JS provides the high-performance, browser-native rendering engine for EPUB, MOBI, and FB2 formats that Paperback builds upon. We are incredibly grateful for his work.
+Paperback is a fork of the amazing [foliate-js](https://github.com/johnfactotum/foliate-js) library created by [John Factotum](https://github.com/johnfactotum). Foliate-JS provides the high-performance, browser-native rendering engine for EPUB, MOBI, and FB2 formats that Paperback builds upon. We are incredibly grateful for his work. Please consider visiting [johnfactotum/foliate-js](https://github.com/johnfactotum/foliate-js) and leaving a ⭐ star on the original repository to support his development!
 
 ## Key Features
 ◆ **Discord Integration**: Single-click secure login displaying user avatars and custom colors in the reader.
@@ -97,12 +97,17 @@ ADMIN_USERS=gabrielbaiano_
 ## Support
 If you find Paperback helpful and want to support its active development, or share it with others:
 
-### Buy Me a Coffee
-Want to support Paperback? Buy me a coffee!
+### Buy Me a Coffee (Gabriel Baiano)
+If you find Paperback helpful and want to support its active development and hosting costs, buy me a coffee!
 
 <a href="https://buymeacoffee.com/gabrielngal" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="200" height="50" style="height: 50px !important; width: 200px !important;" />
 </a>
+
+### Support the Original Creator (John Factotum)
+To support the core engine that powers this reader, please support John Factotum:
+- **Buy Him a Coffee**: [johnfactotum](https://buymeacoffee.com/johnfactotum)
+- **Star the Project**: Leave a ⭐ star on the original [foliate-js repository](https://github.com/johnfactotum/foliate-js)
 
 ### Share the Project
 If you love reading books collaboratively with Paperback, help us spread the word! You can share the link with friends, invite them to your rooms, or share it on your favorite platforms:
