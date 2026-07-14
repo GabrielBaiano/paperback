@@ -280,7 +280,6 @@ function handleWSMessage(data) {
 
             renderMembersList();
             renderAllHighlights();
-            renderActivityFeed();
             break;
             
         case 'member_joined':
@@ -670,14 +669,15 @@ function executeComment() {
         const parentTop = iframeRect.top + rect.top + window.scrollY;
         const parentLeft = iframeRect.left + rect.left + window.scrollX;
         
-        hideSelectionMenu();
-        showFloatingComposer(cfi, text, parentTop, parentLeft);
-
         // Deselect
         const selection = lastSelectionDetails.doc.defaultView.getSelection();
         if (selection) selection.removeAllRanges();
+
+        hideSelectionMenu();
+        showFloatingComposer(cfi, text, parentTop, parentLeft);
     } catch (e) {
         console.error('[Book Club] Failed to extract CFI:', e);
+        hideSelectionMenu();
     }
 }
 
