@@ -489,7 +489,17 @@ body {
         <button id="tab-bookclub" class="tab-btn">Book Club</button>
     </div>
     <div id="toc-view" class="tab-content active"></div>
-    <div id="bookclub-view" class="tab-content">
+    <div id="bookclub-view" class="tab-content" style="position: relative;">
+        <!-- Idle/Inactive Overlay -->
+        <div id="bc-idle-overlay" style="display: none; position: absolute; inset: 0; background: rgba(30, 31, 35, 0.96); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; backdrop-filter: blur(4px);">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: #ff9800; margin-bottom: 16px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #fff;">Connection Suspended</h3>
+            <p style="margin: 0 0 20px 0; font-size: 0.82rem; color: GrayText; line-height: 1.4;">You have been inactive for 15 minutes. We disconnected you to save resources.</p>
+            <button id="bc-reconnect-btn" class="bc-btn bc-btn-primary" style="width: 100%; border-radius: 8px;">Reconnect</button>
+        </div>
+
         <!-- If not in a room, show creation / join panel -->
         <div id="bc-setup-panel">
             <h3>Start a Book Club</h3>

@@ -15,6 +15,9 @@ let myId = null;
 let myName = localStorage.getItem('bc-name') || 'Reader ' + Math.floor(Math.random() * 1000);
 let myColor = localStorage.getItem('bc-color') || PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
 let intentionalClose = false;
+let isIdle = false;
+let idleTimeout = null;
+const IDLE_TIME_LIMIT = 15 * 60 * 1000; // 15 minutes of inactivity before disconnect
 
 // Local state caches
 let activeMembers = {};
@@ -1103,6 +1106,7 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
     
     // Listen for progress changes (relocate event)
     reader.view.addEventListener('relocate', (e) => {
+        resetIdleTimer();
         hideFloatingComposer();
         // Hide hover popover instantly (bypass timeout/hover state)
         if (hoverPopover) {
@@ -1135,6 +1139,12 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
         console.log(`[Book Club] Loaded section ${index}. Injecting selection/hover handlers.`);
         currentSectionIndex = index; // Track current loaded section index for cursor visibility filter
         
+        // Reset idle timer on iframe interaction
+        const iframeEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart'];
+        iframeEvents.forEach(evt => {
+            doc.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+
         // Selection change listener
         doc.addEventListener('mouseup', (event) => {
             handleTextSelection(doc, index, event);
@@ -1419,6 +1429,68 @@ function initHelpModal() {
     });
 }
 
+// Active Idle Detection & Auto-Disconnect to prevent battery/resource drain
+function initIdleDetector() {
+    // Reset timer on parent layout interactions
+    const resetEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    resetEvents.forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Wire up the Reconnect button on the idle overlay
+    const reconnectBtn = document.getElementById('bc-reconnect-btn');
+    if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wakeUpFromIdle();
+        });
+    }
+
+    // Start detector timer
+    resetIdleTimer();
+}
+
+function resetIdleTimer() {
+    if (isIdle) {
+        wakeUpFromIdle();
+    }
+    clearTimeout(idleTimeout);
+    idleTimeout = setTimeout(goIdle, IDLE_TIME_LIMIT);
+}
+
+function goIdle() {
+    if (isIdle || !roomId) return;
+    isIdle = true;
+    console.log('[Book Club] Idle limit reached. Suspending WebSocket presence...');
+
+    // Close WS session to stop updating room last_active and save connection slots
+    if (ws) {
+        intentionalClose = true;
+        ws.close();
+        ws = null;
+    }
+
+    // Display the idle overlay blocking Book Club UI
+    const overlay = document.getElementById('bc-idle-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+}
+
+function wakeUpFromIdle() {
+    if (!isIdle) return;
+    isIdle = false;
+
+    // Hide the idle overlay
+    const overlay = document.getElementById('bc-idle-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+
+    console.log('[Book Club] Interaction detected. Restoring WebSocket session...');
+    connectWebSocket();
+}
+
 // Auto-reconnect WebSocket on visibility state changes (e.g. app switching on mobile)
 function initAutoReconnect() {
     document.addEventListener('visibilitychange', () => {
@@ -1510,6 +1582,7 @@ async function checkAuth() {
             loadHistoryList();
             initAutoReconnect();
             initHelpModal();
+            initIdleDetector();
             loadOpenRooms();
             setInterval(loadOpenRooms, 30000);
         } else {
