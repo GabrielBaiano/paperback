@@ -538,6 +538,135 @@
     pointer-events: auto;
 }
 
+/* Floating Comment Composer */
+.bc-floating-composer {
+    position: absolute;
+    z-index: 10000;
+    width: 280px;
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.bc-floating-composer textarea {
+    width: 100%;
+    height: 70px;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    background: Canvas;
+    color: CanvasText;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.bc-floating-composer textarea:focus {
+    border-color: var(--my-color, CanvasText);
+}
+
+.bc-composer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* Floating Hover Popover */
+.bc-hover-popover {
+    position: absolute;
+    z-index: 9998;
+    max-width: 320px;
+    width: 280px;
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.bc-hover-popover.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.bc-popover-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: GrayText;
+    border-bottom: 1px solid rgba(128,128,128,0.15);
+    padding-bottom: 4px;
+}
+
+.bc-popover-author-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.bc-popover-author {
+    font-weight: bold;
+}
+
+.bc-popover-quote {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: GrayText;
+    border-left: 2px solid rgba(128,128,128,0.3);
+    padding-left: 6px;
+    margin: 2px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.bc-popover-comments {
+    max-height: 150px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.bc-popover-comment {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    background: rgba(128,128,128,0.06);
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+.bc-popover-comment-user {
+    font-weight: bold;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+
+.bc-popover-comment-text {
+    word-break: break-word;
+}
+
+
 .bc-menu-btn {
     background: none;
     border: none;
