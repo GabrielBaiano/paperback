@@ -1367,8 +1367,10 @@ async function loadHistoryList() {
 
 // Active personal rooms for the logged-in user on the Home screen dashboard
 async function loadMyRooms() {
-    const section = document.getElementById('your-rooms-section');
     const list = document.getElementById('your-rooms-list');
+    const shelfBtn = document.getElementById('bc-home-shelf-btn');
+    const shelfBadge = document.getElementById('bc-home-shelf-badge');
+    const shelfModalOverlay = document.getElementById('bc-shelf-modal-overlay');
     if (!list) return;
 
     try {
@@ -1382,15 +1384,23 @@ async function loadMyRooms() {
         const activeRooms = (rooms || []).filter(room => room.hasBook);
 
         if (activeRooms.length === 0) {
-            if (section) section.style.display = 'none';
+            if (shelfBtn) shelfBtn.style.display = 'none';
+            if (shelfModalOverlay) shelfModalOverlay.style.display = 'none';
             return;
         }
 
-        if (section) section.style.display = 'block';
+        if (shelfBtn) {
+            shelfBtn.style.display = 'flex';
+            if (shelfBadge) shelfBadge.innerText = activeRooms.length;
+        }
 
         activeRooms.forEach(room => {
             const card = document.createElement('div');
-            card.className = 'your-room-card';
+            card.className = 'your-room-card bc-card';
+            card.style.padding = '14px';
+            card.style.cursor = 'pointer';
+            card.style.textAlign = 'left';
+            card.style.position = 'relative';
 
             const onlineText = room.onlineCount > 0
                 ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`
@@ -1420,27 +1430,25 @@ async function loadMyRooms() {
             }
 
             card.innerHTML = `
-                <div class="bc-card" style="padding: 12px; margin-bottom: 8px; cursor: pointer; text-align: left;" data-room-url="${window.location.origin}${window.location.pathname}?room=${room.roomId}">
-                    <div class="your-room-card-title" style="font-weight: 600; color: #fff; margin-bottom: 2px;">${room.title}</div>
-                    <div class="your-room-card-author" style="font-size: 0.76rem; color: rgba(255,255,255,0.4); margin-bottom: 8px;">${room.author}</div>
-                    <div class="your-room-card-footer">
-                        ${onlineText}
-                    </div>
-                    <div class="your-room-actions">
-                        <button class="your-room-action-btn copy-link" data-room-id="${room.roomId}" title="Copy Invite Link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                            </svg>
-                            Invite
-                        </button>
-                        ${actionBtnHtml}
-                    </div>
+                <div class="your-room-card-title" style="font-weight: 600; color: #fff; margin-bottom: 2px;">${room.title}</div>
+                <div class="your-room-card-author" style="font-size: 0.76rem; color: rgba(255,255,255,0.4); margin-bottom: 8px;">${room.author}</div>
+                <div class="your-room-card-footer">
+                    ${onlineText}
+                </div>
+                <div class="your-room-actions">
+                    <button class="your-room-action-btn copy-link" data-room-id="${room.roomId}" title="Copy Invite Link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                        Invite
+                    </button>
+                    ${actionBtnHtml}
                 </div>
             `;
 
             // Card click leads to joining the room
-            card.querySelector('.bc-card').addEventListener('click', (e) => {
+            card.addEventListener('click', (e) => {
                 if (e.target.closest('.your-room-action-btn')) return;
                 const url = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                 window.location.href = url;
@@ -1533,6 +1541,34 @@ function initHelpModal() {
     }
 
     if (helpBtn) helpBtn.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.style.display === 'flex') closeModal();
+    });
+}
+
+// Reading Shelf Modal triggers
+function initShelfModal() {
+    const shelfBtn = document.getElementById('bc-home-shelf-btn');
+    const overlay = document.getElementById('bc-shelf-modal-overlay');
+    const closeBtn = document.getElementById('bc-shelf-modal-close');
+    if (!overlay) return;
+
+    function openModal() {
+        loadMyRooms(); // Refresh the list when opening
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    shelfBtn?.addEventListener('click', openModal);
     closeBtn?.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeModal();
@@ -1695,6 +1731,7 @@ async function checkAuth() {
             loadHistoryList();
             initAutoReconnect();
             initHelpModal();
+            initShelfModal();
             initIdleDetector();
             loadMyRooms();
 

@@ -1112,6 +1112,46 @@
     transform: translateY(-1px);
 }
 
+/* ── Home Shelf Modal Overlay ─────────────────────────────────── */
+#bc-shelf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 99999;
+    display: none; /* Flex when opened */
+    align-items: center;
+    justify-content: center;
+}
+
+#bc-shelf-modal {
+    max-width: 420px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background: #1e1f23;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: bc-modal-fade 0.2s ease-out;
+}
+
+/* Home Shelf Button Hover Effects */
+#bc-home-shelf-btn {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+#bc-home-shelf-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
 
 
 /* Shelf Card Quick Actions */
