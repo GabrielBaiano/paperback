@@ -1,16 +1,16 @@
 {
   "name": "paperback",
   "version": "0.0.0",
-  "description": "Render e-books in the browser",
+  "description": "Collaborative e-book reader in the browser",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/johnfactotum/foliate-js.git"
+    "url": "git+https://github.com/GabrielBaiano/paperback.git"
   },
   "bugs": {
-    "url": "https://github.com/johnfactotum/foliate-js/issues"
+    "url": "https://github.com/GabrielBaiano/paperback/issues"
   },
-  "homepage": "https://github.com/johnfactotum/foliate-js#readme",
-  "author": "John Factotum",
+  "homepage": "https://github.com/GabrielBaiano/paperback#readme",
+  "author": "Gabriel Gama (GabrielBaiano)",
   "license": "MIT",
   "type": "module",
   "exports": {
