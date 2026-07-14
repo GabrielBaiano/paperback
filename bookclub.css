@@ -1138,3 +1138,192 @@
     background: rgba(255, 255, 255, 0.1);
     transform: translateY(-1px);
 }
+
+/* ── Floating Drawer Toggle Button ─────────────────────────── */
+#bc-shelf-toggle-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #1e1f23;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+    transition: background 0.15s, color 0.15s, transform 0.15s, border-color 0.15s;
+}
+
+#bc-shelf-toggle-btn:hover {
+    background: #282a2f;
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.bc-shelf-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ff4747;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: bold;
+    min-width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    box-sizing: border-box;
+    border: 1px solid #1e1f23;
+}
+
+/* ── Shelf Drawer (Slide-out panel) ───────────────────────── */
+.bc-drawer {
+    position: fixed;
+    top: 0;
+    left: -320px; /* Hidden by default */
+    width: 320px;
+    height: 100vh;
+    background: #18191c;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-sizing: border-box;
+}
+
+.bc-drawer.open {
+    left: 0;
+}
+
+.bc-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: #1e1f23;
+}
+
+.bc-drawer-header h2 {
+    font-size: 1.1rem;
+    font-weight: 650;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+#bc-rooms-drawer-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+
+#bc-rooms-drawer-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#bc-rooms-drawer-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bc-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.bc-drawer-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Shelf Card Quick Actions */
+.your-room-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.your-room-action-btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    outline: none;
+}
+
+.your-room-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.your-room-action-btn.delete {
+    color: #ff6060;
+    border-color: rgba(255, 96, 96, 0.25);
+    background: rgba(255, 96, 96, 0.06);
+}
+
+.your-room-action-btn.delete:hover {
+    background: rgba(255, 96, 96, 0.14);
+    border-color: rgba(255, 96, 96, 0.45);
+    color: #ff8080;
+}
+
+.your-room-action-btn.leave {
+    color: #ff9800;
+    border-color: rgba(255, 152, 0, 0.25);
+    background: rgba(255, 152, 0, 0.06);
+}
+
+.your-room-action-btn.leave:hover {
+    background: rgba(255, 152, 0, 0.14);
+    border-color: rgba(255, 152, 0, 0.45);
+    color: #ffb74d;
+}
+
+.your-room-card {
+    width: 100%;
+}

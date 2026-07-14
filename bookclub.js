@@ -507,6 +507,12 @@ function handleWSMessage(data) {
                 window.location.href = window.location.origin + window.location.pathname;
             }
             break;
+
+        case 'room_deleted':
+            alert('This room has been deleted by the creator.');
+            intentionalClose = true;
+            window.location.href = window.location.origin + window.location.pathname;
+            break;
     }
 }
 
@@ -693,7 +699,7 @@ function renderMembersList() {
         list.appendChild(item);
     }
     
-    $('#bc-member-count').innerText = count;
+    $('#bc-member-count').innerText = `${count} / 10`;
     renderProgressMarkers();
 
     // Teleport click handlers
@@ -1357,11 +1363,62 @@ async function loadHistoryList() {
     }
 }
 
+// Drawer control for the Rooms Shelf
+function openRoomsDrawer() {
+    const drawer = document.getElementById('bc-rooms-drawer');
+    const overlay = document.getElementById('bc-drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeRoomsDrawer() {
+    const drawer = document.getElementById('bc-rooms-drawer');
+    const overlay = document.getElementById('bc-drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+// Initialize Rooms Shelf Drawer controls
+function initRoomsDrawer() {
+    const toggleBtn = document.getElementById('bc-shelf-toggle-btn');
+    const closeBtn = document.getElementById('bc-rooms-drawer-close');
+    const overlay = document.getElementById('bc-drawer-overlay');
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            loadMyRooms(); // Refresh the list when opening
+            openRoomsDrawer();
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeRoomsDrawer);
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', closeRoomsDrawer);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const drawer = document.getElementById('bc-rooms-drawer');
+        if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) {
+            closeRoomsDrawer();
+        }
+    });
+}
+
 // Active personal rooms for the logged-in user on the landing page dashboard
 async function loadMyRooms() {
-    const section = document.getElementById('your-rooms-section');
+    const toggleBtn = document.getElementById('bc-shelf-toggle-btn');
+    const badge = document.getElementById('bc-shelf-badge');
     const list = document.getElementById('your-rooms-list');
-    if (!list || !section) return;
+    if (!list) return;
 
     try {
         const res = await fetch('/api/my-rooms');
@@ -1370,46 +1427,155 @@ async function loadMyRooms() {
 
         list.innerHTML = '';
 
-        // Show only the 4 most recent active rooms (where a book still exists)
-        const activeRooms = (rooms || [])
-            .filter(room => room.hasBook)
-            .slice(0, 4);
+        // Show only active rooms where a book still exists
+        const activeRooms = (rooms || []).filter(room => room.hasBook);
+
+        // Update floating drawer toggle button visibility & room count badge
+        if (toggleBtn) {
+            if (activeRooms.length > 0) {
+                toggleBtn.style.display = 'flex';
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.innerText = activeRooms.length;
+                }
+            } else {
+                toggleBtn.style.display = 'none';
+                if (badge) badge.style.display = 'none';
+            }
+        }
 
         if (activeRooms.length === 0) {
-            section.style.display = 'none'; // Hide section completely if no active personal rooms
+            list.innerHTML = '<div class="your-rooms-empty" style="text-align: center; color: rgba(255,255,255,0.3); padding: 24px 0; font-size: 0.85rem;">No active rooms. Drop a book to start!</div>';
             return;
         }
 
-        section.style.display = 'block'; // Show section if there are active personal rooms
-
         activeRooms.forEach(room => {
-            const card = document.createElement('button');
+            const card = document.createElement('div');
             card.className = 'your-room-card';
-            card.title = `Resume reading "${room.title}"`;
 
             const onlineText = room.onlineCount > 0
                 ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`
                 : `<span class="your-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
 
+            // Action buttons: Creator gets Delete (lixeira), member gets Leave (porta)
+            let actionBtnHtml = '';
+            if (myDiscordId && room.creatorId === myDiscordId) {
+                actionBtnHtml = `
+                    <button class="your-room-action-btn delete" data-room-id="${room.roomId}" title="Delete Room">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                    </button>
+                `;
+            } else {
+                actionBtnHtml = `
+                    <button class="your-room-action-btn leave" data-room-id="${room.roomId}" title="Leave Room">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                        Leave
+                    </button>
+                `;
+            }
+
             card.innerHTML = `
-                <div class="your-room-card-title">${room.title}</div>
-                <div class="your-room-card-author">${room.author}</div>
-                <div class="your-room-card-footer">
-                    ${onlineText}
-                    <span class="your-room-join-hint">Open →</span>
+                <div class="bc-card" style="padding: 12px; margin-bottom: 8px; cursor: pointer; text-align: left;" data-room-url="${window.location.origin}${window.location.pathname}?room=${room.roomId}">
+                    <div class="your-room-card-title" style="font-weight: 600; color: #fff; margin-bottom: 2px;">${room.title}</div>
+                    <div class="your-room-card-author" style="font-size: 0.76rem; color: rgba(255,255,255,0.4); margin-bottom: 8px;">${room.author}</div>
+                    <div class="your-room-card-footer">
+                        ${onlineText}
+                    </div>
+                    <div class="your-room-actions">
+                        <button class="your-room-action-btn copy-link" data-room-id="${room.roomId}" title="Copy Invite Link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            Invite
+                        </button>
+                        ${actionBtnHtml}
+                    </div>
                 </div>
             `;
 
-            card.addEventListener('click', () => {
+            // Card click leads to joining the room
+            card.querySelector('.bc-card').addEventListener('click', (e) => {
+                // If they clicked on an action button, do not trigger room navigation
+                if (e.target.closest('.your-room-action-btn')) return;
+                
                 const url = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                 window.location.href = url;
             });
+
+            // Bind Copy link button
+            card.querySelector('.copy-link').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
+                navigator.clipboard.writeText(inviteUrl).then(() => {
+                    const btn = e.currentTarget;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Copied!';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                });
+            });
+
+            // Bind Delete button
+            const deleteBtn = card.querySelector('.delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const confirmDel = confirm(`Are you sure you want to delete the room "${room.title}"?\nThis will permanently delete the book file and all highlights/comments!`);
+                    if (confirmDel) {
+                        fetch(`/api/rooms/${room.roomId}`, { method: 'DELETE' })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    loadMyRooms(); // Refresh lists
+                                    loadHistoryList();
+                                } else {
+                                    alert(data.error || 'Failed to delete room');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Delete error:', err);
+                                alert('Error deleting room');
+                            });
+                    }
+                });
+            }
+
+            // Bind Leave button
+            const leaveBtn = card.querySelector('.leave');
+            if (leaveBtn) {
+                leaveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const confirmLeave = confirm(`Are you sure you want to leave the room "${room.title}"?`);
+                    if (confirmLeave) {
+                        fetch(`/api/rooms/${room.roomId}/leave`, { method: 'POST' })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    loadMyRooms(); // Refresh lists
+                                    loadHistoryList();
+                                } else {
+                                    alert(data.error || 'Failed to leave room');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Leave error:', err);
+                                alert('Error leaving room');
+                            });
+                    }
+                });
+            }
 
             list.appendChild(card);
         });
     } catch (err) {
         console.warn('[Book Club] Could not load user rooms:', err);
-        section.style.display = 'none';
+        if (toggleBtn) toggleBtn.style.display = 'none';
     }
 }
 
@@ -1594,6 +1760,7 @@ async function checkAuth() {
             initAutoReconnect();
             initHelpModal();
             initIdleDetector();
+            initRoomsDrawer();
             loadMyRooms();
             setInterval(loadMyRooms, 30000);
         } else {

@@ -300,7 +300,8 @@ app.get('/api/my-rooms', async (req, res) => {
                 lastActive: room.last_active,
                 hasBook,
                 memberCount,
-                onlineCount
+                onlineCount,
+                creatorId: room.creator_id
             };
         }));
         
@@ -475,8 +476,116 @@ app.get('/api/rooms/:roomId', async (req, res) => {
     }
 });
 
+// Delete a room (Creator-only, deletes DB records and book file, disconnects active clients)
+app.delete('/api/rooms/:roomId', async (req, res) => {
+    const user = await getAuthUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required. Please login with Discord.' });
+    }
 
+    const { roomId } = req.params;
 
+    try {
+        const room = await dbGet('SELECT * FROM rooms WHERE room_id = ?', [roomId]);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+
+        // Limit check: only creator (or whitelist exempt admins) can delete
+        if (room.creator_id !== user.discord_id && !isLimitExempt(user)) {
+            return res.status(403).json({ error: 'Only the creator of the room can delete it.' });
+        }
+
+        // 1. Delete physical book file if it exists
+        if (room.book_path) {
+            if (room.book_path.startsWith('supabase://')) {
+                if (supabase) {
+                    const fileKey = room.book_path.replace('supabase://', '');
+                    const { error } = await supabase.storage.from('books').remove([fileKey]);
+                    if (error) {
+                        console.error('[Delete Room Warning] Failed to delete from Supabase:', error);
+                    }
+                }
+            } else {
+                const filename = path.basename(room.book_path);
+                const filePath = path.join(uploadDir, filename);
+                if (fs.existsSync(filePath)) {
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.error('[Delete Room Warning] Failed to delete local file:', err);
+                    });
+                }
+            }
+        }
+
+        // 2. Cascade delete database records manually to be safe
+        await dbRun('DELETE FROM highlights WHERE room_id = ?', [roomId]);
+        await dbRun('DELETE FROM room_members WHERE room_id = ?', [roomId]);
+        await dbRun('DELETE FROM rooms WHERE room_id = ?', [roomId]);
+
+        console.log(`[Room Deleted] Room ID: ${roomId} deleted by ${user.username}`);
+
+        // 3. Disconnect any active readers via WebSockets
+        for (const [clientWs, clientInfo] of clients.entries()) {
+            if (clientInfo.roomId === roomId) {
+                try {
+                    clientWs.send(JSON.stringify({ type: 'room_deleted', roomId }));
+                    setTimeout(() => {
+                        try { clientWs.close(); } catch (_) {}
+                    }, 100);
+                } catch (wsErr) {
+                    console.error('[Delete Room Warning] Failed to send WS close signal:', wsErr);
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Room successfully deleted' });
+    } catch (e) {
+        console.error('[API Error] Failed to delete room:', e);
+        res.status(500).json({ error: 'Failed to delete room' });
+    }
+});
+
+// Leave a room (Removes user from membership, disconnects active WebSocket if online)
+app.post('/api/rooms/:roomId/leave', async (req, res) => {
+    const user = await getAuthUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required. Please login with Discord.' });
+    }
+
+    const { roomId } = req.params;
+
+    try {
+        const room = await dbGet('SELECT * FROM rooms WHERE room_id = ?', [roomId]);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+
+        // Creators cannot leave their own room (they must delete it instead)
+        if (room.creator_id === user.discord_id) {
+            return res.status(400).json({ error: 'Creators cannot leave their own room. You can delete it instead.' });
+        }
+
+        // 1. Remove from room_members database table
+        await dbRun('DELETE FROM room_members WHERE room_id = ? AND discord_id = ?', [roomId, user.discord_id]);
+
+        // 2. If user has active WebSocket session, disconnect it (will broadcast member_left automatically)
+        let disconnected = false;
+        for (const [clientWs, clientInfo] of clients.entries()) {
+            if (clientInfo.roomId === roomId && clientInfo.discordId === user.discord_id) {
+                try {
+                    clientWs.close();
+                    disconnected = true;
+                } catch (_) {}
+            }
+        }
+
+        console.log(`[Room Left] ${user.username} left Room ID: ${roomId}`);
+        res.json({ success: true, message: 'Room successfully left', disconnected });
+    } catch (e) {
+        console.error('[API Error] Failed to leave room:', e);
+        res.status(500).json({ error: 'Failed to leave room' });
+    }
+});
 // Re-upload a book for an expired room session
 app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) => {
     const user = await getAuthUser(req);
