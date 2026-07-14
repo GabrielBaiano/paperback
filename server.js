@@ -103,6 +103,9 @@ wss.on('connection', (ws) => {
                 case 'relocate':
                     handleRelocate(ws, data);
                     break;
+                case 'update_identity':
+                    handleUpdateIdentity(ws, data);
+                    break;
                 case 'add_highlight':
                     handleAddHighlight(ws, data);
                     break;
@@ -181,6 +184,34 @@ function handleRelocate(ws, data) {
             wsId,
             cfi,
             fraction
+        });
+    }
+}
+
+function handleUpdateIdentity(ws, data) {
+    const client = clients.get(ws);
+    if (!client) return;
+
+    const { roomId, wsId } = client;
+    const { name, color } = data;
+    const room = rooms.get(roomId);
+
+    if (room && room.members[wsId]) {
+        if (name) {
+            room.members[wsId].name = name;
+            client.name = name;
+        }
+        if (color) {
+            room.members[wsId].color = color;
+            client.color = color;
+        }
+
+        console.log(`[Identity] ${wsId} updated: name=${name}, color=${color}`);
+
+        broadcastToRoom(roomId, null, {
+            type: 'member_updated',
+            wsId,
+            member: room.members[wsId]
         });
     }
 }

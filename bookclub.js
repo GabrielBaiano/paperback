@@ -14,6 +14,7 @@ let roomId = null;
 let myId = null;
 let myName = localStorage.getItem('bc-name') || 'Leitor ' + Math.floor(Math.random() * 1000);
 let myColor = localStorage.getItem('bc-color') || PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+let intentionalClose = false;
 
 // Local state caches
 let activeMembers = {};
@@ -175,16 +176,7 @@ function initSetupEvents() {
         if (nickVal) {
             myName = nickVal;
             localStorage.setItem('bc-name', myName);
-            
-            // Randomly select another color if they wish, or keep current
-            localStorage.setItem('bc-color', myColor);
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                // Reconnect to update credentials on server
-                ws.close();
-            } else {
-                connectWebSocket();
-            }
+            sendIdentityUpdate();
         }
     });
 }
@@ -220,10 +212,12 @@ function connectWebSocket() {
     };
 
     ws.onclose = () => {
-        console.log('[Book Club] WS Connection closed. Attempting reconnect in 3s...');
-        setTimeout(() => {
-            if (roomId) connectWebSocket();
-        }, 3000);
+        console.log('[Book Club] WS Connection closed.');
+        if (!intentionalClose && roomId) {
+            console.log('[Book Club] Unexpected close, reconnecting in 3s...');
+            setTimeout(() => connectWebSocket(), 3000);
+        }
+        intentionalClose = false;
     };
 
     ws.onerror = (err) => {
@@ -244,6 +238,13 @@ function handleWSMessage(data) {
         case 'member_joined':
             activeMembers[data.wsId] = data.member;
             renderMembersList();
+            break;
+
+        case 'member_updated':
+            if (activeMembers[data.wsId]) {
+                activeMembers[data.wsId] = { ...activeMembers[data.wsId], ...data.member };
+                renderMembersList();
+            }
             break;
             
         case 'member_relocated':
@@ -293,6 +294,23 @@ function handleWSMessage(data) {
     }
 }
 
+// Send identity update without reconnecting
+function sendIdentityUpdate() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            type: 'update_identity',
+            name: myName,
+            color: myColor
+        }));
+        // Update local member state immediately
+        if (myId && activeMembers[myId]) {
+            activeMembers[myId].name = myName;
+            activeMembers[myId].color = myColor;
+            renderMembersList();
+            updateSliderThumbColor();
+        }
+    }
+}
 // Color the slider thumb with the current user's color
 function updateSliderThumbColor() {
     const slider = $('#progress-slider');
@@ -845,10 +863,8 @@ function initColorPicker() {
         const nickInput = $('#bc-nick-input');
         if (nickInput) nickInput.style.borderColor = myColor;
 
-        // If already connected, reconnect to broadcast the new color
-        if (ws) {
-            ws.close();
-        }
+        // Send update via WS — no reconnect needed
+        sendIdentityUpdate();
     }
 
     // Render preset swatches
