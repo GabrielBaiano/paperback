@@ -94,10 +94,6 @@ function showRoomPanel() {
     $('#bc-setup-panel').style.display = 'none';
     $('#bc-room-panel').style.display = 'block';
     $('#bc-room-id-val').innerText = roomId;
-    
-    // Set identity fields
-    $('#bc-nick-input').value = myName;
-    $('#bc-nick-input').style.borderColor = myColor;
 }
 
 // Handle Room Setup Events
@@ -176,15 +172,7 @@ function initSetupEvents() {
         });
     });
 
-    // Save Identity Button
-    $('#bc-save-nick-btn').addEventListener('click', () => {
-        const nickVal = $('#bc-nick-input').value.trim();
-        if (nickVal) {
-            myName = nickVal;
-            localStorage.setItem('bc-name', myName);
-            sendIdentityUpdate();
-        }
-    });
+
 
     // Drop-target join button (home screen — before book is loaded)
     const dropJoinBtn = $('#drop-join-btn');
