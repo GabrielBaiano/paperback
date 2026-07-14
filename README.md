@@ -10,16 +10,18 @@
 </p>
 
 <p align="center">
-  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Website-Live-blue?style=flat-square" alt="Website"></a>
-  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Demo-Online-orange?style=flat-square" alt="Demo"></a>
-  <a href="https://github.com/GabrielBaiano/paperback"><img src="https://img.shields.io/github/license/GabrielBaiano/paperback?style=flat-square" alt="License"></a>
-  <a href="https://buymeacoffee.com/gabrielngal"><img src="https://img.shields.io/badge/Buy_Me_A_Coffee-Support-yellow?style=flat-square" alt="Buy Me A Coffee"></a>
+  <a href="https://paperback.fly.dev/"><img src="https://img.shields.io/badge/Launch%20App-Paperback-007acc?style=for-the-badge&logo=rocket" alt="Launch App"></a>
+  <a href="https://github.com/GabrielBaiano/paperback"><img src="https://img.shields.io/badge/License-MIT-4caf50?style=for-the-badge" alt="License"></a>
+  <a href="https://buymeacoffee.com/gabrielngal"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
 </p>
 
 ---
 
 ## Table of Contents
 - [Introduction](#introduction)
+- [How It Works (For Readers)](#how-it-works-for-readers)
+- [Book Expiration and Highlights](#book-expiration-and-highlights)
+- [Credits and Attribution](#credits-and-attribution)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
 - [Performance](#performance)
@@ -30,11 +32,26 @@
 - [Deployment](#deployment)
 - [Support](#support)
 - [Contributing](#contributing)
-- [Community & Support](#community--support)
 - [License](#license)
 
 ## Introduction
 Paperback is a high-performance web-based collaborative e-book reader. It forks the clean, browser-native EPUB rendering capabilities of Foliate-JS and extends it with real-time multiplayer synchronization, shared highlights, comments, and secure Discord authentication.
+
+## How It Works (For Readers)
+Paperback is designed to make reading with friends as seamless as possible:
+1. **Connect your Profile**: Click "Connect with Discord" to log in. This allows your friends to see your username and avatar while reading.
+2. **Create a Room**: Upload an EPUB file of the book you want to read. Once uploaded, a unique Room Code will be generated.
+3. **Invite Friends**: Copy the Room Code or the invite link and share it with your friends. Once they join, they can see your current page position, highlights, and comments in real-time.
+4. **Collaborate**: Highlight any text to select a color, write inline annotations, and view other readers' comments in the sidebar.
+
+## Book Expiration and Highlights
+To keep infrastructure costs completely free, Paperback operates on an ephemeral storage policy:
+- **Automatic Pruning**: Book files are automatically deleted from our secure cloud storage after **24 hours of inactivity** (meaning no one has opened the room or read the book for 24 hours).
+- **Your Highlights are Safe**: Deleting the book file **never** deletes your notes, highlights, or comments. Those are permanently stored in our database.
+- **Easy Recovery**: If you open an expired room, Paperback will prompt you to drag and drop the required EPUB file. Once you provide the file, the session is restored instantly, and everyone can resume reading where they left off.
+
+## Credits and Attribution
+Paperback is a fork of [foliate-js](https://github.com/johnfactotum/foliate-js), the brilliant browser-native book rendering library created by [John Factotum](https://github.com/johnfactotum). We are incredibly grateful for his open-source work that forms the foundation of this collaborative reader.
 
 ## Key Features
 - **Discord OAuth2 Integration**: Secure, single-click login using Discord profiles, showing reader avatars directly in the reading rooms.
