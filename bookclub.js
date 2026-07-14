@@ -523,57 +523,6 @@ function renderMembersList() {
     });
 }
 
-// Inject highlight rendering in Foliate
-async function drawHighlightOnView(highlight) {
-    const reader = globalThis.reader;
-    if (!reader || !reader.view) return;
-
-    try {
-        const { index } = await reader.view.resolveNavigation(highlight.cfi);
-        const annotation = {
-            value: highlight.cfi,
-            color: highlight.highlightColor || highlight.userColor || '#FFD700',
-            userName: highlight.userName
-        };
-
-        // Cache in reader
-        if (!reader.annotations.has(index)) {
-            reader.annotations.set(index, []);
-        }
-        
-        // Avoid duplicate annotations
-        const list = reader.annotations.get(index);
-        const exists = list.some(a => a.value === highlight.cfi);
-        if (!exists) {
-            list.push(annotation);
-            reader.annotationsByValue.set(highlight.cfi, annotation);
-            await reader.view.addAnnotation(annotation);
-        }
-    } catch (e) {
-        console.error('[Book Club] Error rendering highlight:', e);
-    }
-}
-
-async function removeHighlightFromView(cfi) {
-    const reader = globalThis.reader;
-    if (!reader || !reader.view) return;
-
-    try {
-        const { index } = await reader.view.resolveNavigation(cfi);
-        const annotation = reader.annotationsByValue.get(cfi);
-        if (annotation) {
-            await reader.view.deleteAnnotation(annotation);
-            reader.annotationsByValue.delete(cfi);
-            
-            const list = reader.annotations.get(index);
-            if (list) {
-                reader.annotations.set(index, list.filter(a => a.value !== cfi));
-            }
-        }
-    } catch (e) {
-        console.error('[Book Club] Error removing highlight:', e);
-    }
-}
 
 function renderAllHighlights() {
     for (const highlight of Object.values(activeHighlights)) {
