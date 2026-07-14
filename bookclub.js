@@ -402,26 +402,26 @@ function renderProgressMarkers() {
     const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
 
-    // Collect only OTHER members (skip self)
-    const others = Object.entries(activeMembers).filter(([id]) => id !== myId);
-    if (others.length === 0) return;
+    // Collect all members (including self)
+    const membersList = Object.entries(activeMembers);
+    if (membersList.length === 0) return;
 
     // Group members that are within 3% of each other (cluster threshold)
     const CLUSTER_THRESHOLD = 0.03;
     const clusters = [];
     const used = new Set();
 
-    for (let i = 0; i < others.length; i++) {
+    for (let i = 0; i < membersList.length; i++) {
         if (used.has(i)) continue;
-        const [idA, memberA] = others[i];
+        const [idA, memberA] = membersList[i];
         if (memberA.fraction == null) continue;
 
         const cluster = [[idA, memberA]];
         used.add(i);
 
-        for (let j = i + 1; j < others.length; j++) {
+        for (let j = i + 1; j < membersList.length; j++) {
             if (used.has(j)) continue;
-            const [idB, memberB] = others[j];
+            const [idB, memberB] = membersList[j];
             if (memberB.fraction == null) continue;
             if (Math.abs(memberA.fraction - memberB.fraction) <= CLUSTER_THRESHOLD) {
                 cluster.push([idB, memberB]);
@@ -445,30 +445,35 @@ function renderProgressMarkers() {
 
         if (cluster.length === 1) {
             // Single dot
-            const [, member] = cluster[0];
+            const [id, member] = cluster[0];
+            const isSelf = id === myId;
+            
             const dot = document.createElement('div');
-            dot.className = 'bc-progress-dot';
+            dot.className = isSelf ? 'bc-progress-dot bc-progress-dot-self' : 'bc-progress-dot';
             dot.style.backgroundColor = member.color;
 
             const label = document.createElement('div');
             label.className = 'bc-progress-dot-label';
-            label.textContent = `${member.name} · ${Math.round(member.fraction * 100)}%`;
+            label.textContent = isSelf ? `You · ${Math.round(member.fraction * 100)}%` : `${member.name} · ${Math.round(member.fraction * 100)}%`;
             dot.appendChild(label);
 
-            if (cluster[0][0] !== myId && member.cfi) {
+            if (!isSelf && member.cfi) {
                 dot.addEventListener('click', () => globalThis.reader?.view?.goTo(member.cfi));
             }
             wrapper.appendChild(dot);
         } else {
             // Stacked cluster — multi-ring dot
+            const hasSelf = cluster.some(([id]) => id === myId);
+            
             const stack = document.createElement('div');
             stack.className = 'bc-progress-stack';
 
             // Render concentric colored rings (outer to inner)
-            cluster.forEach(([, member], idx) => {
+            cluster.forEach(([id, member], idx) => {
                 const ring = document.createElement('div');
                 ring.className = 'bc-progress-ring';
-                const size = 14 + idx * 5; // each ring slightly larger
+                const baseSize = (id === myId) ? 17 : 13;
+                const size = baseSize + idx * 4; // each ring slightly larger
                 ring.style.width = `${size}px`;
                 ring.style.height = `${size}px`;
                 ring.style.backgroundColor = member.color;
@@ -485,7 +490,9 @@ function renderProgressMarkers() {
             // Label on hover
             const label = document.createElement('div');
             label.className = 'bc-progress-dot-label';
-            label.textContent = cluster.map(([, m]) => `${m.name} ${Math.round(m.fraction * 100)}%`).join(' · ');
+            label.textContent = cluster.map(([id, m]) => {
+                return id === myId ? `You ${Math.round(m.fraction * 100)}%` : `${m.name} ${Math.round(m.fraction * 100)}%`;
+            }).join(' · ');
             stack.appendChild(label);
 
             // Click teleports to first member in cluster
