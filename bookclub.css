@@ -1261,3 +1261,7 @@
     border-color: rgba(255, 152, 0, 0.45);
     color: #ffb74d;
 }
+
+@keyframes bc-spin {
+    to { transform: rotate(360deg); }
+}

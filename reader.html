@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data: https://cdn.discordapp.com; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
 <title>Paperback</title>
-<link rel="stylesheet" href="bookclub.css?v=4">
+<link rel="stylesheet" href="bookclub.css?v=5">
 <style>
 :root {
     --active-bg: rgba(0, 0, 0, .05);
@@ -595,5 +595,11 @@ body {
     </div>
 </div>
 
-<script src="reader.js?v=4" type="module"></script>
-<script src="bookclub.js?v=4" type="module"></script>
+<!-- Global Loading Overlay -->
+<div id="bc-loading-overlay" style="display: none; position: fixed; inset: 0; background: rgba(20, 21, 23, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100000; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; transition: opacity 0.25s ease; opacity: 0;">
+    <div class="bc-loading-spinner" style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #ff4747; border-radius: 50%; animation: bc-spin 0.8s linear infinite;"></div>
+    <div id="bc-loading-text" style="font-size: 0.95rem; font-weight: 500; opacity: 0.9; letter-spacing: 0.5px;">Loading...</div>
+</div>
+
+<script src="reader.js?v=5" type="module"></script>
+<script src="bookclub.js?v=5" type="module"></script>

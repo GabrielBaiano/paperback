@@ -74,30 +74,62 @@ async function checkRoomParam() {
                 
                 if (roomData.hasBook) {
                     console.log(`[Book Club] Joining Room ${roomId}. Downloading book...`);
+                    showLoading('Joining room and downloading book...');
                     // Programmatic loading of book
                     if (globalThis.openBook) {
                         await globalThis.openBook(roomData.bookPath);
                     } else {
                         console.error('[Book Club] globalThis.openBook not found');
+                        hideLoading();
                     }
                 } else {
                     console.log(`[Book Club] Room ${roomId} found but book is expired. Showing re-upload panel.`);
                     showReuploadPanel(roomData.title, roomData.author);
+                    hideLoading();
                 }
             } else {
                 const errData = await res.json().catch(() => ({}));
                 alert(errData.error || 'Room not found! Check the code you entered.');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 showSetupPanel();
+                hideLoading();
             }
         } catch (err) {
             console.error('[Book Club] Failed to check room:', err);
             showSetupPanel();
+            hideLoading();
         }
     } else {
         showSetupPanel();
     }
 }
+
+// Global Loading Overlay Controls
+function showLoading(text) {
+    const overlay = document.getElementById('bc-loading-overlay');
+    const textEl = document.getElementById('bc-loading-text');
+    if (overlay && textEl) {
+        textEl.innerText = text || 'Loading...';
+        overlay.style.display = 'flex';
+        // force reflow
+        overlay.offsetHeight;
+        overlay.style.opacity = '1';
+    }
+}
+window.showLoading = showLoading;
+
+function hideLoading() {
+    const overlay = document.getElementById('bc-loading-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            if (overlay.style.opacity === '0') {
+                overlay.style.display = 'none';
+            }
+        }, 250);
+    }
+}
+window.hideLoading = hideLoading;
 
 // Show/Hide Panels
 function showSetupPanel() {
@@ -142,6 +174,7 @@ function initSetupEvents() {
         formData.append('title', title);
         formData.append('author', author);
 
+        showLoading('Creating your room and uploading book...');
         $('#bc-create-room-btn').innerText = 'Creating Room...';
         $('#bc-create-room-btn').disabled = true;
 
@@ -169,6 +202,7 @@ function initSetupEvents() {
             console.error('[Book Club] Create room error:', err);
             alert('Network error creating room.');
         } finally {
+            hideLoading();
             $('#bc-create-room-btn').innerText = 'Create Room with Current Book';
             $('#bc-create-room-btn').disabled = false;
         }
@@ -1079,6 +1113,7 @@ async function removeHighlightFromView(cfi) {
 
 window.addEventListener('book-opened', async ({ detail: reader }) => {
     console.log('[Book Club] Book opened hook initialized');
+    hideLoading();
     
     if (roomId) {
         // If reupload panel is visible, upload the book to restore it on the server
@@ -1102,6 +1137,8 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
                 }
             } catch (err) {
                 console.error('[Book Club] Error restoring room:', err);
+            } finally {
+                hideLoading();
             }
         }
 
