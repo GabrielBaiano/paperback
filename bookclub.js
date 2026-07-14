@@ -12,7 +12,7 @@ const PRESET_COLORS = [
 let ws = null;
 let roomId = null;
 let myId = null;
-let myName = localStorage.getItem('bc-name') || 'Leitor ' + Math.floor(Math.random() * 1000);
+let myName = localStorage.getItem('bc-name') || 'Reader ' + Math.floor(Math.random() * 1000);
 let myColor = localStorage.getItem('bc-color') || PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
 let intentionalClose = false;
 
@@ -65,7 +65,7 @@ async function checkRoomParam() {
                     console.error('[Book Club] globalThis.openBook not found');
                 }
             } else {
-                alert('Sala não encontrada! Verifique o código informado.');
+                alert('Room not found! Check the code you entered.');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 showSetupPanel();
             }
@@ -100,7 +100,7 @@ function initSetupEvents() {
     $('#bc-create-room-btn').addEventListener('click', async () => {
         const reader = globalThis.reader;
         if (!reader || !reader.currentFile) {
-            alert('Por favor, abra um livro primeiro arrastando o arquivo ou escolhendo no menu antes de iniciar o clube!');
+            alert('Please open a book first by dragging a file or choosing from the menu before starting the club!');
             return;
         }
 
@@ -114,7 +114,7 @@ function initSetupEvents() {
         formData.append('title', title);
         formData.append('author', author);
 
-        $('#bc-create-room-btn').innerText = 'Criando Sala...';
+        $('#bc-create-room-btn').innerText = 'Creating Room...';
         $('#bc-create-room-btn').disabled = true;
 
         try {
@@ -134,13 +134,13 @@ function initSetupEvents() {
                 showRoomPanel();
                 connectWebSocket();
             } else {
-                alert('Erro ao criar sala.');
+                alert('Error creating room.');
             }
         } catch (err) {
             console.error('[Book Club] Create room error:', err);
-            alert('Falha de rede ao criar sala.');
+            alert('Network error creating room.');
         } finally {
-            $('#bc-create-room-btn').innerText = 'Criar Sala com Livro Atual';
+            $('#bc-create-room-btn').innerText = 'Create Room with Current Book';
             $('#bc-create-room-btn').disabled = false;
         }
     });
@@ -149,7 +149,7 @@ function initSetupEvents() {
     $('#bc-join-room-btn').addEventListener('click', () => {
         const inputVal = $('#bc-join-id-input').value.trim();
         if (!inputVal) {
-            alert('Digite um código de sala válido.');
+            alert('Enter a valid room code.');
             return;
         }
         
@@ -163,7 +163,7 @@ function initSetupEvents() {
         navigator.clipboard.writeText(inviteUrl).then(() => {
             const btn = $('#bc-copy-link-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Copiado!';
+            btn.innerHTML = 'Copied!';
             setTimeout(() => {
                 btn.innerHTML = originalText;
             }, 2000);
@@ -473,11 +473,11 @@ function renderMembersList() {
         item.innerHTML = `
             <div class="bc-member-left">
                 <span class="bc-avatar" style="background-color: ${member.color};"></span>
-                <span class="bc-member-name">${member.name} ${isMe ? '(Você)' : ''}</span>
+                <span class="bc-member-name">${member.name} ${isMe ? '(You)' : ''}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="bc-member-progress">${pct}%</span>
-                ${(!isMe && member.cfi) ? `<button class="bc-teleport-btn" data-cfi="${member.cfi}">Ir para</button>` : ''}
+                ${(!isMe && member.cfi) ? `<button class="bc-teleport-btn" data-cfi="${member.cfi}">Go to</button>` : ''}
             </div>
         `;
         list.appendChild(item);
@@ -579,7 +579,7 @@ function createFloatingMenu() {
 
     const commentBtn = document.createElement('button');
     commentBtn.className = 'bc-menu-btn';
-    commentBtn.innerText = 'Comentar';
+    commentBtn.innerText = 'Comment';
     commentBtn.style.borderLeft = '1px solid rgba(128, 128, 128, 0.3)';
     commentBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
@@ -589,7 +589,7 @@ function createFloatingMenu() {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'bc-menu-btn';
-    cancelBtn.innerText = 'Fechar';
+    cancelBtn.innerText = 'Close';
     cancelBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
         hideSelectionMenu();
@@ -719,7 +719,7 @@ function openCommentThread(cfi) {
     $('#bc-comment-instruction').style.display = 'none';
     $('#bc-comments-container').style.display = 'block';
     
-    $('#bc-highlight-author').innerText = `Grifado por ${highlight.userName}`;
+    $('#bc-highlight-author').innerText = `Highlighted by ${highlight.userName}`;
     $('#bc-selected-highlight-text').innerText = `"${highlight.text}"`;
     $('#bc-selected-highlight-text').style.borderColor = highlight.highlightColor || highlight.userColor;
 
@@ -791,7 +791,7 @@ function initCommentFormEvents() {
     // Delete highlight button
     $('#bc-delete-highlight-btn').addEventListener('click', () => {
         if (activeCommentCfi && ws && ws.readyState === WebSocket.OPEN) {
-            if (confirm('Tem certeza que deseja excluir esta marcação e seus comentários?')) {
+            if (confirm('Are you sure you want to delete this highlight and its comments?')) {
                 ws.send(JSON.stringify({
                     type: 'delete_highlight',
                     cfi: activeCommentCfi
