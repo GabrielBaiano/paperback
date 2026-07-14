@@ -4,53 +4,97 @@
 #bc-progress-markers {
     position: absolute;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
     z-index: 2;
 }
 
-.bc-progress-dot {
+/* Wrapper: absolutely positioned at exact pixel X */
+.bc-progress-dot-wrapper {
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Single member dot */
+.bc-progress-dot {
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     border: 2px solid Canvas;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    pointer-events: auto;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
     cursor: pointer;
-    transition: transform 0.3s ease;
-    z-index: 3;
+    transition: transform 0.2s ease;
+    position: relative;
 }
 
-.bc-progress-dot:hover {
-    transform: translate(-50%, -50%) scale(1.4);
+.bc-progress-dot-wrapper:hover .bc-progress-dot {
+    transform: scale(1.4);
 }
 
+/* Stack (multiple members close together) */
+.bc-progress-stack {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Each ring in the stack — concentric circles */
+.bc-progress-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid Canvas;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+}
+
+.bc-progress-stack:hover .bc-progress-ring {
+    transform: scale(1.3);
+}
+
+/* Badge showing member count */
+.bc-progress-badge {
+    position: relative;
+    z-index: 20;
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* Tooltip label */
 .bc-progress-dot-label {
     position: absolute;
-    bottom: 18px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: Canvas;
     color: CanvasText;
     font-size: 0.65rem;
-    padding: 2px 5px;
-    border-radius: 4px;
+    padding: 3px 7px;
+    border-radius: 5px;
     white-space: nowrap;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     border: 1px solid rgba(128,128,128,0.2);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
     font-family: inherit;
+    z-index: 30;
 }
 
-.bc-progress-dot:hover .bc-progress-dot-label {
+.bc-progress-dot-wrapper:hover .bc-progress-dot-label,
+.bc-progress-stack:hover .bc-progress-dot-label {
     opacity: 1;
 }
 
@@ -241,6 +285,80 @@
 .bc-input-group {
     display: flex;
     gap: 8px;
+}
+
+/* Color picker row */
+.bc-color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.bc-color-picker-row label {
+    font-size: 0.8rem;
+    color: GrayText;
+    white-space: nowrap;
+}
+
+/* Preset color swatches */
+.bc-color-presets {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.bc-color-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    flex-shrink: 0;
+}
+
+.bc-color-swatch:hover {
+    transform: scale(1.2);
+}
+
+.bc-color-swatch.selected {
+    border-color: CanvasText;
+    transform: scale(1.15);
+}
+
+/* Native color input – show as a small round swatch */
+#bc-color-input {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    appearance: none;
+    -webkit-appearance: none;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+#bc-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 50%;
+}
+
+#bc-color-input::-webkit-color-swatch {
+    border: 2px solid CanvasText;
+    border-radius: 50%;
+}
+
+#bc-color-input::-moz-color-swatch {
+    border: 2px solid CanvasText;
+    border-radius: 50%;
 }
 
 .bc-section-title {

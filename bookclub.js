@@ -293,35 +293,125 @@ function handleWSMessage(data) {
     }
 }
 
-// Render progress bar markers (colored dots per member)
+// Color the slider thumb with the current user's color
+function updateSliderThumbColor() {
+    const slider = $('#progress-slider');
+    if (slider) slider.style.accentColor = myColor;
+}
+
+// Render progress bar markers (colored dots per member, excluding self)
 function renderProgressMarkers() {
+    updateSliderThumbColor();
+
     const container = $('#bc-progress-markers');
     if (!container) return;
     container.innerHTML = '';
 
-    for (const [id, member] of Object.entries(activeMembers)) {
-        if (member.fraction == null) continue;
-        const pct = member.fraction * 100;
+    const slider = $('#progress-slider');
+    if (!slider || slider.style.visibility === 'hidden') return;
 
-        const dot = document.createElement('div');
-        dot.className = 'bc-progress-dot';
-        dot.style.left = `${pct}%`;
-        dot.style.backgroundColor = member.color;
+    // Get the actual pixel width of the slider track
+    // Range input thumb is typically ~16px wide, so track is width - thumbWidth
+    const thumbSize = 16;
+    const trackWidth = slider.offsetWidth;
+    if (trackWidth === 0) return;
 
-        // Tooltip label on hover
-        const label = document.createElement('div');
-        label.className = 'bc-progress-dot-label';
-        label.textContent = `${member.name} · ${Math.round(pct)}%`;
-        dot.appendChild(label);
+    // Collect only OTHER members (skip self)
+    const others = Object.entries(activeMembers).filter(([id]) => id !== myId);
+    if (others.length === 0) return;
 
-        // Click to teleport
-        if (id !== myId && member.cfi) {
-            dot.addEventListener('click', () => {
-                globalThis.reader?.view?.goTo(member.cfi);
+    // Group members that are within 3% of each other (cluster threshold)
+    const CLUSTER_THRESHOLD = 0.03;
+    const clusters = [];
+    const used = new Set();
+
+    for (let i = 0; i < others.length; i++) {
+        if (used.has(i)) continue;
+        const [idA, memberA] = others[i];
+        if (memberA.fraction == null) continue;
+
+        const cluster = [[idA, memberA]];
+        used.add(i);
+
+        for (let j = i + 1; j < others.length; j++) {
+            if (used.has(j)) continue;
+            const [idB, memberB] = others[j];
+            if (memberB.fraction == null) continue;
+            if (Math.abs(memberA.fraction - memberB.fraction) <= CLUSTER_THRESHOLD) {
+                cluster.push([idB, memberB]);
+                used.add(j);
+            }
+        }
+        clusters.push(cluster);
+    }
+
+    // Render each cluster
+    for (const cluster of clusters) {
+        // Average fraction for positioning
+        const avgFraction = cluster.reduce((sum, [, m]) => sum + m.fraction, 0) / cluster.length;
+
+        // Correct pixel position matching range thumb
+        const xPx = avgFraction * (trackWidth - thumbSize) + thumbSize / 2;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bc-progress-dot-wrapper';
+        wrapper.style.left = `${xPx}px`;
+
+        if (cluster.length === 1) {
+            // Single dot
+            const [, member] = cluster[0];
+            const dot = document.createElement('div');
+            dot.className = 'bc-progress-dot';
+            dot.style.backgroundColor = member.color;
+
+            const label = document.createElement('div');
+            label.className = 'bc-progress-dot-label';
+            label.textContent = `${member.name} · ${Math.round(member.fraction * 100)}%`;
+            dot.appendChild(label);
+
+            if (cluster[0][0] !== myId && member.cfi) {
+                dot.addEventListener('click', () => globalThis.reader?.view?.goTo(member.cfi));
+            }
+            wrapper.appendChild(dot);
+        } else {
+            // Stacked cluster — multi-ring dot
+            const stack = document.createElement('div');
+            stack.className = 'bc-progress-stack';
+
+            // Render concentric colored rings (outer to inner)
+            cluster.forEach(([, member], idx) => {
+                const ring = document.createElement('div');
+                ring.className = 'bc-progress-ring';
+                const size = 14 + idx * 5; // each ring slightly larger
+                ring.style.width = `${size}px`;
+                ring.style.height = `${size}px`;
+                ring.style.backgroundColor = member.color;
+                ring.style.zIndex = String(10 - idx);
+                stack.appendChild(ring);
             });
+
+            // Count badge
+            const badge = document.createElement('div');
+            badge.className = 'bc-progress-badge';
+            badge.textContent = cluster.length;
+            stack.appendChild(badge);
+
+            // Label on hover
+            const label = document.createElement('div');
+            label.className = 'bc-progress-dot-label';
+            label.textContent = cluster.map(([, m]) => `${m.name} ${Math.round(m.fraction * 100)}%`).join(' · ');
+            stack.appendChild(label);
+
+            // Click teleports to first member in cluster
+            stack.addEventListener('click', () => {
+                const cfi = cluster.find(([, m]) => m.cfi)?.[1].cfi;
+                if (cfi) globalThis.reader?.view?.goTo(cfi);
+            });
+
+            wrapper.appendChild(stack);
         }
 
-        container.appendChild(dot);
+        container.appendChild(wrapper);
     }
 }
 
@@ -732,9 +822,54 @@ window.addEventListener('book-opened', ({ detail: reader }) => {
 });
 
 // App Entry Point
+function initColorPicker() {
+    const presets = PRESET_COLORS;
+    const presetsContainer = $('#bc-color-presets');
+    const colorInput = $('#bc-color-input');
+
+    // Set native input to current color
+    colorInput.value = myColor;
+
+    function applyColor(color) {
+        myColor = color;
+        localStorage.setItem('bc-color', myColor);
+        colorInput.value = myColor;
+        updateSliderThumbColor();
+
+        // Update selected swatch highlight
+        presetsContainer.querySelectorAll('.bc-color-swatch').forEach(s => {
+            s.classList.toggle('selected', s.dataset.color === myColor);
+        });
+
+        // Update nick input border color as live preview
+        const nickInput = $('#bc-nick-input');
+        if (nickInput) nickInput.style.borderColor = myColor;
+
+        // If already connected, reconnect to broadcast the new color
+        if (ws) {
+            ws.close();
+        }
+    }
+
+    // Render preset swatches
+    presets.forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.className = 'bc-color-swatch';
+        swatch.dataset.color = color;
+        swatch.style.backgroundColor = color;
+        if (color === myColor) swatch.classList.add('selected');
+        swatch.addEventListener('click', () => applyColor(color));
+        presetsContainer.appendChild(swatch);
+    });
+
+    // Native color picker for custom color
+    colorInput.addEventListener('input', (e) => applyColor(e.target.value));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initSetupEvents();
     initCommentFormEvents();
+    initColorPicker();
     checkRoomParam();
 });
