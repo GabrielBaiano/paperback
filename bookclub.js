@@ -1086,10 +1086,10 @@ async function checkAuth() {
             }
 
             // Show main app welcome screen, hide landing screen
-            const landingInner = $('#bc-landing-inner');
-            if (landingInner) landingInner.style.display = 'none';
-            const appInner = $('#bc-app-inner');
-            if (appInner) appInner.style.display = 'flex';
+            const landingText = $('#bc-landing-text');
+            if (landingText) landingText.style.display = 'none';
+            const appContent = $('#bc-app-content');
+            if (appContent) appContent.style.display = 'flex';
 
             // Now run other client initiations
             initTabs();
@@ -1098,10 +1098,10 @@ async function checkAuth() {
             checkRoomParam();
         } else {
             // Show landing screen, hide main app welcome screen
-            const landingInner = $('#bc-landing-inner');
-            if (landingInner) landingInner.style.display = 'flex';
-            const appInner = $('#bc-app-inner');
-            if (appInner) appInner.style.display = 'none';
+            const landingText = $('#bc-landing-text');
+            if (landingText) landingText.style.display = 'flex';
+            const appContent = $('#bc-app-content');
+            if (appContent) appContent.style.display = 'none';
         }
     } catch (e) {
         console.error('[Book Club] Auth check failed:', e);
