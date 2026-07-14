@@ -26,6 +26,7 @@ let selectionMenu = null;
 
 // Live Cursor Synchronization State
 const peerCursors = new Map(); // wsId -> DOM element
+const cursorTimeouts = new Map(); // wsId -> timeoutId for inactivity fade-out
 let lastMoveTime = 0;
 let currentSectionIndex = null;
 let floatingComposer = null;
@@ -303,7 +304,8 @@ function handlePeerMouseMove(data) {
         cursorEl.style.position = 'fixed';
         cursorEl.style.pointerEvents = 'none';
         cursorEl.style.zIndex = '999999';
-        cursorEl.style.transition = 'left 0.1s linear, top 0.1s linear';
+        cursorEl.style.transition = 'left 0.1s linear, top 0.1s linear, opacity 0.3s ease';
+        cursorEl.style.opacity = '0';
         cursorEl.dataset.color = color;
         cursorEl.dataset.name = name;
         
@@ -319,10 +321,32 @@ function handlePeerMouseMove(data) {
         peerCursors.set(wsId, cursorEl);
     }
 
+    // Reset inactivity timeout for this cursor
+    if (cursorTimeouts.has(wsId)) {
+        clearTimeout(cursorTimeouts.get(wsId));
+    }
+
     cursorEl.style.display = 'block';
+    // Small delay ensures element displays block before opacity transition starts
+    requestAnimationFrame(() => {
+        cursorEl.style.opacity = '1';
+    });
+
     // Calculate pixel coordinates based on our current viewport size
     cursorEl.style.left = `${x * window.innerWidth}px`;
     cursorEl.style.top = `${y * window.innerHeight}px`;
+
+    // Set timeout to fade out cursor after 3 seconds of inactivity
+    const timeoutId = setTimeout(() => {
+        cursorEl.style.opacity = '0';
+        setTimeout(() => {
+            if (cursorEl.style.opacity === '0') {
+                cursorEl.style.display = 'none';
+            }
+        }, 300);
+    }, 3000);
+
+    cursorTimeouts.set(wsId, timeoutId);
 }
 
 // WebSocket connection management
@@ -1088,6 +1112,10 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
             handleTextSelection(doc, index, event);
         });
 
+        doc.addEventListener('mousedown', (event) => {
+            sendMouseMove(event, true, doc);
+        });
+
         // Mouse hover over highlighted text inside doc to open comment popover
         doc.addEventListener('mousemove', (e) => {
             sendMouseMove(e, true, doc); // Send mouse coordinates to peers
@@ -1370,6 +1398,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for mouse movement in the main parent window
     window.addEventListener('mousemove', (e) => {
+        sendMouseMove(e, false);
+    });
+
+    window.addEventListener('mousedown', (e) => {
         sendMouseMove(e, false);
     });
 
