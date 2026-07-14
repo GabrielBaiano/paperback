@@ -1365,32 +1365,11 @@ async function loadHistoryList() {
 
 
 
-// Active personal rooms for the logged-in user inside the native sidebar
+// Active personal rooms for the logged-in user on the Home screen dashboard
 async function loadMyRooms() {
+    const section = document.getElementById('your-rooms-section');
     const list = document.getElementById('your-rooms-list');
     if (!list) return;
-
-    // Toggle native sidebar layout depending on whether a book room is open or not
-    const sidebarHeader = document.getElementById('side-bar-header');
-    const sidebarTabs = document.querySelector('.sidebar-tabs');
-    const tocView = document.getElementById('toc-view');
-    const bookclubView = document.getElementById('bookclub-view');
-    const shelfView = document.getElementById('bc-shelf-sidebar-view');
-
-    if (!roomId) {
-        // Home screen: Show only the shelf view in the sidebar
-        if (sidebarHeader) sidebarHeader.style.display = 'none';
-        if (sidebarTabs) sidebarTabs.style.display = 'none';
-        if (tocView) tocView.style.display = 'none';
-        if (bookclubView) bookclubView.style.display = 'none';
-        if (shelfView) shelfView.style.display = 'flex';
-    } else {
-        // In a book room: Restore native tabs, hide the shelf
-        if (sidebarHeader) sidebarHeader.style.display = 'flex';
-        if (sidebarTabs) sidebarTabs.style.display = 'flex';
-        if (shelfView) shelfView.style.display = 'none';
-        // Note: active tab state (toc or bookclub) will control display of their respective views
-    }
 
     try {
         const res = await fetch('/api/my-rooms');
@@ -1403,9 +1382,11 @@ async function loadMyRooms() {
         const activeRooms = (rooms || []).filter(room => room.hasBook);
 
         if (activeRooms.length === 0) {
-            list.innerHTML = '<div class="your-rooms-empty" style="text-align: center; color: rgba(255,255,255,0.3); padding: 24px 0; font-size: 0.85rem;">No active rooms. Drop a book to start!</div>';
+            if (section) section.style.display = 'none';
             return;
         }
+
+        if (section) section.style.display = 'block';
 
         activeRooms.forEach(room => {
             const card = document.createElement('div');
@@ -1536,10 +1517,10 @@ async function loadMyRooms() {
 
 // Help & About modal
 function initHelpModal() {
-    const helpBtn = $('#help-button');
+    const helpBtn = $('#help-button'); // may be null now
     const overlay = $('#help-modal-overlay');
     const closeBtn = $('#help-modal-close');
-    if (!helpBtn || !overlay) return;
+    if (!overlay) return;
 
     function openModal() {
         overlay.style.display = 'flex';
@@ -1551,7 +1532,7 @@ function initHelpModal() {
         document.body.style.overflow = '';
     }
 
-    helpBtn.addEventListener('click', openModal);
+    if (helpBtn) helpBtn.addEventListener('click', openModal);
     closeBtn?.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeModal();
@@ -1716,16 +1697,6 @@ async function checkAuth() {
             initHelpModal();
             initIdleDetector();
             loadMyRooms();
-
-            // Refresh shelf rooms on Home screen sidebar-button click
-            const sideBtn = document.getElementById('side-bar-button');
-            if (sideBtn) {
-                sideBtn.addEventListener('click', () => {
-                    if (!roomId) {
-                        loadMyRooms();
-                    }
-                });
-            }
 
             setInterval(() => {
                 if (!roomId) {
