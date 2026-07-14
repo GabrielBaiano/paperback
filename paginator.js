@@ -360,6 +360,7 @@ class View {
         }
     }
     expand() {
+        if (!this.document) return
         const { documentElement } = this.document
         if (this.#column) {
             const side = this.#vertical ? 'height' : 'width'
@@ -604,7 +605,7 @@ export class Paginator extends HTMLElement {
                 const range = this.#lastVisibleRange
                 if (!range) return
                 const sel = doc.getSelection()
-                if (!sel.rangeCount) return
+                if (!sel || !sel.rangeCount) return
                 if (isPointerSelecting && sel.type === 'Range')
                     checkPointerSelection(range, sel)
                 else if (isKeyboardSelecting) {
