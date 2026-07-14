@@ -557,6 +557,9 @@ wss.on('connection', async (ws, req) => {
                 case 'delete_highlight':
                     await handleDeleteHighlight(ws, data, user);
                     break;
+                case 'mousemove':
+                    handleMouseMove(ws, data);
+                    break;
                 default:
                     console.warn(`[WS Warning] Unknown message type: ${data.type}`);
             }
@@ -766,6 +769,21 @@ async function handleDeleteHighlight(ws, data, user) {
     broadcastToRoom(roomId, null, {
         type: 'highlight_deleted',
         cfi
+    });
+}
+
+function handleMouseMove(ws, data) {
+    const client = clients.get(ws);
+    if (!client) return;
+    
+    broadcastToRoom(client.roomId, ws, {
+        type: 'mousemove',
+        wsId: client.wsId,
+        name: client.name,
+        color: client.color,
+        x: data.x,
+        y: data.y,
+        index: data.index
     });
 }
 

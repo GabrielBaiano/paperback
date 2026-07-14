@@ -23,6 +23,11 @@ let activeCommentCfi = null;
 let pendingCommentCfi = null;
 let pendingCommentText = null; // Stores comment text while waiting for CFI confirmation
 let selectionMenu = null;
+
+// Live Cursor Synchronization State
+const peerCursors = new Map(); // wsId -> DOM element
+let lastMoveTime = 0;
+let currentSectionIndex = null;
 let floatingComposer = null;
 let hoverPopover = null;
 let hoverPopoverTimeout = null;
@@ -241,6 +246,85 @@ function initSetupEvents() {
     }
 }
 
+// Send current mouse coordinates to the room, throttled to 50ms (20fps)
+function sendMouseMove(e, isInsideIframe, doc) {
+    if (!roomId) return;
+    const now = Date.now();
+    if (now - lastMoveTime < 50) return;
+    lastMoveTime = now;
+
+    let x = e.clientX;
+    let y = e.clientY;
+
+    if (isInsideIframe && doc) {
+        const iframe = doc.defaultView.frameElement;
+        if (iframe) {
+            const rect = iframe.getBoundingClientRect();
+            x += rect.left;
+            y += rect.top;
+        }
+    }
+
+    const pctX = x / window.innerWidth;
+    const pctY = y / window.innerHeight;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            type: 'mousemove',
+            x: pctX,
+            y: pctY,
+            index: currentSectionIndex
+        }));
+    }
+}
+
+// Create or update a peer's cursor on our screen
+function handlePeerMouseMove(data) {
+    const { wsId, name, color, x, y, index } = data;
+
+    // Only show cursor if they are on the same section as us
+    if (index !== currentSectionIndex) {
+        const existingCursor = peerCursors.get(wsId);
+        if (existingCursor) {
+            existingCursor.style.display = 'none';
+        }
+        return;
+    }
+
+    let cursorEl = peerCursors.get(wsId);
+    if (cursorEl && (cursorEl.dataset.color !== color || cursorEl.dataset.name !== name)) {
+        cursorEl.remove();
+        cursorEl = null;
+    }
+
+    if (!cursorEl) {
+        cursorEl = document.createElement('div');
+        cursorEl.className = 'bc-peer-cursor';
+        cursorEl.style.position = 'fixed';
+        cursorEl.style.pointerEvents = 'none';
+        cursorEl.style.zIndex = '999999';
+        cursorEl.style.transition = 'left 0.1s linear, top 0.1s linear';
+        cursorEl.dataset.color = color;
+        cursorEl.dataset.name = name;
+        
+        cursorEl.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="transform: translate(-2px, -2px); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));">
+                <path d="M4.5 3V19L9.5 14L15.5 20L18.5 17L12.5 11L17.5 7.5L4.5 3Z" fill="${color}" stroke="white" stroke-width="2"/>
+            </svg>
+            <div style="background-color: ${color}; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-left: 14px; margin-top: -6px; box-shadow: 0 2px 5px rgba(0,0,0,0.25); font-weight: bold;">
+                ${name}
+            </div>
+        `;
+        document.body.appendChild(cursorEl);
+        peerCursors.set(wsId, cursorEl);
+    }
+
+    cursorEl.style.display = 'block';
+    // Calculate pixel coordinates based on our current viewport size
+    cursorEl.style.left = `${x * window.innerWidth}px`;
+    cursorEl.style.top = `${y * window.innerHeight}px`;
+}
+
 // WebSocket connection management
 function connectWebSocket() {
     if (!roomId) return;
@@ -336,6 +420,17 @@ function handleWSMessage(data) {
         case 'member_left':
             delete activeMembers[data.wsId];
             renderMembersList();
+            
+            // Clean up cursor element
+            const cursorEl = peerCursors.get(data.wsId);
+            if (cursorEl) {
+                cursorEl.remove();
+                peerCursors.delete(data.wsId);
+            }
+            break;
+
+        case 'mousemove':
+            handlePeerMouseMove(data);
             break;
             
         case 'highlight_added':
@@ -982,6 +1077,7 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
     // Listen for section document load event to inject text selection and hover listeners
     reader.view.addEventListener('load', ({ detail: { doc, index } }) => {
         console.log(`[Book Club] Loaded section ${index}. Injecting selection/hover handlers.`);
+        currentSectionIndex = index; // Track current loaded section index for cursor visibility filter
         
         // Selection change listener
         doc.addEventListener('mouseup', (event) => {
@@ -994,6 +1090,8 @@ window.addEventListener('book-opened', async ({ detail: reader }) => {
 
         // Mouse hover over highlighted text inside doc to open comment popover
         doc.addEventListener('mousemove', (e) => {
+            sendMouseMove(e, true, doc); // Send mouse coordinates to peers
+
             const overlayerObj = globalThis.reader?.view?.renderer?.getContents()
                 ?.find(x => x.index === index && x.overlayer);
             if (overlayerObj?.overlayer) {
@@ -1269,6 +1367,11 @@ async function checkAuth() {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
+
+    // Listen for mouse movement in the main parent window
+    window.addEventListener('mousemove', (e) => {
+        sendMouseMove(e, false);
+    });
 
     // Prevent keypresses in inputs/textareas from triggering Foliate page-turn hotkeys
     document.addEventListener('keydown', (e) => {
