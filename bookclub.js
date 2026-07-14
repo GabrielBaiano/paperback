@@ -308,20 +308,16 @@ function handleWSMessage(data) {
             break;
             
         case 'highlight_added':
-            activeHighlights[data.highlight.cfi] = data.highlight;
-            drawHighlightOnView(data.highlight);
-            
-            // If we have a pending comment open action for this CFI
-            if (data.cfi === pendingCommentCfi) {
-                pendingCommentCfi = null;
-                openCommentThread(data.cfi);
-            }
-            // If we have pending text from the floating composer to send
-            if (data.cfi === pendingCommentCfi || (pendingCommentText && data.cfi === pendingCommentCfi)) {
-                // Handled in sending logic
-            }
-            if (pendingCommentText && data.cfi === pendingCommentCfi) {
-                // send comment WS
+            const hCfi = data.cfi || data.highlight?.cfi;
+            if (hCfi && data.highlight) {
+                activeHighlights[hCfi] = data.highlight;
+                drawHighlightOnView(data.highlight);
+                
+                // If we have a pending comment open action for this CFI
+                if (hCfi === pendingCommentCfi) {
+                    pendingCommentCfi = null;
+                    openCommentThread(hCfi);
+                }
             }
             break;
             
@@ -384,7 +380,9 @@ function sendIdentityUpdate() {
 // Color the slider thumb with the current user's color
 function updateSliderThumbColor() {
     const slider = $('#progress-slider');
-    if (slider) slider.style.accentColor = myColor;
+    if (slider) {
+        slider.style.setProperty('--bc-user-color', myColor);
+    }
 }
 
 // Render progress bar markers (colored dots per member, excluding self)
