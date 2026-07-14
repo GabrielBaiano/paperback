@@ -895,3 +895,237 @@
     color: #ff2222;
 }
 
+/* ── Help / About button in toolbar ─────────────────────────── */
+#help-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#help-button:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── About Modal Overlay ─────────────────────────────────────── */
+#help-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: help-overlay-in 0.2s ease;
+}
+
+@keyframes help-overlay-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+#help-modal {
+    background: #1e1f23;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    width: min(480px, 92vw);
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    animation: help-modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes help-modal-in {
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Header */
+#help-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+#help-modal-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: #fff;
+}
+
+#help-modal-logo svg {
+    color: #7c8cf8;
+    flex-shrink: 0;
+}
+
+#help-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+}
+
+#help-modal-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Body */
+#help-modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#help-modal-version-badge {
+    display: inline-block;
+    background: rgba(124, 140, 248, 0.15);
+    border: 1px solid rgba(124, 140, 248, 0.35);
+    color: #9aa8ff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+#help-modal-tagline {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.help-modal-section h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0 0 8px;
+}
+
+.help-modal-section p,
+.help-modal-section ul {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+}
+
+.help-modal-section a {
+    color: #7c8cf8;
+    text-decoration: none;
+}
+
+.help-modal-section a:hover {
+    text-decoration: underline;
+}
+
+.help-credits-list {
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.help-credits-list li {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    line-height: 1.5;
+}
+
+.help-credit-sub {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.help-credit-sub a {
+    color: rgba(124, 140, 248, 0.8);
+}
+
+.help-tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.help-tech-pills span {
+    font-size: 0.76rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+}
+
+/* Footer */
+#help-modal-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 24px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+#help-issue-btn,
+#help-github-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+}
+
+#help-issue-btn {
+    background: rgba(255, 68, 68, 0.12);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #ff7070;
+}
+
+#help-issue-btn:hover {
+    background: rgba(255, 68, 68, 0.22);
+    transform: translateY(-1px);
+}
+
+#help-github-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#help-github-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}

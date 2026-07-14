@@ -1343,6 +1343,33 @@ async function loadHistoryList() {
     }
 }
 
+// Help & About modal
+function initHelpModal() {
+    const helpBtn = $('#help-button');
+    const overlay = $('#help-modal-overlay');
+    const closeBtn = $('#help-modal-close');
+    if (!helpBtn || !overlay) return;
+
+    function openModal() {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    helpBtn.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.style.display === 'flex') closeModal();
+    });
+}
+
 // Auto-reconnect WebSocket on visibility state changes (e.g. app switching on mobile)
 function initAutoReconnect() {
     document.addEventListener('visibilitychange', () => {
@@ -1433,6 +1460,7 @@ async function checkAuth() {
             checkRoomParam();
             loadHistoryList();
             initAutoReconnect();
+            initHelpModal();
         } else {
             // Show landing screen, hide main app welcome screen
             const landingText = $('#bc-landing-text');
@@ -1446,6 +1474,8 @@ async function checkAuth() {
             if (urlRoomId && urlRoomId !== 'null' && urlRoomId !== 'undefined') {
                 localStorage.setItem('redirect_room', urlRoomId);
             }
+
+            initHelpModal();
         }
     } catch (e) {
         console.error('[Book Club] Auth check failed:', e);
