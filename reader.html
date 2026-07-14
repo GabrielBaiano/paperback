@@ -330,16 +330,16 @@ body {
         <svg class="icon empty-state-icon" width="72" height="72" aria-hidden="true">
             <path d="M36 18s-6-6-12-6-15 6-15 6v42s9-6 15-6 12 6 12 6c4-4 8-6 12-6s12 2 15 6V18c-6-4-12-6-15-6-4 0-8 2-12 6m0 0v42"/>
         </svg>
-        <h1>Arraste um livro aqui!</h1>
-        <p>Ou <button id="file-button">escolha um arquivo</button> para abrir.</p>
+        <h1>Drop a book here!</h1>
+        <p>Or <button id="file-button">choose a file</button> to open it.</p>
 
         <div class="drop-target-divider">
-            <span>ou entre em uma sala existente</span>
+            <span>or join an existing room</span>
         </div>
 
         <div class="drop-target-join">
-            <input type="text" id="drop-join-input" placeholder="Código da Sala (ex: a1b2c3d4e)">
-            <button id="drop-join-btn" aria-label="Entrar na sala">
+            <input type="text" id="drop-join-input" placeholder="Room code (e.g. a1b2c3d4e)">
+            <button id="drop-join-btn" aria-label="Join room">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M13 6l6 6-6 6"/>
                 </svg>
@@ -357,68 +357,68 @@ body {
         </div>
     </div>
     <div class="sidebar-tabs">
-        <button id="tab-toc" class="tab-btn active">Sumário</button>
-        <button id="tab-bookclub" class="tab-btn">Clube do Livro</button>
+        <button id="tab-toc" class="tab-btn active">Table of Contents</button>
+        <button id="tab-bookclub" class="tab-btn">Book Club</button>
     </div>
     <div id="toc-view" class="tab-content active"></div>
     <div id="bookclub-view" class="tab-content">
         <!-- If not in a room, show creation / join panel -->
         <div id="bc-setup-panel">
-            <h3>Iniciar Clube do Livro</h3>
-            <p>Compartilhe sua leitura com amigos em tempo real.</p>
-            <button id="bc-create-room-btn" class="bc-btn bc-btn-primary">Criar Sala com Livro Atual</button>
-            <div class="bc-divider"><span>OU</span></div>
-            <h3>Entrar em uma Sala</h3>
+            <h3>Start a Book Club</h3>
+            <p>Share your reading with friends in real time.</p>
+            <button id="bc-create-room-btn" class="bc-btn bc-btn-primary">Create Room with Current Book</button>
+            <div class="bc-divider"><span>OR</span></div>
+            <h3>Join a Room</h3>
             <div class="bc-join-form">
-                <input type="text" id="bc-join-id-input" placeholder="Código da Sala (ex: a1b2c3d4)">
-                <button id="bc-join-room-btn" class="bc-btn">Entrar</button>
+                <input type="text" id="bc-join-id-input" placeholder="Room code (e.g. a1b2c3d4)">
+                <button id="bc-join-room-btn" class="bc-btn">Join</button>
             </div>
         </div>
         <!-- If in a room, show the active room state -->
         <div id="bc-room-panel" style="display: none;">
             <div class="bc-info-card">
-                <div class="bc-room-badge">Sala Ativa</div>
+                <div class="bc-room-badge">Active Room</div>
                 <div class="bc-room-id-container">
                     <span id="bc-room-id-val"></span>
-                    <button id="bc-copy-link-btn" title="Copiar Link de Convite">
+                    <button id="bc-copy-link-btn" title="Copy Invite Link">
                         <svg class="icon" width="16" height="16" aria-hidden="true" style="stroke-width: 2px;">
                             <path d="M8 4v8M4 8h8"/>
                         </svg>
-                        Copiar Convite
+                        Copy Invite
                     </button>
                 </div>
             </div>
             
             <div id="bc-identity-section" class="bc-card">
-                <label for="bc-nick-input">Seu Apelido:</label>
+                <label for="bc-nick-input">Nickname:</label>
                 <div class="bc-input-group">
-                    <input type="text" id="bc-nick-input" placeholder="Como quer ser chamado?">
-                    <button id="bc-save-nick-btn" class="bc-btn bc-btn-sm">Salvar</button>
+                    <input type="text" id="bc-nick-input" placeholder="What should we call you?">
+                    <button id="bc-save-nick-btn" class="bc-btn bc-btn-sm">Save</button>
                 </div>
                 <div class="bc-color-picker-row">
-                    <label for="bc-color-input">Sua Cor:</label>
+                    <label for="bc-color-input">Your Color:</label>
                     <div class="bc-color-presets" id="bc-color-presets"></div>
-                    <input type="color" id="bc-color-input" title="Cor personalizada">
+                    <input type="color" id="bc-color-input" title="Custom color">
                 </div>
             </div>
 
-            <div class="bc-section-title">Participantes (<span id="bc-member-count">0</span>)</div>
+            <div class="bc-section-title">Readers (<span id="bc-member-count">0</span>)</div>
             <div id="bc-members-list" class="bc-members-list"></div>
 
-            <div class="bc-section-title">Discussão e Grifos</div>
+            <div class="bc-section-title">Discussion &amp; Highlights</div>
             <div id="bc-comment-instruction" class="bc-placeholder-text">
-                Selecione texto no livro e clique em "Grifar" ou clique em uma marcação existente para abrir comentários.
+                Select text in the book and click &ldquo;Highlight&rdquo;, or click an existing mark to open comments.
             </div>
             <div id="bc-comments-container" style="display: none;" class="bc-card">
                 <div class="bc-highlight-header">
                     <span class="bc-highlight-author" id="bc-highlight-author"></span>
-                    <button id="bc-delete-highlight-btn" class="bc-delete-btn" title="Excluir Grifo">Excluir</button>
+                    <button id="bc-delete-highlight-btn" class="bc-delete-btn" title="Delete Highlight">Delete</button>
                 </div>
                 <div id="bc-selected-highlight-text" class="bc-highlight-quote"></div>
                 <div id="bc-comments-list" class="bc-comments-list"></div>
                 <div class="bc-comment-form">
-                    <textarea id="bc-comment-input" placeholder="Escreva algo sobre este trecho..."></textarea>
-                    <button id="bc-send-comment-btn" class="bc-btn bc-btn-primary bc-btn-sm">Enviar</button>
+                    <textarea id="bc-comment-input" placeholder="Write something about this passage..."></textarea>
+                    <button id="bc-send-comment-btn" class="bc-btn bc-btn-primary bc-btn-sm">Send</button>
                 </div>
             </div>
         </div>
