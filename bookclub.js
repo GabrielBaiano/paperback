@@ -385,7 +385,7 @@ function updateSliderThumbColor() {
     }
 }
 
-// Render progress bar markers (colored dots per member, excluding self)
+// Render progress bar markers (colored dots per member, excluding self, plus custom chapter ticks)
 function renderProgressMarkers() {
     updateSliderThumbColor();
 
@@ -397,31 +397,42 @@ function renderProgressMarkers() {
     if (!slider || slider.style.visibility === 'hidden') return;
 
     // Get the actual pixel width of the slider track
-    // Range input thumb is typically ~16px wide, so track is width - thumbWidth
     const thumbSize = 16;
     const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
 
-    // Collect all members (including self)
-    const membersList = Object.entries(activeMembers);
-    if (membersList.length === 0) return;
+    // 1. Draw custom chapter ticks (so they show on all browsers/custom sliders)
+    if (globalThis.reader?.view?.getSectionFractions) {
+        const fractions = globalThis.reader.view.getSectionFractions();
+        fractions.forEach(fraction => {
+            const xPx = fraction * (trackWidth - thumbSize) + thumbSize / 2;
+            const tick = document.createElement('div');
+            tick.className = 'bc-progress-tick';
+            tick.style.left = `${xPx}px`;
+            container.appendChild(tick);
+        });
+    }
+
+    // 2. Collect only OTHER members (skip self, as native thumb is user's dot)
+    const others = Object.entries(activeMembers).filter(([id]) => id !== myId);
+    if (others.length === 0) return;
 
     // Group members that are within 3% of each other (cluster threshold)
     const CLUSTER_THRESHOLD = 0.03;
     const clusters = [];
     const used = new Set();
 
-    for (let i = 0; i < membersList.length; i++) {
+    for (let i = 0; i < others.length; i++) {
         if (used.has(i)) continue;
-        const [idA, memberA] = membersList[i];
+        const [idA, memberA] = others[i];
         if (memberA.fraction == null) continue;
 
         const cluster = [[idA, memberA]];
         used.add(i);
 
-        for (let j = i + 1; j < membersList.length; j++) {
+        for (let j = i + 1; j < others.length; j++) {
             if (used.has(j)) continue;
-            const [idB, memberB] = membersList[j];
+            const [idB, memberB] = others[j];
             if (memberB.fraction == null) continue;
             if (Math.abs(memberA.fraction - memberB.fraction) <= CLUSTER_THRESHOLD) {
                 cluster.push([idB, memberB]);
@@ -446,34 +457,29 @@ function renderProgressMarkers() {
         if (cluster.length === 1) {
             // Single dot
             const [id, member] = cluster[0];
-            const isSelf = id === myId;
-            
             const dot = document.createElement('div');
-            dot.className = isSelf ? 'bc-progress-dot bc-progress-dot-self' : 'bc-progress-dot';
+            dot.className = 'bc-progress-dot';
             dot.style.backgroundColor = member.color;
 
             const label = document.createElement('div');
             label.className = 'bc-progress-dot-label';
-            label.textContent = isSelf ? `You · ${Math.round(member.fraction * 100)}%` : `${member.name} · ${Math.round(member.fraction * 100)}%`;
+            label.textContent = `${member.name} · ${Math.round(member.fraction * 100)}%`;
             dot.appendChild(label);
 
-            if (!isSelf && member.cfi) {
+            if (member.cfi) {
                 dot.addEventListener('click', () => globalThis.reader?.view?.goTo(member.cfi));
             }
             wrapper.appendChild(dot);
         } else {
             // Stacked cluster — multi-ring dot
-            const hasSelf = cluster.some(([id]) => id === myId);
-            
             const stack = document.createElement('div');
             stack.className = 'bc-progress-stack';
 
             // Render concentric colored rings (outer to inner)
-            cluster.forEach(([id, member], idx) => {
+            cluster.forEach(([, member], idx) => {
                 const ring = document.createElement('div');
                 ring.className = 'bc-progress-ring';
-                const baseSize = (id === myId) ? 17 : 13;
-                const size = baseSize + idx * 4; // each ring slightly larger
+                const size = 12 + idx * 4; // each ring slightly larger
                 ring.style.width = `${size}px`;
                 ring.style.height = `${size}px`;
                 ring.style.backgroundColor = member.color;
@@ -490,9 +496,7 @@ function renderProgressMarkers() {
             // Label on hover
             const label = document.createElement('div');
             label.className = 'bc-progress-dot-label';
-            label.textContent = cluster.map(([id, m]) => {
-                return id === myId ? `You ${Math.round(m.fraction * 100)}%` : `${m.name} ${Math.round(m.fraction * 100)}%`;
-            }).join(' · ');
+            label.textContent = cluster.map(([, m]) => `${m.name} ${Math.round(m.fraction * 100)}%`).join(' · ');
             stack.appendChild(label);
 
             // Click teleports to first member in cluster
@@ -507,6 +511,7 @@ function renderProgressMarkers() {
         container.appendChild(wrapper);
     }
 }
+
 
 // Render members list
 function renderMembersList() {
