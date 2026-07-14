@@ -1042,11 +1042,70 @@ function initColorPicker() {
     colorInput.addEventListener('input', (e) => applyColor(e.target.value));
 }
 
+// Check Discord login status
+let myDiscordId = null;
+let myAvatarUrl = null;
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        
+        if (data.loggedIn) {
+            const user = data.user;
+            myDiscordId = user.discord_id;
+            myName = user.username;
+            myAvatarUrl = user.avatar_url;
+            myColor = user.color;
+
+            // Fill sidebar profile card
+            const avatarImg = $('#bc-my-avatar');
+            if (avatarImg) avatarImg.src = user.avatar_url;
+            const usernameSpan = $('#bc-my-username');
+            if (usernameSpan) usernameSpan.innerText = user.username;
+
+            document.documentElement.style.setProperty('--bc-user-color', user.color);
+            
+            // Re-select preset swatch color picker
+            const swatches = document.querySelectorAll('.bc-color-swatch');
+            swatches.forEach(s => {
+                s.classList.toggle('selected', s.dataset.color === myColor);
+            });
+            const colorInput = $('#bc-color-input');
+            if (colorInput) colorInput.value = myColor;
+
+            // Wire up logout button
+            const logoutBtn = $('#bc-logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const logoutRes = await fetch('/api/auth/logout', { method: 'POST' });
+                    if (logoutRes.ok) {
+                        window.location.reload();
+                    }
+                });
+            }
+
+            // Hide landing overlay
+            const landing = $('#bc-landing-overlay');
+            if (landing) landing.style.display = 'none';
+
+            // Now run other client initiations
+            initTabs();
+            initSetupEvents();
+            initColorPicker();
+            checkRoomParam();
+        } else {
+            // Show landing overlay
+            const landing = $('#bc-landing-overlay');
+            if (landing) landing.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error('[Book Club] Auth check failed:', e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
-    initSetupEvents();
-    initColorPicker();
-    checkRoomParam();
+    checkAuth();
 
     // Prevent keypresses in inputs/textareas from triggering Foliate page-turn hotkeys
     document.addEventListener('keydown', (e) => {

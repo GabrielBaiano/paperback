@@ -1,5 +1,5 @@
 {
-  "name": "foliate-js",
+  "name": "paperback",
   "version": "0.0.0",
   "description": "Render e-books in the browser",
   "repository": {
@@ -32,8 +32,12 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
+    "sqlite3": "^6.0.1",
     "ws": "^8.18.0"
   },
   "keywords": [

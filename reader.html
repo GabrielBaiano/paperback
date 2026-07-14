@@ -3,7 +3,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
-<title>E-Book Reader</title>
+<title>Paperback</title>
 <link rel="stylesheet" href="bookclub.css">
 <style>
 :root {
@@ -324,6 +324,25 @@ body {
     filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .2));
 }
 </style>
+<div id="bc-landing-overlay" class="bc-landing-overlay" style="display: none;">
+    <div class="bc-landing-card">
+        <div class="bc-landing-logo">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>Paperback</span>
+        </div>
+        <h2>Read books with friends. In real time.</h2>
+        <p>Connect your Discord account to join reading clubs, share highlights, discuss passages, and synchronize your progress automatically across devices.</p>
+        <a href="/api/auth/discord" class="bc-discord-login-btn">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M13.545 2.907a13.245 13.245 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.575-.407.837a12.09 12.09 0 0 0-3.658 0 8.284 8.284 0 0 0-.412-.837.052.052 0 0 0-.052-.025 13.228 13.228 0 0 0-3.258 1.011.051.051 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032c.001.014.01.028.021.037a13.276 13.276 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019c.308-.42.582-.863.818-1.329a.05.05 0 0 0-.01-.059.051.051 0 0 0-.018-.011 8.875 8.875 0 0 1-1.248-.595.05.05 0 0 1-.02-.066.051.051 0 0 1 .015-.019c.084-.063.168-.129.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.052.052 0 0 1 .053.007c.08.066.164.132.248.195a.051.051 0 0 1-.004.085 8.254 8.254 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.235 13.235 0 0 0 4.001-2.02.049.049 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.034.034 0 0 0-.02-.019Zm-7.72 8.924c-.788 0-1.437-.728-1.437-1.62 0-.89.64-1.619 1.437-1.619.797 0 1.44.73 1.437 1.619 0 .892-.64 1.62-1.438 1.62Zm5.016 0c-.788 0-1.438-.728-1.438-1.62 0-.89.64-1.619 1.438-1.619.797 0 1.44.73 1.438 1.619 0 .892-.64 1.62-1.438 1.62Z"/>
+            </svg>
+            Connect with Discord
+        </a>
+    </div>
+</div>
 <input type="file" id="file-input" hidden>
 <div id="drop-target" class="filter">
     <div class="drop-target-inner">
@@ -388,15 +407,15 @@ body {
                     </button>
                 </div>
             </div>
-            
-            <div id="bc-identity-section" class="bc-card">
-                <label for="bc-nick-input">Nickname:</label>
-                <div class="bc-input-group">
-                    <input type="text" id="bc-nick-input" placeholder="What should we call you?">
-                    <button id="bc-save-nick-btn" class="bc-btn bc-btn-sm">Save</button>
+            <div id="bc-identity-section" class="bc-card bc-profile-card">
+                <div class="bc-profile-row">
+                    <img id="bc-my-avatar" class="bc-profile-avatar" src="" alt="Avatar">
+                    <div class="bc-profile-details">
+                        <span id="bc-my-username" class="bc-profile-username">-----</span>
+                        <button id="bc-logout-btn" class="bc-logout-link-btn">Logout</button>
+                    </div>
                 </div>
-                <div class="bc-color-picker-row">
-                    <label for="bc-color-input">Your Color:</label>
+                <div class="bc-color-picker-row" style="margin-top: 12px; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 12px;">
                     <div class="bc-color-presets" id="bc-color-presets"></div>
                     <input type="color" id="bc-color-input" title="Custom color">
                 </div>
