@@ -1096,7 +1096,6 @@ function initColorPicker() {
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initSetupEvents();
-    initCommentFormEvents();
     initColorPicker();
     checkRoomParam();
 
