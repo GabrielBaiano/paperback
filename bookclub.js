@@ -1196,4 +1196,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initCommentFormEvents();
     initColorPicker();
     checkRoomParam();
+
+    // Prevent keypresses in inputs/textareas from triggering Foliate page-turn hotkeys
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+            const k = e.key;
+            if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'h' || k === 'l') {
+                e.stopImmediatePropagation();
+            }
+        }
+    }, true);
 });
