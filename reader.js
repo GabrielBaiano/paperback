@@ -215,6 +215,7 @@ const open = async file => {
     await reader.open(file)
     window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
 }
+globalThis.openBook = open
 
 const dragOverHandler = e => e.preventDefault()
 const dropHandler = e => {
