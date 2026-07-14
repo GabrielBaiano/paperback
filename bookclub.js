@@ -64,7 +64,6 @@ async function checkRoomParam() {
     
     if (urlRoomId && urlRoomId !== 'null' && urlRoomId !== 'undefined') {
         roomId = urlRoomId;
-        localStorage.setItem('redirect_room', urlRoomId); // Store redirect room code immediately
         try {
             const res = await fetch(`/api/rooms/${roomId}`);
             if (res.ok) {
@@ -194,6 +193,22 @@ function initSetupEvents() {
             }, 2000);
         });
     });
+
+    // Leave Room Button
+    const leaveBtn = $('#bc-leave-room-btn');
+    if (leaveBtn) {
+        leaveBtn.addEventListener('click', () => {
+            if (ws) {
+                intentionalClose = true;
+                ws.close();
+                ws = null;
+            }
+            roomId = null;
+            localStorage.removeItem('redirect_room');
+            window.history.pushState({}, document.title, window.location.pathname);
+            window.location.reload();
+        });
+    }
 
     // Select Re-upload file button click
     const selectReuploadBtn = $('#bc-select-reupload-btn');
@@ -352,6 +367,14 @@ function handlePeerMouseMove(data) {
 // WebSocket connection management
 function connectWebSocket() {
     if (!roomId) return;
+
+    // Close any existing WebSocket connection cleanly before establishing a new one
+    if (ws) {
+        console.log('[Book Club] Closing existing WebSocket connection before reconnecting...');
+        intentionalClose = true;
+        ws.close();
+        ws = null;
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}`;
@@ -1299,6 +1322,12 @@ async function loadHistoryList() {
                     });
                     
                     roomCard.addEventListener('click', () => {
+                        // If already in this room, just switch to Book Club tab — no reload needed
+                        if (roomId === room.roomId) {
+                            const tabBookclub = $('#tab-bookclub');
+                            if (tabBookclub) tabBookclub.click();
+                            return;
+                        }
                         const newUrl = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                         window.location.href = newUrl;
                     });
@@ -1410,6 +1439,13 @@ async function checkAuth() {
             if (landingText) landingText.style.display = 'flex';
             const appContent = $('#bc-app-content');
             if (appContent) appContent.style.display = 'none';
+
+            // Store redirect room parameter to redirect_room so that they return to it after Discord OAuth!
+            const params = new URLSearchParams(window.location.search);
+            const urlRoomId = params.get('room');
+            if (urlRoomId && urlRoomId !== 'null' && urlRoomId !== 'undefined') {
+                localStorage.setItem('redirect_room', urlRoomId);
+            }
         }
     } catch (e) {
         console.error('[Book Club] Auth check failed:', e);
