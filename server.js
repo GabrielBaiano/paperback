@@ -448,7 +448,7 @@ app.get('/api/public-rooms', async (req, res) => {
             WHERE r.last_active > datetime('now', '-24 hours')
             GROUP BY r.room_id
             ORDER BY r.last_active DESC
-            LIMIT 20
+            LIMIT 4
         `);
 
         // Annotate with live online count from in-memory clients map
