@@ -211,6 +211,7 @@ class Reader {
 const open = async file => {
     document.body.removeChild($('#drop-target'))
     const reader = new Reader()
+    reader.currentFile = file
     globalThis.reader = reader
     await reader.open(file)
     window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
