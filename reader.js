@@ -102,6 +102,27 @@ class Reader {
         $('#menu-button > button').addEventListener('click', () =>
             menu.element.classList.toggle('show'))
         menu.groups.layout.select('paginated')
+
+        // Help & About option inside settings dropdown
+        const helpItem = document.createElement('li')
+        helpItem.setAttribute('role', 'menuitem')
+        helpItem.innerText = 'Help & About'
+        helpItem.style.cursor = 'pointer'
+        helpItem.style.borderTop = '1px solid rgba(128, 128, 128, 0.15)'
+        helpItem.style.marginTop = '6px'
+        helpItem.style.paddingTop = '6px'
+        helpItem.style.paddingBottom = '6px'
+        helpItem.style.userSelect = 'none'
+
+        helpItem.addEventListener('click', () => {
+            menu.element.classList.remove('show')
+            const overlay = document.getElementById('help-modal-overlay')
+            if (overlay) {
+                overlay.style.display = 'flex'
+                document.body.style.overflow = 'hidden'
+            }
+        })
+        menu.element.append(helpItem)
     }
     async open(file) {
         this.view = document.createElement('foliate-view')

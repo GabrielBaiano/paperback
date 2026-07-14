@@ -1363,62 +1363,34 @@ async function loadHistoryList() {
     }
 }
 
-// Drawer control for the Rooms Shelf
-function openRoomsDrawer() {
-    const drawer = document.getElementById('bc-rooms-drawer');
-    const overlay = document.getElementById('bc-drawer-overlay');
-    if (drawer && overlay) {
-        drawer.classList.add('open');
-        overlay.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-}
 
-function closeRoomsDrawer() {
-    const drawer = document.getElementById('bc-rooms-drawer');
-    const overlay = document.getElementById('bc-drawer-overlay');
-    if (drawer && overlay) {
-        drawer.classList.remove('open');
-        overlay.classList.remove('show');
-        document.body.style.overflow = '';
-    }
-}
 
-// Initialize Rooms Shelf Drawer controls
-function initRoomsDrawer() {
-    const toggleBtn = document.getElementById('bc-shelf-toggle-btn');
-    const closeBtn = document.getElementById('bc-rooms-drawer-close');
-    const overlay = document.getElementById('bc-drawer-overlay');
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            loadMyRooms(); // Refresh the list when opening
-            openRoomsDrawer();
-        });
-    }
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeRoomsDrawer);
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', closeRoomsDrawer);
-    }
-
-    document.addEventListener('keydown', (e) => {
-        const drawer = document.getElementById('bc-rooms-drawer');
-        if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) {
-            closeRoomsDrawer();
-        }
-    });
-}
-
-// Active personal rooms for the logged-in user on the landing page dashboard
+// Active personal rooms for the logged-in user inside the native sidebar
 async function loadMyRooms() {
-    const toggleBtn = document.getElementById('bc-shelf-toggle-btn');
-    const badge = document.getElementById('bc-shelf-badge');
     const list = document.getElementById('your-rooms-list');
     if (!list) return;
+
+    // Toggle native sidebar layout depending on whether a book room is open or not
+    const sidebarHeader = document.getElementById('side-bar-header');
+    const sidebarTabs = document.querySelector('.sidebar-tabs');
+    const tocView = document.getElementById('toc-view');
+    const bookclubView = document.getElementById('bookclub-view');
+    const shelfView = document.getElementById('bc-shelf-sidebar-view');
+
+    if (!roomId) {
+        // Home screen: Show only the shelf view in the sidebar
+        if (sidebarHeader) sidebarHeader.style.display = 'none';
+        if (sidebarTabs) sidebarTabs.style.display = 'none';
+        if (tocView) tocView.style.display = 'none';
+        if (bookclubView) bookclubView.style.display = 'none';
+        if (shelfView) shelfView.style.display = 'flex';
+    } else {
+        // In a book room: Restore native tabs, hide the shelf
+        if (sidebarHeader) sidebarHeader.style.display = 'flex';
+        if (sidebarTabs) sidebarTabs.style.display = 'flex';
+        if (shelfView) shelfView.style.display = 'none';
+        // Note: active tab state (toc or bookclub) will control display of their respective views
+    }
 
     try {
         const res = await fetch('/api/my-rooms');
@@ -1427,22 +1399,8 @@ async function loadMyRooms() {
 
         list.innerHTML = '';
 
-        // Show only active rooms where a book still exists
+        // Show active rooms where book exists
         const activeRooms = (rooms || []).filter(room => room.hasBook);
-
-        // Update floating drawer toggle button visibility & room count badge
-        if (toggleBtn) {
-            if (activeRooms.length > 0) {
-                toggleBtn.style.display = 'flex';
-                if (badge) {
-                    badge.style.display = 'flex';
-                    badge.innerText = activeRooms.length;
-                }
-            } else {
-                toggleBtn.style.display = 'none';
-                if (badge) badge.style.display = 'none';
-            }
-        }
 
         if (activeRooms.length === 0) {
             list.innerHTML = '<div class="your-rooms-empty" style="text-align: center; color: rgba(255,255,255,0.3); padding: 24px 0; font-size: 0.85rem;">No active rooms. Drop a book to start!</div>';
@@ -1457,7 +1415,7 @@ async function loadMyRooms() {
                 ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`
                 : `<span class="your-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
 
-            // Action buttons: Creator gets Delete (lixeira), member gets Leave (porta)
+            // Action buttons: Creator gets Delete, member gets Leave
             let actionBtnHtml = '';
             if (myDiscordId && room.creatorId === myDiscordId) {
                 actionBtnHtml = `
@@ -1502,9 +1460,7 @@ async function loadMyRooms() {
 
             // Card click leads to joining the room
             card.querySelector('.bc-card').addEventListener('click', (e) => {
-                // If they clicked on an action button, do not trigger room navigation
                 if (e.target.closest('.your-room-action-btn')) return;
-                
                 const url = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                 window.location.href = url;
             });
@@ -1532,7 +1488,7 @@ async function loadMyRooms() {
                             .then(res => res.json())
                             .then(data => {
                                 if (data.success) {
-                                    loadMyRooms(); // Refresh lists
+                                    loadMyRooms();
                                     loadHistoryList();
                                 } else {
                                     alert(data.error || 'Failed to delete room');
@@ -1557,7 +1513,7 @@ async function loadMyRooms() {
                             .then(res => res.json())
                             .then(data => {
                                 if (data.success) {
-                                    loadMyRooms(); // Refresh lists
+                                    loadMyRooms();
                                     loadHistoryList();
                                 } else {
                                     alert(data.error || 'Failed to leave room');
@@ -1575,7 +1531,6 @@ async function loadMyRooms() {
         });
     } catch (err) {
         console.warn('[Book Club] Could not load user rooms:', err);
-        if (toggleBtn) toggleBtn.style.display = 'none';
     }
 }
 
@@ -1760,9 +1715,23 @@ async function checkAuth() {
             initAutoReconnect();
             initHelpModal();
             initIdleDetector();
-            initRoomsDrawer();
             loadMyRooms();
-            setInterval(loadMyRooms, 30000);
+
+            // Refresh shelf rooms on Home screen sidebar-button click
+            const sideBtn = document.getElementById('side-bar-button');
+            if (sideBtn) {
+                sideBtn.addEventListener('click', () => {
+                    if (!roomId) {
+                        loadMyRooms();
+                    }
+                });
+            }
+
+            setInterval(() => {
+                if (!roomId) {
+                    loadMyRooms();
+                }
+            }, 30000);
         } else {
             // Show landing screen, hide main app welcome screen
             const landingText = $('#bc-landing-text');
