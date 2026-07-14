@@ -95,16 +95,35 @@ ADMIN_USERS=gabrielbaiano_
 ```
 
 ## Support
-If you find Paperback helpful and want to support its active development, you can buy me a coffee!
+If you find Paperback helpful and want to support its active development, or share it with others:
 
-Quer me ajudar? [Buy me a coffee!](https://buymeacoffee.com/gabrielngal)
+### Buy Me a Coffee
+Want to support Paperback? Buy me a coffee!
+
+<a href="https://buymeacoffee.com/gabrielngal" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="200" height="50" style="height: 50px !important; width: 200px !important;" />
+</a>
+
+### Share the Project
+If you love reading books collaboratively with Paperback, help us spread the word! You can share the link with friends, invite them to your rooms, or tweet about it:
+
+<a href="https://twitter.com/intent/tweet?text=Check%20out%20Paperback,%20a%20clean%20and%20lightweight%20collaborative%20e-book%20reader%20in%20the%20browser!%20https://github.com/GabrielBaiano/paperback" target="_blank">
+  <img src="https://img.shields.io/badge/Share%20on-Twitter-1da1f2.svg?logo=twitter&logoColor=white&style=flat-square" alt="Share on Twitter" />
+</a>
+
+### Help Us Improve
+Want to help make Paperback even better? We welcome all bug reports, feature suggestions, and pull requests!
+
+<a href="./CONTRIBUTING.md">
+  <img src="https://img.shields.io/badge/Contribute-Help%20Improve-blue.svg?style=flat-square" alt="Contributing Guide" />
+</a>
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 <p align="center">
-  Quer me ajudar? <a href="https://buymeacoffee.com/gabrielngal">Buy me a coffee!</a>
+  Want to support Paperback? <a href="https://buymeacoffee.com/gabrielngal">Buy me a coffee!</a>
 </p>
 <p align="center">
   Made by <a href="https://github.com/GabrielBaiano">Gabriel Baiano</a>
