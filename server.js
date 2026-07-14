@@ -52,6 +52,11 @@ app.use(cookieParser());
 app.use(express.static(__dirname));
 app.use('/uploads', express.static(uploadDir));
 
+// Route to serve the main reader page at the root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'reader.html'));
+});
+
 // Helper to parse cookies
 function parseCookies(cookieStr) {
     const list = {};
