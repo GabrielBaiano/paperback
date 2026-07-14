@@ -280,6 +280,7 @@ function handleWSMessage(data) {
 
             renderMembersList();
             renderAllHighlights();
+            renderActivityFeed();
             break;
             
         case 'member_joined':
@@ -318,6 +319,7 @@ function handleWSMessage(data) {
                     pendingCommentCfi = null;
                     openCommentThread(hCfi);
                 }
+                renderActivityFeed();
             }
             break;
             
@@ -331,19 +333,18 @@ function handleWSMessage(data) {
                 if (hoverPopover && hoverPopover.style.display !== 'none' && hoverPopover.dataset.cfi === data.cfi) {
                     renderHoverPopoverComments(data.cfi);
                 }
+                renderActivityFeed();
             }
             break;
             
         case 'highlight_deleted':
-            const hl = activeHighlights[data.cfi];
-            if (hl) {
+            if (activeHighlights[data.cfi]) {
                 removeHighlightFromView(data.cfi);
                 delete activeHighlights[data.cfi];
             }
             if (activeCommentCfi === data.cfi) {
                 closeCommentThread();
             }
-            break;
             
         case 'comment_added':
             if (activeHighlights[data.cfi]) {
@@ -957,7 +958,7 @@ function openCommentThread(cfi) {
     // Switch to Book Club Tab
     $('#tab-bookclub').click();
 
-    $('#bc-comment-instruction').style.display = 'none';
+    $('#bc-feed-panel').style.display = 'none';
     $('#bc-comments-container').style.display = 'block';
     
     $('#bc-highlight-author').innerText = `Highlighted by ${highlight.userName}`;
@@ -965,7 +966,6 @@ function openCommentThread(cfi) {
     $('#bc-selected-highlight-text').style.borderColor = highlight.highlightColor || highlight.userColor;
 
     // Show delete button only if it belongs to current user or if host
-    // For simplicity, let anyone delete it or show it for user
     const isOwner = highlight.userName === myName;
     $('#bc-delete-highlight-btn').style.display = isOwner ? 'block' : 'none';
 
@@ -974,8 +974,65 @@ function openCommentThread(cfi) {
 
 function closeCommentThread() {
     activeCommentCfi = null;
-    $('#bc-comment-instruction').style.display = 'block';
+    $('#bc-feed-panel').style.display = 'flex';
     $('#bc-comments-container').style.display = 'none';
+    renderActivityFeed();
+}
+
+// Render the Chronological Activity Feed
+function renderActivityFeed() {
+    const feed = $('#bc-activity-feed');
+    if (!feed) return;
+    feed.innerHTML = '';
+
+    const highlights = Object.values(activeHighlights);
+    if (highlights.length === 0) {
+        feed.innerHTML = `<div style="font-size: 0.8rem; color: GrayText; text-align: center; padding: 24px 8px; border: 1px dashed rgba(128,128,128,0.25); border-radius: 8px;">No activity yet. Highlight text in the book to start a discussion!</div>`;
+        return;
+    }
+
+    // Sort highlights by timestamp descending (newest first)
+    highlights.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timeB - timeA;
+    });
+
+    highlights.forEach(h => {
+        const card = document.createElement('div');
+        card.className = 'bc-feed-card';
+        
+        // Click to open thread and teleport to cfi position
+        card.addEventListener('click', () => {
+            openCommentThread(h.cfi);
+            if (globalThis.reader) {
+                globalThis.reader.view.goTo(h.cfi);
+            }
+        });
+
+        const timeStr = h.timestamp 
+            ? new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '';
+
+        card.innerHTML = `
+            <div class="bc-feed-card-header">
+                <span class="bc-feed-dot" style="background-color: ${h.userColor || 'gray'};"></span>
+                <span class="bc-feed-author">${h.userName}</span>
+                <span class="bc-feed-time">${timeStr}</span>
+            </div>
+            <div class="bc-feed-quote">"${h.text}"</div>
+            ${h.comments && h.comments.length > 0 ? `
+                <div class="bc-feed-comments-preview">
+                    💬 ${h.comments.length} comment${h.comments.length > 1 ? 's' : ''} (latest: ${h.comments[h.comments.length - 1].userName})
+                </div>
+            ` : `
+                <div class="bc-feed-comments-preview" style="opacity: 0.55;">
+                    💬 Add comment...
+                </div>
+            `}
+        `;
+        feed.appendChild(card);
+    });
 }
 
 function renderComments() {
@@ -1005,6 +1062,14 @@ function renderComments() {
 }
 
 function initCommentFormEvents() {
+    // Back to feed button
+    const closeBtn = $('#bc-close-thread-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeCommentThread();
+        });
+    }
+
     // Send comment button
     $('#bc-send-comment-btn').addEventListener('click', () => {
         const input = $('#bc-comment-input');

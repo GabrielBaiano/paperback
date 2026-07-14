@@ -256,7 +256,8 @@ function handleAddHighlight(ws, data) {
             userName: name,
             userColor: color,
             highlightColor: highlightColor || color,
-            comments: []
+            comments: [],
+            timestamp: new Date().toISOString()
         };
 
         broadcastToRoom(roomId, null, {
