@@ -62,13 +62,18 @@ async function checkRoomParam() {
             const res = await fetch(`/api/rooms/${roomId}`);
             if (res.ok) {
                 const roomData = await res.json();
-                console.log(`[Book Club] Joining Room ${roomId}. Downloading book...`);
                 
-                // Programmatic loading of book
-                if (globalThis.openBook) {
-                    await globalThis.openBook(roomData.bookPath);
+                if (roomData.hasBook) {
+                    console.log(`[Book Club] Joining Room ${roomId}. Downloading book...`);
+                    // Programmatic loading of book
+                    if (globalThis.openBook) {
+                        await globalThis.openBook(roomData.bookPath);
+                    } else {
+                        console.error('[Book Club] globalThis.openBook not found');
+                    }
                 } else {
-                    console.error('[Book Club] globalThis.openBook not found');
+                    console.log(`[Book Club] Room ${roomId} found but book is expired. Showing re-upload panel.`);
+                    showReuploadPanel(roomData.title, roomData.author);
                 }
             } else {
                 alert('Room not found! Check the code you entered.');
@@ -88,10 +93,21 @@ async function checkRoomParam() {
 function showSetupPanel() {
     $('#bc-setup-panel').style.display = 'block';
     $('#bc-room-panel').style.display = 'none';
+    $('#bc-reupload-panel').style.display = 'none';
+}
+
+function showReuploadPanel(title, author) {
+    $('#bc-setup-panel').style.display = 'none';
+    $('#bc-room-panel').style.display = 'none';
+    $('#bc-reupload-panel').style.display = 'block';
+    
+    $('#bc-reupload-title-val').innerText = title || 'Untitled';
+    $('#bc-reupload-author-val').innerText = author || 'Unknown';
 }
 
 function showRoomPanel() {
     $('#bc-setup-panel').style.display = 'none';
+    $('#bc-reupload-panel').style.display = 'none';
     $('#bc-room-panel').style.display = 'block';
     $('#bc-room-id-val').innerText = roomId;
 }
@@ -171,6 +187,32 @@ function initSetupEvents() {
             }, 2000);
         });
     });
+
+    // Select Re-upload file button click
+    const selectReuploadBtn = $('#bc-select-reupload-btn');
+    const reuploadFileInput = $('#bc-reupload-file-input');
+    if (selectReuploadBtn && reuploadFileInput) {
+        selectReuploadBtn.addEventListener('click', () => {
+            reuploadFileInput.click();
+        });
+        
+        reuploadFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file && globalThis.openBook) {
+                await globalThis.openBook(file);
+            }
+        });
+    }
+
+    // Cancel Re-upload button click
+    const cancelReuploadBtn = $('#bc-cancel-reupload-btn');
+    if (cancelReuploadBtn) {
+        cancelReuploadBtn.addEventListener('click', () => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            roomId = null;
+            showSetupPanel();
+        });
+    }
 
 
 
@@ -872,10 +914,34 @@ async function removeHighlightFromView(cfi) {
     }
 }
 
-window.addEventListener('book-opened', ({ detail: reader }) => {
+window.addEventListener('book-opened', async ({ detail: reader }) => {
     console.log('[Book Club] Book opened hook initialized');
     
     if (roomId) {
+        // If reupload panel is visible, upload the book to restore it on the server
+        const reuploadPanel = $('#bc-reupload-panel');
+        const isReuploadActive = reuploadPanel && reuploadPanel.style.display === 'block';
+
+        if (isReuploadActive && reader.currentFile) {
+            console.log('[Book Club] Expired room session active. Restoring book on server...');
+            const formData = new FormData();
+            formData.append('book', reader.currentFile);
+            
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/reupload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    console.log('[Book Club] Room restored on server successfully.');
+                } else {
+                    console.error('[Book Club] Failed to restore room on server.');
+                }
+            } catch (err) {
+                console.error('[Book Club] Error restoring room:', err);
+            }
+        }
+
         showRoomPanel();
         connectWebSocket();
         

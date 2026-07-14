@@ -393,6 +393,24 @@ body {
                 <button id="bc-join-room-btn" class="bc-btn">Join</button>
             </div>
         </div>
+        <!-- If room exists but book has expired, show re-upload prompt -->
+        <div id="bc-reupload-panel" style="display: none;">
+            <h3>Room Session Found!</h3>
+            <p>The temporary book file for this session has expired.</p>
+            <div class="bc-info-card" style="padding: 15px; margin: 10px 0; border: 1px dashed var(--accent, #007acc); border-radius: 8px;">
+                <p style="margin-top: 0; font-size: 0.9em;">Please drag the book file anywhere or choose it below to restore the session:</p>
+                <div class="bc-room-badge" style="display: block; margin-bottom: 8px; font-weight: bold;">Required Book</div>
+                <div style="font-size: 0.95em; padding: 6px 0;">
+                    <strong style="opacity: 0.85;">Title:</strong> <span id="bc-reupload-title-val" style="font-weight: 500;">Untitled</span>
+                </div>
+                <div style="font-size: 0.95em; padding: 6px 0; margin-bottom: 10px;">
+                    <strong style="opacity: 0.85;">Author:</strong> <span id="bc-reupload-author-val" style="font-weight: 500;">Unknown</span>
+                </div>
+                <input type="file" id="bc-reupload-file-input" accept=".epub" style="display: none;">
+                <button id="bc-select-reupload-btn" class="bc-btn bc-btn-primary" style="width: 100%; border-radius: 6px;">Choose EPUB File</button>
+            </div>
+            <button id="bc-cancel-reupload-btn" class="bc-btn" style="width: 100%; margin-top: 5px; opacity: 0.8;">Cancel & Go Home</button>
+        </div>
         <!-- If in a room, show the active room state -->
         <div id="bc-room-panel" style="display: none;">
             <div class="bc-info-card">

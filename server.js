@@ -8,6 +8,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
+import { createClient } from '@supabase/supabase-js';
 
 // Import SQLite helper functions
 import { dbRun, dbGet, dbAll } from './db.js';
@@ -22,6 +23,16 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'foliate-jam-super-secret-key-12345';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+if (supabase) {
+    console.log('[Supabase] Client initialized successfully. Using Supabase Storage.');
+} else {
+    console.log('[Supabase Warning] Credentials missing. Falling back to local ephemeral storage.');
+}
+
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
@@ -34,15 +45,17 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
+const storage = supabase
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+            cb(null, uniqueSuffix + path.extname(file.originalname));
+        }
+    });
 const upload = multer({ storage });
 
 app.use(express.json());
@@ -223,11 +236,34 @@ app.post('/api/rooms', upload.single('book'), async (req, res) => {
     }
 
     const roomId = Math.random().toString(36).substring(2, 11);
-    const bookPath = `/uploads/${req.file.filename}`;
     const title = req.body.title || 'Untitled';
     const author = req.body.author || 'Unknown';
+    let bookPath = '';
 
     try {
+        if (supabase) {
+            // Upload to Supabase Storage
+            const fileKey = `${roomId}-${Date.now()}-${req.file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('books')
+                .upload(fileKey, req.file.buffer, {
+                    contentType: req.file.mimetype || 'application/epub+zip',
+                    upsert: true
+                });
+            
+            if (error) {
+                console.error('[Supabase Upload Error]:', error);
+                throw error;
+            }
+            
+            bookPath = `supabase://${fileKey}`;
+            console.log(`[Supabase Uploaded] Room ID: ${roomId}, File: ${fileKey}`);
+        } else {
+            // Local fallback
+            bookPath = `/uploads/${req.file.filename}`;
+            console.log(`[Local Uploaded] Room ID: ${roomId}, File: ${req.file.filename}`);
+        }
+
         await dbRun(`
             INSERT INTO rooms (room_id, book_path, filename, title, author, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -248,16 +284,120 @@ app.get('/api/rooms/:roomId', async (req, res) => {
         if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
+        
+        let bookPath = room.book_path;
+        let hasBook = false;
+
+        if (room.book_path.startsWith('supabase://')) {
+            if (supabase) {
+                const fileKey = room.book_path.replace('supabase://', '');
+                
+                // Verify that file still exists in bucket
+                const { data: files } = await supabase.storage
+                    .from('books')
+                    .list('', { search: fileKey });
+                
+                const fileExists = files && files.some(f => f.name === fileKey);
+                if (fileExists) {
+                    // Create signed URL for download (expires in 24 hours)
+                    const { data: signedData } = await supabase.storage
+                        .from('books')
+                        .createSignedUrl(fileKey, 86400);
+
+                    if (signedData && signedData.signedUrl) {
+                        bookPath = signedData.signedUrl;
+                        hasBook = true;
+                    }
+                }
+            }
+        } else {
+            // Local fallback
+            const filename = path.basename(room.book_path);
+            const physicalPath = path.join(uploadDir, filename);
+            hasBook = fs.existsSync(physicalPath);
+        }
+
         res.json({
             roomId: room.room_id,
-            bookPath: room.book_path,
+            bookPath,
+            title: room.title,
+            author: room.author,
+            hasBook
+        });
+    } catch (e) {
+        console.error('[API Error] Failed to fetch room:', e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Re-upload a book for an expired room session
+app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) => {
+    const user = await getAuthUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required. Please login with Discord.' });
+    }
+
+    if (!req.file) {
+        return res.status(400).json({ error: 'No book file uploaded' });
+    }
+
+    const { roomId } = req.params;
+    let bookPath = '';
+
+    try {
+        const room = await dbGet('SELECT * FROM rooms WHERE room_id = ?', [roomId]);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+
+        if (supabase) {
+            // Upload to Supabase Storage
+            const fileKey = `${roomId}-${Date.now()}-${req.file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('books')
+                .upload(fileKey, req.file.buffer, {
+                    contentType: req.file.mimetype || 'application/epub+zip',
+                    upsert: true
+                });
+            
+            if (error) {
+                console.error('[Supabase Reupload Error]:', error);
+                throw error;
+            }
+            
+            bookPath = `supabase://${fileKey}`;
+            console.log(`[Supabase Restored] Room ID: ${roomId}, File: ${fileKey}`);
+        } else {
+            // Local fallback
+            bookPath = `/uploads/${req.file.filename}`;
+            console.log(`[Local Restored] Room ID: ${roomId}, File: ${req.file.filename}`);
+        }
+
+        await dbRun('UPDATE rooms SET book_path = ? WHERE room_id = ?', [bookPath, roomId]);
+
+        // If upload is to Supabase, generate signed link immediately to return
+        let returnPath = bookPath;
+        if (supabase && bookPath.startsWith('supabase://')) {
+            const fileKey = bookPath.replace('supabase://', '');
+            const { data: signedData } = await supabase.storage
+                .from('books')
+                .createSignedUrl(fileKey, 86400);
+            if (signedData && signedData.signedUrl) {
+                returnPath = signedData.signedUrl;
+            }
+        }
+
+        console.log(`[Room Restored] Room ID: ${roomId}, New book file: ${req.file.originalname}`);
+        res.json({
+            roomId,
+            bookPath: returnPath,
             title: room.title,
             author: room.author,
             hasBook: true
         });
     } catch (e) {
-        console.error('[API Error] Failed to fetch room:', e);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('[API Error] Failed to reupload book:', e);
+        res.status(500).json({ error: 'Failed to reupload book' });
     }
 });
 
@@ -541,6 +681,82 @@ function broadcastToRoom(roomId, excludeWs, messageObj) {
         }
     }
 }
+
+// Ephemeral Storage: Prune files older than 24 hours (local and Supabase)
+function startPruningTask() {
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    
+    console.log('[Pruner] Initializing automatic file pruning task (Runs every 1 hour).');
+    
+    setInterval(async () => {
+        console.log('[Pruner] Running file pruning check...');
+        const now = Date.now();
+        
+        // 1. Supabase Pruning
+        if (supabase) {
+            try {
+                // List files in the books bucket
+                const { data: files, error } = await supabase.storage
+                    .from('books')
+                    .list('', { limit: 100 });
+                
+                if (error) {
+                    console.error('[Pruner Error] Failed to list Supabase files:', error);
+                } else if (files && files.length > 0) {
+                    const filesToDelete = files
+                        .filter(f => {
+                            const createdTime = new Date(f.created_at).getTime();
+                            const age = now - createdTime;
+                            return age > ONE_DAY_MS;
+                        })
+                        .map(f => f.name);
+                    
+                    if (filesToDelete.length > 0) {
+                        console.log(`[Pruner] Deleting ${filesToDelete.length} inactive files from Supabase Storage:`, filesToDelete);
+                        const { error: removeError } = await supabase.storage
+                            .from('books')
+                            .remove(filesToDelete);
+                        
+                        if (removeError) {
+                            console.error('[Pruner Error] Failed to delete files from Supabase:', removeError);
+                        } else {
+                            console.log('[Pruner] Successfully pruned inactive files from Supabase Storage.');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('[Pruner Error] Supabase pruning error:', e);
+            }
+        }
+        
+        // 2. Local Fallback Pruning
+        fs.readdir(uploadDir, (err, files) => {
+            if (err) {
+                // Ignore if uploadDir doesn't exist or can't be read
+                return;
+            }
+            
+            files.forEach(file => {
+                const filePath = path.join(uploadDir, file);
+                fs.stat(filePath, (statErr, stats) => {
+                    if (statErr) return;
+                    
+                    const age = now - stats.mtimeMs;
+                    if (age > ONE_DAY_MS) {
+                        console.log(`[Pruner] Local file ${file} is inactive. Deleting...`);
+                        fs.unlink(filePath, unlinkErr => {
+                            if (!unlinkErr) {
+                                console.log(`[Pruner] Successfully deleted local inactive book file: ${file}`);
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    }, 60 * 60 * 1000); // Check every 1 hour
+}
+
+startPruningTask();
 
 const PORT = process.env.PORT || 3080;
 server.listen(PORT, () => {

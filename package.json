@@ -32,6 +32,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.5",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
