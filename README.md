@@ -19,14 +19,14 @@
 ---
 
 ## Table of Contents
-- [Introduction](#introduction)
-- [How to Use (Quick Start)](#how-to-use-quick-start)
-- [Book Expiration and Highlights (FAQ)](#book-expiration-and-highlights-faq)
-- [Credits and Attribution](#credits-and-attribution)
-- [Key Features](#key-features)
-- [Developer Setup](#developer-setup)
-- [Support](#support)
-- [License](#license)
+› [Introduction](#introduction)
+› [How to Use (Quick Start)](#how-to-use-quick-start)
+› [Book Expiration and Highlights (FAQ)](#book-expiration-and-highlights-faq)
+› [Credits and Attribution](#credits-and-attribution)
+› [Key Features](#key-features)
+› [Developer Setup](#developer-setup)
+› [Support](#support)
+› [License](#license)
 
 ## Introduction
 Paperback is a free web application that allows multiple people to read e-books together in real-time. Whether you are running a virtual book club, studying textbook chapters with classmates, or sharing a novel with a long-distance partner, Paperback synchronizes your reading positions, highlights, and annotations instantly.
@@ -53,11 +53,11 @@ If you open an expired room, Paperback will show a welcome prompt asking you to 
 Paperback is a fork of the amazing [foliate-js](https://github.com/johnfactotum/foliate-js) library created by [John Factotum](https://github.com/johnfactotum). Foliate-JS provides the high-performance, browser-native rendering engine for EPUB, MOBI, and FB2 formats that Paperback builds upon. We are incredibly grateful for his work.
 
 ## Key Features
-- **Discord Integration**: Single-click secure login displaying user avatars and custom colors in the reader.
-- **Live Location Sync**: WebSocket synchronization displays page markers and progression indicators for all active readers.
-- **Shared Highlights**: Highlight passages and add inline notes that sync in real-time.
-- **Zero-Bandwidth Downloads**: Ephemeral files are uploaded to Supabase Storage and served via signed CDN links directly to the client's browser.
-- **Reading History**: Access your recently opened active and expired rooms directly from the home dashboard.
+◆ **Discord Integration**: Single-click secure login displaying user avatars and custom colors in the reader.
+◆ **Live Location Sync**: WebSocket synchronization displays page markers and progression indicators for all active readers.
+◆ **Shared Highlights**: Highlight passages and add inline notes that sync in real-time.
+◆ **Zero-Bandwidth Downloads**: Ephemeral files are uploaded to Supabase Storage and served via signed CDN links directly to the client's browser.
+◆ **Reading History**: Access your recently opened active and expired rooms directly from the home dashboard.
 
 ## Developer Setup
 If you want to run Paperback locally or deploy your own instance:
@@ -141,8 +141,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
   Want to support Paperback? <a href="https://buymeacoffee.com/gabrielngal">Buy me a coffee!</a>
 </p>
 <p align="center">
-  Made with ❤️ and the help of <a href="https://github.com/matiassingers/awesome-readme">Awesome-Readme</a>
-</p>
-<p align="center">
-  Made by <a href="https://github.com/GabrielBaiano">Gabriel Baiano</a>
+  Made with ❤️ and the help of <a href="https://github.com/GabrielBaiano/awesome-readme">Awesome-Readme</a>
 </p>

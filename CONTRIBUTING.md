@@ -60,6 +60,3 @@ Paperback is a completely free, open-source project. If you want to support its 
 <a href="https://buymeacoffee.com/gabrielngal" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="200" height="50" style="height: 50px !important; width: 200px !important;" />
 </a>
-
----
-Made by <a href="https://github.com/GabrielBaiano">Gabriel Baiano</a>
