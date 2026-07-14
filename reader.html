@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
 <title>E-Book Reader</title>
+<link rel="stylesheet" href="bookclub.css">
 <style>
 :root {
     --active-bg: rgba(0, 0, 0, .05);
@@ -270,7 +271,68 @@ body {
             <p id="side-bar-author"></p>
         </div>
     </div>
-    <div id="toc-view"></div>
+    <div class="sidebar-tabs">
+        <button id="tab-toc" class="tab-btn active">Sumário</button>
+        <button id="tab-bookclub" class="tab-btn">Clube do Livro</button>
+    </div>
+    <div id="toc-view" class="tab-content active"></div>
+    <div id="bookclub-view" class="tab-content">
+        <!-- If not in a room, show creation / join panel -->
+        <div id="bc-setup-panel">
+            <h3>Iniciar Clube do Livro</h3>
+            <p>Compartilhe sua leitura com amigos em tempo real.</p>
+            <button id="bc-create-room-btn" class="bc-btn bc-btn-primary">Criar Sala com Livro Atual</button>
+            <div class="bc-divider"><span>OU</span></div>
+            <h3>Entrar em uma Sala</h3>
+            <div class="bc-join-form">
+                <input type="text" id="bc-join-id-input" placeholder="Código da Sala (ex: a1b2c3d4)">
+                <button id="bc-join-room-btn" class="bc-btn">Entrar</button>
+            </div>
+        </div>
+        <!-- If in a room, show the active room state -->
+        <div id="bc-room-panel" style="display: none;">
+            <div class="bc-info-card">
+                <div class="bc-room-badge">Sala Ativa</div>
+                <div class="bc-room-id-container">
+                    <span id="bc-room-id-val"></span>
+                    <button id="bc-copy-link-btn" title="Copiar Link de Convite">
+                        <svg class="icon" width="16" height="16" aria-hidden="true" style="stroke-width: 2px;">
+                            <path d="M8 4v8M4 8h8"/>
+                        </svg>
+                        Copiar Convite
+                    </button>
+                </div>
+            </div>
+            
+            <div id="bc-identity-section" class="bc-card">
+                <label for="bc-nick-input">Seu Apelido:</label>
+                <div class="bc-input-group">
+                    <input type="text" id="bc-nick-input" placeholder="Como quer ser chamado?">
+                    <button id="bc-save-nick-btn" class="bc-btn bc-btn-sm">Salvar</button>
+                </div>
+            </div>
+
+            <div class="bc-section-title">Participantes (<span id="bc-member-count">0</span>)</div>
+            <div id="bc-members-list" class="bc-members-list"></div>
+
+            <div class="bc-section-title">Discussão e Grifos</div>
+            <div id="bc-comment-instruction" class="bc-placeholder-text">
+                Selecione texto no livro e clique em "Grifar" ou clique em uma marcação existente para abrir comentários.
+            </div>
+            <div id="bc-comments-container" style="display: none;" class="bc-card">
+                <div class="bc-highlight-header">
+                    <span class="bc-highlight-author" id="bc-highlight-author"></span>
+                    <button id="bc-delete-highlight-btn" class="bc-delete-btn" title="Excluir Grifo">Excluir</button>
+                </div>
+                <div id="bc-selected-highlight-text" class="bc-highlight-quote"></div>
+                <div id="bc-comments-list" class="bc-comments-list"></div>
+                <div class="bc-comment-form">
+                    <textarea id="bc-comment-input" placeholder="Escreva algo sobre este trecho..."></textarea>
+                    <button id="bc-send-comment-btn" class="bc-btn bc-btn-primary bc-btn-sm">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="header-bar" class="toolbar">
     <button id="side-bar-button" aria-label="Show sidebar">
@@ -302,3 +364,4 @@ body {
     </button>
 </div>
 <script src="reader.js" type="module"></script>
+<script src="bookclub.js" type="module"></script>
