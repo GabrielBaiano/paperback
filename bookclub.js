@@ -637,14 +637,14 @@ function initCommentFormEvents() {
     });
 }
 
-// Hook reader events once the book is opened
 window.addEventListener('book-opened', ({ detail: reader }) => {
     console.log('[Book Club] Book opened hook initialized');
-    showRoomPanel();
     
-    // Connect WebSockets if roomId is already set (guest path)
     if (roomId) {
+        showRoomPanel();
         connectWebSocket();
+    } else {
+        showSetupPanel();
     }
     
     // Listen for progress changes (relocate event)
