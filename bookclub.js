@@ -1085,6 +1085,21 @@ async function checkAuth() {
                 });
             }
 
+            // Fill welcome screen info and logout button
+            const welcomeUserInfo = $('#bc-welcome-user-info');
+            if (welcomeUserInfo) {
+                welcomeUserInfo.innerHTML = `Connected as <strong>${user.username}</strong>. Not you? <button id="bc-welcome-logout-btn" style="background: none; border: none; color: #ff4444; text-decoration: underline; cursor: pointer; padding: 0; font: inherit;">Logout</button>`;
+                const welcomeLogoutBtn = $('#bc-welcome-logout-btn');
+                if (welcomeLogoutBtn) {
+                    welcomeLogoutBtn.addEventListener('click', async () => {
+                        const logoutRes = await fetch('/api/auth/logout', { method: 'POST' });
+                        if (logoutRes.ok) {
+                            window.location.reload();
+                        }
+                    });
+                }
+            }
+
             // Show main app welcome screen, hide landing screen
             const landingText = $('#bc-landing-text');
             if (landingText) landingText.style.display = 'none';
