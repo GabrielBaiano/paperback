@@ -85,7 +85,8 @@ async function checkRoomParam() {
                     showReuploadPanel(roomData.title, roomData.author);
                 }
             } else {
-                alert('Room not found! Check the code you entered.');
+                const errData = await res.json().catch(() => ({}));
+                alert(errData.error || 'Room not found! Check the code you entered.');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 showSetupPanel();
             }
@@ -161,7 +162,8 @@ function initSetupEvents() {
                 showRoomPanel();
                 connectWebSocket();
             } else {
-                alert('Error creating room.');
+                const errData = await res.json().catch(() => ({}));
+                alert(errData.error || 'Error creating room.');
             }
         } catch (err) {
             console.error('[Book Club] Create room error:', err);

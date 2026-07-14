@@ -23,7 +23,10 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'foliate-jam-super-secret-key-12345';
-const supabaseUrl = process.env.SUPABASE_URL;
+let supabaseUrl = process.env.SUPABASE_URL;
+if (supabaseUrl && supabaseUrl.includes('/rest/v1')) {
+    supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '');
+}
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
