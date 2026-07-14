@@ -62,9 +62,15 @@
 }
 
 .bc-btn-primary {
-    background: currentColor;
+    background: CanvasText;
     color: Canvas;
     border-color: transparent;
+}
+
+.bc-btn:disabled,
+.bc-btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .bc-btn-primary:hover {
