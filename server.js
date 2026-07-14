@@ -851,6 +851,18 @@ function startPruningTask() {
 
 startPruningTask();
 
+// Express Error Handling Middleware to catch Multer and other unhandled errors gracefully
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File too large. Maximum allowed size is 20MB.' });
+        }
+        return res.status(400).json({ error: `Upload error: ${err.message}` });
+    }
+    console.error('[Unhandled Server Error]', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
 const PORT = process.env.PORT || 3080;
 server.listen(PORT, () => {
     console.log(`[Server] Running on http://localhost:${PORT}`);

@@ -1239,11 +1239,13 @@ async function checkAuth() {
 
             // Check if we have a saved redirect room from localStorage
             const redirectRoom = localStorage.getItem('redirect_room');
-            if (redirectRoom) {
+            if (redirectRoom && redirectRoom !== 'null' && redirectRoom !== 'undefined') {
                 localStorage.removeItem('redirect_room');
                 const newUrl = `${window.location.origin}${window.location.pathname}?room=${redirectRoom}`;
                 window.history.replaceState({ roomId: redirectRoom }, document.title, newUrl);
                 roomId = redirectRoom;
+            } else {
+                localStorage.removeItem('redirect_room'); // Clean up dirty string if any
             }
 
             // Now run other client initiations
