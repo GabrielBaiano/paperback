@@ -233,20 +233,24 @@ function initSetupEvents() {
         });
     });
 
+    // Leave Room / Go Home Logic
+    const leaveRoomAndGoHome = () => {
+        if (ws) {
+            intentionalClose = true;
+            ws.close();
+            ws = null;
+        }
+        roomId = null;
+        localStorage.removeItem('redirect_room');
+        window.history.pushState({}, document.title, window.location.pathname);
+        window.location.reload();
+    };
+    globalThis.leaveBookClubAndGoHome = leaveRoomAndGoHome;
+
     // Leave Room Button
     const leaveBtn = $('#bc-leave-room-btn');
     if (leaveBtn) {
-        leaveBtn.addEventListener('click', () => {
-            if (ws) {
-                intentionalClose = true;
-                ws.close();
-                ws = null;
-            }
-            roomId = null;
-            localStorage.removeItem('redirect_room');
-            window.history.pushState({}, document.title, window.location.pathname);
-            window.location.reload();
-        });
+        leaveBtn.addEventListener('click', leaveRoomAndGoHome);
     }
 
     // Select Re-upload file button click

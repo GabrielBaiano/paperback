@@ -103,13 +103,32 @@ class Reader {
             menu.element.classList.toggle('show'))
         menu.groups.layout.select('paginated')
 
+        // Back to Home option inside settings dropdown
+        const homeItem = document.createElement('li')
+        homeItem.setAttribute('role', 'menuitem')
+        homeItem.innerText = 'Back to Home'
+        homeItem.style.cursor = 'pointer'
+        homeItem.style.borderTop = '1px solid rgba(128, 128, 128, 0.15)'
+        homeItem.style.marginTop = '6px'
+        homeItem.style.paddingTop = '6px'
+        homeItem.style.paddingBottom = '6px'
+        homeItem.style.userSelect = 'none'
+
+        homeItem.addEventListener('click', () => {
+            menu.element.classList.remove('show')
+            if (typeof globalThis.leaveBookClubAndGoHome === 'function') {
+                globalThis.leaveBookClubAndGoHome()
+            } else {
+                window.location.href = window.location.origin + window.location.pathname
+            }
+        })
+        menu.element.append(homeItem)
+
         // Help & About option inside settings dropdown
         const helpItem = document.createElement('li')
         helpItem.setAttribute('role', 'menuitem')
         helpItem.innerText = 'Help & About'
         helpItem.style.cursor = 'pointer'
-        helpItem.style.borderTop = '1px solid rgba(128, 128, 128, 0.15)'
-        helpItem.style.marginTop = '6px'
         helpItem.style.paddingTop = '6px'
         helpItem.style.paddingBottom = '6px'
         helpItem.style.userSelect = 'none'
