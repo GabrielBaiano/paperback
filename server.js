@@ -40,12 +40,34 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
 // Configure multer for file uploads
-const uploadDir = fs.existsSync('/data')
+let uploadDir;
+let useDataDir = false;
+try {
+    if (fs.existsSync('/data')) {
+        fs.accessSync('/data', fs.constants.W_OK);
+        useDataDir = true;
+    }
+} catch (err) {
+    console.warn('[Uploads Warning] /data directory exists but is not writable:', err.message);
+}
+
+uploadDir = useDataDir
     ? '/data/uploads'
     : path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (err) {
+        console.error('[Uploads Error] Failed to create upload directory at', uploadDir, err.message);
+        if (useDataDir) {
+            console.log('[Uploads] Falling back to local uploads directory.');
+            uploadDir = path.join(__dirname, 'uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+        }
+    }
 }
 
 const storage = supabase
@@ -81,6 +103,17 @@ app.use('/uploads', express.static(uploadDir));
 // Route to serve the main reader page at the root URL
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'reader.html'));
+});
+
+// Lightweight health check endpoint with DB check for platform monitoring
+app.get('/health', async (req, res) => {
+    try {
+        await dbGet('SELECT 1');
+        res.status(200).json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
+    } catch (err) {
+        console.error('[Health Check Failure]', err);
+        res.status(500).json({ status: 'error', database: err.message, timestamp: new Date().toISOString() });
+    }
 });
 
 // Helper to parse cookies
@@ -1088,6 +1121,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3080;
-server.listen(PORT, () => {
-    console.log(`[Server] Running on http://localhost:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+    console.log(`[Server] Running on http://${HOST}:${PORT}`);
 });

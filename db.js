@@ -6,8 +6,17 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Check if /data directory exists (common persistent volume mount path in production like Fly.io)
-const dataDirExists = fs.existsSync('/data');
+// Check if /data directory exists and is writable (common persistent volume mount path in production like Fly.io)
+let dataDirExists = false;
+try {
+    if (fs.existsSync('/data')) {
+        fs.accessSync('/data', fs.constants.W_OK);
+        dataDirExists = true;
+    }
+} catch (err) {
+    console.warn('[DB Warning] /data directory exists but is not writable. Falling back to local directory.', err.message);
+}
+
 const dbPath = dataDirExists 
     ? '/data/foliate_jam.db' 
     : path.join(__dirname, 'foliate_jam.db');
