@@ -94,6 +94,7 @@ function parseCookies(cookieStr) {
     return list;
 }
 
+
 // Helper middleware to get authenticated user from JWT cookie
 async function getAuthUser(req) {
     const token = req.cookies?.token;
@@ -362,7 +363,7 @@ app.post('/api/rooms', upload.single('book'), async (req, res) => {
     try {
         if (supabase) {
             // Upload to Supabase Storage
-            const fileKey = `${roomId}-${Date.now()}-${req.file.originalname}`;
+            const fileKey = `${roomId}-${Date.now()}.epub`;
             const { data, error } = await supabase.storage
                 .from('books')
                 .upload(fileKey, req.file.buffer, {
@@ -611,7 +612,7 @@ app.post('/api/rooms/:roomId/reupload', upload.single('book'), async (req, res) 
 
         if (supabase) {
             // Upload to Supabase Storage
-            const fileKey = `${roomId}-${Date.now()}-${req.file.originalname}`;
+            const fileKey = `${roomId}-${Date.now()}.epub`;
             const { data, error } = await supabase.storage
                 .from('books')
                 .upload(fileKey, req.file.buffer, {
