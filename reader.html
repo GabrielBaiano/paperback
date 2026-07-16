@@ -419,7 +419,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--menu-header-color);
-    margin: 8px 8px 4px 24px; /* Align horizontally with the text labels */
+    margin: 8px 8px 4px 32px; /* Align horizontally with the text labels and icons */
     user-select: none;
 }
 
@@ -438,7 +438,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 12px 8px 24px; /* Add padding to prevent indicator overlaying icons */
+    padding: 8px 12px 8px 32px; /* Add padding to prevent indicator overlaying icons */
     border-radius: 8px;
     color: var(--menu-text);
     font-size: 0.88rem;
@@ -459,7 +459,7 @@ body {
 /* Active indicator (colored bar on the left) */
 .active-indicator {
     position: absolute;
-    left: 8px;
+    left: 6px;
     top: 50%;
     transform: translateY(-50%) scaleX(0);
     width: 3px;
@@ -494,8 +494,8 @@ body {
 .menu-hover-pill {
     position: absolute;
     top: 0;
-    left: 8px;
-    right: 8px;
+    left: 6px;
+    right: 6px;
     background: var(--menu-hover-bg);
     border-radius: 8px;
     pointer-events: none;
@@ -514,7 +514,7 @@ body {
 .menu-hover-indicator {
     position: absolute;
     top: 0;
-    left: 8px;
+    left: 6px;
     width: 3px;
     height: 16px;
     background: var(--menu-indicator-color);

@@ -391,6 +391,12 @@ class Reader {
     }
     #onLoad({ detail: { doc } }) {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
+        doc.addEventListener('click', () => {
+            const menuMorph = document.getElementById('menu-button-morph')
+            if (menuMorph) {
+                menuMorph.classList.remove('open')
+            }
+        })
     }
     #onRelocate({ detail }) {
         const { fraction, location, tocItem, pageItem } = detail
