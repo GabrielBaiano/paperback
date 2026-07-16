@@ -3,44 +3,89 @@ import { createTOCView } from './ui/tree.js'
 import { createMenu } from './ui/menu.js'
 import { Overlayer } from './overlayer.js'
 
-const getCSS = ({ spacing, justify, hyphenate }) => `
-    @namespace epub "http://www.idpf.org/2007/ops";
-    html {
-        color-scheme: light dark;
-    }
-    /* https://github.com/whatwg/html/issues/5426 */
-    @media (prefers-color-scheme: dark) {
-        a:link {
-            color: lightblue;
-        }
-    }
-    p, li, blockquote, dd {
-        line-height: ${spacing};
-        text-align: ${justify ? 'justify' : 'start'};
-        -webkit-hyphens: ${hyphenate ? 'auto' : 'manual'};
-        hyphens: ${hyphenate ? 'auto' : 'manual'};
-        -webkit-hyphenate-limit-before: 3;
-        -webkit-hyphenate-limit-after: 2;
-        -webkit-hyphenate-limit-lines: 2;
-        hanging-punctuation: allow-end last;
-        widows: 2;
-    }
-    /* prevent the above from overriding the align attribute */
-    [align="left"] { text-align: left; }
-    [align="right"] { text-align: right; }
-    [align="center"] { text-align: center; }
-    [align="justify"] { text-align: justify; }
+// Initialize theme on load
+const savedTheme = localStorage.getItem('paperback-theme') || 'system'
+const htmlEl = document.documentElement
+htmlEl.classList.remove('theme-light', 'theme-dark')
+if (savedTheme === 'light') {
+    htmlEl.classList.add('theme-light')
+} else if (savedTheme === 'dark') {
+    htmlEl.classList.add('theme-dark')
+}
 
-    pre {
-        white-space: pre-wrap !important;
+const getCSS = ({ spacing, justify, hyphenate, theme }) => {
+    let themeCSS = ''
+    if (theme === 'dark') {
+        themeCSS = `
+            body {
+                background-color: #09090b !important;
+                color: #f4f4f5 !important;
+            }
+        `
+    } else if (theme === 'light') {
+        themeCSS = `
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+        `
+    } else {
+        themeCSS = `
+            @media (prefers-color-scheme: dark) {
+                body {
+                    background-color: #09090b !important;
+                    color: #f4f4f5 !important;
+                }
+            }
+            @media (prefers-color-scheme: light) {
+                body {
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
+                }
+            }
+        `
     }
-    aside[epub|type~="endnote"],
-    aside[epub|type~="footnote"],
-    aside[epub|type~="note"],
-    aside[epub|type~="rearnote"] {
-        display: none;
-    }
-`
+
+    return `
+        @namespace epub "http://www.idpf.org/2007/ops";
+        html {
+            color-scheme: ${theme === 'system' ? 'light dark' : theme};
+        }
+        ${themeCSS}
+        /* https://github.com/whatwg/html/issues/5426 */
+        @media (prefers-color-scheme: dark) {
+            a:link {
+                color: lightblue;
+            }
+        }
+        p, li, blockquote, dd {
+            line-height: ${spacing};
+            text-align: ${justify ? 'justify' : 'start'};
+            -webkit-hyphens: ${hyphenate ? 'auto' : 'manual'};
+            hyphens: ${hyphenate ? 'auto' : 'manual'};
+            -webkit-hyphenate-limit-before: 3;
+            -webkit-hyphenate-limit-after: 2;
+            -webkit-hyphenate-limit-lines: 2;
+            hanging-punctuation: allow-end last;
+            widows: 2;
+        }
+        /* prevent the above from overriding the align attribute */
+        [align="left"] { text-align: left; }
+        [align="right"] { text-align: right; }
+        [align="center"] { text-align: center; }
+        [align="justify"] { text-align: justify; }
+
+        pre {
+            white-space: pre-wrap !important;
+        }
+        aside[epub|type~="endnote"],
+        aside[epub|type~="footnote"],
+        aside[epub|type~="note"],
+        aside[epub|type~="rearnote"] {
+            display: none;
+        }
+    `
+}
 
 const $ = document.querySelector.bind(document)
 
@@ -68,6 +113,7 @@ class Reader {
         spacing: 1.4,
         justify: true,
         hyphenate: true,
+        theme: localStorage.getItem('paperback-theme') || 'system'
     }
     annotations = new Map()
     annotationsByValue = new Map()
@@ -75,13 +121,28 @@ class Reader {
         $('#dimming-overlay').classList.remove('show')
         $('#side-bar').classList.remove('show')
     }
+    setTheme(theme) {
+        localStorage.setItem('paperback-theme', theme)
+        const html = document.documentElement
+        html.classList.remove('theme-light', 'theme-dark')
+        if (theme === 'light') {
+            html.classList.add('theme-light')
+        } else if (theme === 'dark') {
+            html.classList.add('theme-dark')
+        }
+        
+        this.style.theme = theme
+        if (this.view && this.view.renderer) {
+            this.view.renderer.setStyles?.(getCSS(this.style))
+        }
+    }
     constructor() {
         $('#side-bar-button').addEventListener('click', () => {
             $('#dimming-overlay').classList.add('show')
             $('#side-bar').classList.add('show')
         })
         $('#dimming-overlay').addEventListener('click', () => this.closeSideBar())
-
+ 
         const menu = createMenu([
             {
                 name: 'layout',
@@ -95,13 +156,27 @@ class Reader {
                     this.view?.renderer.setAttribute('flow', value)
                 },
             },
+            {
+                name: 'theme',
+                label: 'Theme',
+                type: 'radio',
+                items: [
+                    ['Light', 'light'],
+                    ['Dark', 'dark'],
+                    ['System', 'system'],
+                ],
+                onclick: value => {
+                    this.setTheme(value)
+                },
+            },
         ])
         menu.element.classList.add('menu')
-
+ 
         $('#menu-button').append(menu.element)
         $('#menu-button > button').addEventListener('click', () =>
             menu.element.classList.toggle('show'))
         menu.groups.layout.select('paginated')
+        menu.groups.theme.select(this.style.theme)
 
         // Back to Home option inside settings dropdown
         const homeItem = document.createElement('li')
@@ -249,29 +324,136 @@ class Reader {
 }
 
 const open = async file => {
-    if (window.showLoading) {
-        window.showLoading('Opening book...');
-    }
-    try {
-        const dropTarget = $('#drop-target');
-        if (dropTarget && dropTarget.parentNode) {
-            dropTarget.parentNode.removeChild(dropTarget);
-        }
-    } catch (e) {
-        console.warn('Could not remove drop-target:', e);
-    }
-    const reader = new Reader()
-    reader.currentFile = file
-    globalThis.reader = reader
-    try {
-        await reader.open(file)
-    } catch (err) {
+    const dropTarget = $('#drop-target')
+    
+    if (dropTarget) {
         if (window.hideLoading) {
-            window.hideLoading();
+            window.hideLoading()
         }
-        throw err;
+        
+        const icon = $('.logo-loading-wrapper')
+        
+        // Define a list of premium water gradient options to randomly select from
+        const gradients = [
+            'linear-gradient(to top, #f43f5e, #f97316)', // Sunset Red/Coral (original logo vibes)
+            'linear-gradient(to top, #3b82f6, #06b6d4)', // Electric Blue
+            'linear-gradient(to top, #0ea5e9, #10b981)', // Ocean Blue/Teal
+            'linear-gradient(to top, #d946ef, #8b5cf6)', // Neon Purple/Pink
+            'linear-gradient(to top, #10b981, #84cc16)', // Emerald Green
+            'linear-gradient(to top, #f59e0b, #ef4444)', // Warm Sunset Orange
+            'linear-gradient(to top, #8b5cf6, #ec4899)'  // Violet/Deep Pink
+        ]
+        const randomGradient = gradients[Math.floor(Math.random() * gradients.length)]
+        const waterEl = $('.liquid-water')
+        if (waterEl) {
+            waterEl.style.background = randomGradient
+        }
+
+        // --- STAGE 1: Text disappears ---
+        dropTarget.classList.add('loading-stage-1')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        
+        // --- STAGE 2: Icon glides down to center of device ---
+        if (icon) {
+            const rect = icon.getBoundingClientRect()
+            const parentRect = dropTarget.getBoundingClientRect()
+            const inner = $('.drop-target-inner')
+            const innerRect = inner.getBoundingClientRect()
+            
+            // Set starting absolute position matching static layout visually relative to its relative parent (.drop-target-inner)
+            icon.style.transition = 'none'
+            icon.style.position = 'absolute'
+            icon.style.top = `${rect.top - innerRect.top}px`
+            icon.style.left = '50%'
+            icon.style.transform = 'translate(-50%, 0)'
+            icon.style.margin = '0'
+            icon.offsetHeight // Reflow
+            
+            // Restore transition smoothly (takes exactly 800ms)
+            icon.style.transition = 'top 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)'
+            icon.offsetHeight // Reflow
+            
+            // Calculate the exact center of the screen relative to .drop-target-inner's coordinate space
+            const screenCenterY = parentRect.height / 2
+            const innerTopOffset = innerRect.top - parentRect.top
+            const targetTop = screenCenterY - innerTopOffset
+            
+            // Glide to the vertical center of the device
+            icon.style.top = `${targetTop}px`
+            icon.style.transform = 'translate(-50%, -50%)'
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 800))
+        
+        // --- STAGE 3: Liquid loading starts ---
+        dropTarget.classList.add('loading-stage-3')
+        
+        let progress = 0
+        const fillEl = $('.liquid-fill')
+        
+        // Progress animation interval (simulated progress from 0 to 100%)
+        const animPromise = new Promise(resolve => {
+            const interval = setInterval(() => {
+                progress += Math.random() * 8 + 2
+                if (progress >= 100) {
+                    progress = 100
+                    clearInterval(interval)
+                    if (fillEl) fillEl.style.height = '100%'
+                    setTimeout(resolve, 400) // let it settle
+                } else {
+                    if (fillEl) fillEl.style.height = `${progress}%`
+                }
+            }, 100)
+        })
+        
+        const reader = new Reader()
+        reader.currentFile = file
+        globalThis.reader = reader
+        
+        try {
+            // Await both the reader initialization and the progress animation
+            await Promise.all([animPromise, reader.open(file)])
+        } catch (err) {
+            dropTarget.className = 'filter'
+            if (icon) {
+                icon.removeAttribute('style')
+            }
+            if (fillEl) fillEl.style.height = '0%'
+            throw err
+        }
+        
+        // --- STAGE 4: Load finished (fade out lights and screen) ---
+        dropTarget.classList.add('loading-finished')
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // Remove it from the DOM
+        try {
+            if (dropTarget.parentNode) {
+                dropTarget.parentNode.removeChild(dropTarget)
+            }
+        } catch (e) {
+            console.warn('Could not remove drop-target:', e)
+        }
+        
+        window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
+    } else {
+        // Fallback for when drop-target does not exist
+        if (window.showLoading) {
+            window.showLoading('Opening book...')
+        }
+        const reader = new Reader()
+        reader.currentFile = file
+        globalThis.reader = reader
+        try {
+            await reader.open(file)
+        } catch (err) {
+            if (window.hideLoading) {
+                window.hideLoading()
+            }
+            throw err
+        }
+        window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
     }
-    window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
 }
 globalThis.openBook = open
 
