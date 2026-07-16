@@ -339,15 +339,17 @@ body {
     right: 0;
     width: 36px;
     height: 36px;
-    background: var(--menu-bg);
-    border: 1px solid var(--menu-border);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0);
     overflow: hidden;
     transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
                 height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
                 border-radius 0.3s ease,
-                background-color 0.2s;
+                background-color 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -358,12 +360,14 @@ body {
 .menu-morph:not(.open):hover {
     background: var(--menu-hover-bg);
     border-color: var(--menu-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .menu-morph.open {
     width: 220px;
     height: 356px; /* Increased height to prevent 'Help & About' from being cut off at the bottom */
     background: var(--menu-open-bg);
+    border-color: var(--menu-border);
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
