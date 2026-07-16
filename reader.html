@@ -351,6 +351,7 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Hover style when closed */
@@ -361,7 +362,7 @@ body {
 
 .menu-morph.open {
     width: 220px;
-    height: 334px; /* Adjust height to fit the menu items perfectly */
+    height: 356px; /* Increased height to prevent 'Help & About' from being cut off at the bottom */
     background: var(--menu-open-bg);
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -571,7 +572,7 @@ body {
     --menu-text-active: #18181b;
     --menu-hover-bg: #f4f4f5;
     --menu-active-bg: #f4f4f5;
-    --menu-divider: rgba(0, 0, 0, 0.06);
+    --menu-divider: #e4e4e7;
     --menu-header-color: #a1a1aa;
     --menu-dots-color: #71717a;
     --menu-indicator-color: #18181b;
@@ -593,7 +594,7 @@ body {
         --menu-text-active: #ffffff;
         --menu-hover-bg: #27272a;
         --menu-active-bg: #1e1e20;
-        --menu-divider: rgba(255, 255, 255, 0.08);
+        --menu-divider: #27272a;
         --menu-header-color: #71717a;
         --menu-dots-color: #e4e4e7;
         --menu-indicator-color: #ffffff;
@@ -615,7 +616,7 @@ html.theme-light {
     --menu-text-active: #18181b;
     --menu-hover-bg: #f4f4f5;
     --menu-active-bg: #f4f4f5;
-    --menu-divider: rgba(0, 0, 0, 0.06);
+    --menu-divider: #e4e4e7;
     --menu-header-color: #a1a1aa;
     --menu-dots-color: #71717a;
     --menu-indicator-color: #18181b;
@@ -636,7 +637,7 @@ html.theme-dark {
     --menu-text-active: #ffffff;
     --menu-hover-bg: #27272a;
     --menu-active-bg: #1e1e20;
-    --menu-divider: rgba(255, 255, 255, 0.08);
+    --menu-divider: #27272a;
     --menu-header-color: #71717a;
     --menu-dots-color: #e4e4e7;
     --menu-indicator-color: #ffffff;
