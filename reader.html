@@ -396,11 +396,6 @@ foliate-view {
     background-position: 50% 50%, 50% 50%;
     mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
-    mask-size: 200% 200%;
-    mask-position: 0% 0%;
-    -webkit-mask-size: 200% 200%;
-    -webkit-mask-position: 0% 0%;
-    transition: mask-position 1.5s cubic-bezier(0.25, 1, 0.5, 1), -webkit-mask-position 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .aurora-bg-effect::after {
@@ -519,10 +514,8 @@ foliate-view {
 }
 
 #drop-target.loading-finished .aurora-bg-effect {
-    mask-position: -100% 100% !important;
-    -webkit-mask-position: -100% 100% !important;
     opacity: 0 !important;
-    transition: mask-position 1.5s cubic-bezier(0.16, 1, 0.3, 1), -webkit-mask-position 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 </style>
 <input type="file" id="file-input" hidden>
