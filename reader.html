@@ -326,11 +326,99 @@ body {
     position: relative;
     width: 36px;
     height: 36px;
-    margin-right: 8px; /* Safe distance from the right edge */
+    margin-right: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+
+/* Round circle shape for settings morph closed state */
+.menu-morph:not(.open) {
+    border-radius: 50% !important;
+}
+
+/* Hamburger sidebar button as a circle */
+#side-bar-button {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-shadow: 0 0 0 rgba(0,0,0,0) !important;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+    color: GrayText !important;
+    flex-shrink: 0;
+}
+
+#side-bar-button:hover {
+    background: var(--menu-hover-bg) !important;
+    border-color: var(--menu-border) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    color: var(--menu-text-active) !important;
+}
+
+/* Members Pill in header */
+#bc-members-pill {
+    display: none; /* shown by JS when in a room */
+    align-items: center;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 3px 10px 3px 3px;
+    gap: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    height: 36px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+html.theme-light #bc-members-pill {
+    background: rgba(255,255,255,0.75);
+    border-color: rgba(0,0,0,0.10);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+
+.bc-pill-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.5);
+    margin-left: -4px;
+    object-fit: cover;
+    background: #27272a;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.bc-pill-avatar:first-child {
+    margin-left: 0;
+}
+
+.bc-pill-avatar:hover {
+    transform: scale(1.12);
+    z-index: 1;
+    position: relative;
+}
+
+.bc-pill-extra {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    margin-left: 6px;
+    white-space: nowrap;
+    font-family: system-ui, sans-serif;
+    letter-spacing: -0.02em;
+}
+
+html.theme-light .bc-pill-extra {
+    color: #3f3f46;
 }
 
 .menu-morph {
@@ -1287,10 +1375,12 @@ foliate-view {
 </div>
 <div id="header-bar" class="toolbar">
     <button id="side-bar-button" aria-label="Show sidebar">
-        <svg class="icon" width="24" height="24" aria-hidden="true">
-            <path d="M 4 6 h 16 M 4 12 h 16 M 4 18 h 16"/>
+        <svg class="icon" width="18" height="18" aria-hidden="true">
+            <path d="M 3 5 h 12 M 3 9 h 12 M 3 13 h 12"/>
         </svg>
     </button>
+    <!-- Members pill: shown when inside a room -->
+    <div id="bc-members-pill"></div>
     <div id="menu-button-wrapper">
         <div id="menu-button-morph" class="menu-morph">
             <!-- Closed State: 3 Dots Button -->

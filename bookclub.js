@@ -136,12 +136,16 @@ function showSetupPanel() {
     $('#bc-setup-panel').style.display = 'block';
     $('#bc-room-panel').style.display = 'none';
     $('#bc-reupload-panel').style.display = 'none';
+    const pill = $('#bc-members-pill');
+    if (pill) pill.style.display = 'none';
 }
 
 function showReuploadPanel(title, author) {
     $('#bc-setup-panel').style.display = 'none';
     $('#bc-room-panel').style.display = 'none';
     $('#bc-reupload-panel').style.display = 'block';
+    const pill = $('#bc-members-pill');
+    if (pill) pill.style.display = 'none';
     
     $('#bc-reupload-title-val').innerText = title || 'Untitled';
     $('#bc-reupload-author-val').innerText = author || 'Unknown';
@@ -152,6 +156,7 @@ function showRoomPanel() {
     $('#bc-reupload-panel').style.display = 'none';
     $('#bc-room-panel').style.display = 'block';
     $('#bc-room-id-val').innerText = roomId;
+    renderMembersPill();
 }
 
 // Handle Room Setup Events
@@ -741,6 +746,7 @@ function renderMembersList() {
     
     $('#bc-member-count').innerText = `${count} / 10`;
     renderProgressMarkers();
+    renderMembersPill();
 
     // Teleport click handlers
     list.querySelectorAll('.bc-teleport-btn').forEach(btn => {
@@ -751,6 +757,66 @@ function renderMembersList() {
             }
         });
     });
+}
+
+// Render the compact members pill in the header toolbar
+function renderMembersPill() {
+    const pill = $('#bc-members-pill');
+    if (!pill) return;
+
+    const members = Object.values(activeMembers);
+    if (members.length === 0) {
+        pill.style.display = 'none';
+        return;
+    }
+
+    const MAX_SHOWN = 5;
+    const shown = members.slice(0, MAX_SHOWN);
+    const extra = members.length - MAX_SHOWN;
+
+    pill.innerHTML = '';
+    pill.style.display = 'flex';
+
+    shown.forEach(member => {
+        if (member.avatarUrl) {
+            const img = document.createElement('img');
+            img.className = 'bc-pill-avatar';
+            img.src = member.avatarUrl;
+            img.alt = member.name;
+            img.title = member.name;
+            img.onerror = () => {
+                // Fallback to colored circle if image fails
+                img.replaceWith(makeColorDot(member));
+            };
+            pill.appendChild(img);
+        } else {
+            pill.appendChild(makeColorDot(member));
+        }
+    });
+
+    if (extra > 0) {
+        const span = document.createElement('span');
+        span.className = 'bc-pill-extra';
+        span.textContent = `+${extra}`;
+        pill.appendChild(span);
+    }
+}
+
+function makeColorDot(member) {
+    const dot = document.createElement('div');
+    dot.className = 'bc-pill-avatar';
+    dot.style.backgroundColor = member.color;
+    dot.title = member.name;
+    // Show first letter as fallback
+    dot.style.display = 'flex';
+    dot.style.alignItems = 'center';
+    dot.style.justifyContent = 'center';
+    dot.style.fontSize = '0.65rem';
+    dot.style.fontWeight = '700';
+    dot.style.color = '#fff';
+    dot.style.fontFamily = 'system-ui, sans-serif';
+    dot.textContent = (member.name || '?')[0].toUpperCase();
+    return dot;
 }
 
 
