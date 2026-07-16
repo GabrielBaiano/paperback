@@ -27,58 +27,6 @@ let pendingCommentCfi = null;
 let pendingCommentText = null; // Stores comment text while waiting for CFI confirmation
 let selectionMenu = null;
 
-// Confetti Particle System
-const triggerConfetti = (element) => {
-    try {
-        const rect = element.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#ffdd00'];
-
-        for (let i = 0; i < 40; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'bc-confetti-particle';
-            
-            // Random size
-            const size = Math.random() * 6 + 4; // 4px to 10px
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            
-            // Random shape
-            if (Math.random() > 0.5) {
-                particle.style.borderRadius = '50%';
-            }
-            
-            // Random color
-            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            // Initial position centered on the button
-            particle.style.left = `${x - size / 2}px`;
-            particle.style.top = `${y - size / 2}px`;
-            
-            // Random explosion path
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = Math.random() * 120 + 40; // 40px to 160px distance
-            const dx = Math.cos(angle) * velocity;
-            const dy = Math.sin(angle) * velocity + 20; // Bias downward slightly for gravity
-            const dr = Math.random() * 360 + 180; // 180 to 540 degrees rotation
-            
-            particle.style.setProperty('--dx', `${dx}px`);
-            particle.style.setProperty('--dy', `${dy}px`);
-            particle.style.setProperty('--dr', `${dr}deg`);
-            
-            document.body.appendChild(particle);
-            
-            // Cleanup after animation completes
-            setTimeout(() => {
-                particle.remove();
-            }, 800);
-        }
-    } catch (err) {
-        console.error('Error triggering confetti:', err);
-    }
-};
-
 // Live Cursor Synchronization State
 const peerCursors = new Map(); // wsId -> DOM element
 const cursorTimeouts = new Map(); // wsId -> timeoutId for inactivity fade-out
@@ -273,13 +221,12 @@ function initSetupEvents() {
     });
 
     // Copy Invite Link Button
-    $('#bc-copy-link-btn').addEventListener('click', (e) => {
+    $('#bc-copy-link-btn').addEventListener('click', () => {
         const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
         navigator.clipboard.writeText(inviteUrl).then(() => {
             const btn = $('#bc-copy-link-btn');
             const originalText = btn.innerHTML;
             btn.innerHTML = 'Copied!';
-            triggerConfetti(e.currentTarget);
             setTimeout(() => {
                 btn.innerHTML = originalText;
             }, 2000);
@@ -1554,7 +1501,6 @@ async function loadMyRooms() {
                     const btn = e.currentTarget;
                     const originalText = btn.innerHTML;
                     btn.innerHTML = 'Copied!';
-                    triggerConfetti(btn);
                     setTimeout(() => { btn.innerHTML = originalText; }, 2000);
                 });
             });
