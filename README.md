@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/GabrielBaiano/paperback/main/ui/logo.jpg" alt="Paperback Logo" width="200"/>
+  <img src="ui/logo.png" alt="Paperback Logo" width="200"/>
 </p>
 
 <h1 align="center">Paperback</h1>

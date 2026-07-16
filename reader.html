@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data: https://cdn.discordapp.com; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
 <title>Paperback</title>
+<link rel="icon" type="image/png" href="ui/favicon.png">
 <link rel="stylesheet" href="bookclub.css?v=5">
 <style>
 :root {
@@ -325,9 +326,7 @@ body {
 <input type="file" id="file-input" hidden>
 <div id="drop-target" class="filter">
     <div class="drop-target-inner">
-        <svg class="icon empty-state-icon" width="72" height="72" aria-hidden="true">
-            <path d="M36 18s-6-6-12-6-15 6-15 6v42s9-6 15-6 12 6 12 6c4-4 8-6 12-6s12 2 15 6V18c-6-4-12-6-15-6-4 0-8 2-12 6m0 0v42"/>
-        </svg>
+        <img src="ui/logo-white.png" alt="Paperback Logo" class="empty-state-icon" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 12px;" aria-hidden="true">
         
         <!-- Landing / Discord login welcome screen (mimics original welcome screen styling) -->
         <div id="bc-landing-text" style="display: none; flex-direction: column; align-items: center;">
@@ -506,11 +505,7 @@ body {
     <div id="help-modal">
         <div id="help-modal-header">
             <div id="help-modal-logo">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    <path d="M12 6v6l3 2"/>
-                </svg>
+                <img src="ui/logo-white.png" alt="" width="28" height="28" style="flex-shrink: 0; object-fit: contain;" aria-hidden="true">
                 <span>Paperback</span>
             </div>
             <button id="help-modal-close" aria-label="Close modal">
