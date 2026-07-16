@@ -255,8 +255,7 @@ class Reader {
 
                 // Update sliding hover pill
                 if (hoverPill) {
-                    hoverPill.style.transform = `translate3d(${left}px, ${top}px, 0)`
-                    hoverPill.style.width = `${itemRect.width}px`
+                    hoverPill.style.transform = `translate3d(0, ${top}px, 0)`
                     hoverPill.style.height = `${itemRect.height}px`
                     hoverPill.style.opacity = '1'
 

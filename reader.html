@@ -324,19 +324,25 @@ body {
 /* Morphing Settings Menu */
 #menu-button-wrapper {
     position: relative;
+    width: 36px;
+    height: 36px;
+    margin-right: 8px; /* Safe distance from the right edge */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1000;
 }
 
 .menu-morph {
     position: absolute;
-    top: -22px; /* Center it vertically relative to toolbar items */
+    top: 0;
     right: 0;
-    width: 44px;
-    height: 44px;
-    background: #18181b;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 36px;
+    height: 36px;
+    background: var(--menu-bg);
+    border: 1px solid var(--menu-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
                 height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
@@ -349,26 +355,26 @@ body {
 
 /* Hover style when closed */
 .menu-morph:not(.open):hover {
-    background: #27272a;
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--menu-hover-bg);
+    border-color: var(--menu-border);
 }
 
 .menu-morph.open {
     width: 220px;
     height: 334px; /* Adjust height to fit the menu items perfectly */
-    background: #121214;
+    background: var(--menu-open-bg);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* Dots Button style (visible when closed, fades out when open) */
 .menu-dots-btn {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
     background: transparent;
     border: none;
-    color: #e4e4e7;
+    color: var(--menu-dots-color);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -412,8 +418,8 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #71717a;
-    margin: 8px 8px 4px 8px;
+    color: var(--menu-header-color);
+    margin: 8px 8px 4px 24px; /* Align horizontally with the text labels */
     user-select: none;
 }
 
@@ -432,9 +438,9 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 10px;
+    padding: 8px 12px 8px 24px; /* Add padding to prevent indicator overlaying icons */
     border-radius: 8px;
-    color: #a1a1aa;
+    color: var(--menu-text);
     font-size: 0.88rem;
     font-weight: 500;
     cursor: pointer;
@@ -447,25 +453,25 @@ body {
 }
 
 .menu-item.hovered {
-    color: #ffffff;
+    color: var(--menu-text-active);
 }
 
-/* Active indicator (white bar on the left) */
+/* Active indicator (colored bar on the left) */
 .active-indicator {
     position: absolute;
-    left: 4px;
+    left: 8px;
     top: 50%;
     transform: translateY(-50%) scaleX(0);
     width: 3px;
     height: 16px;
-    background: #ffffff;
+    background: var(--menu-indicator-color);
     border-radius: 99px;
     transition: transform 0.15s ease;
     transform-origin: left center;
 }
 
 .menu-item.active {
-    color: #ffffff;
+    color: var(--menu-text-active);
 }
 
 .menu-item.active .active-indicator {
@@ -489,12 +495,11 @@ body {
     position: absolute;
     top: 0;
     left: 8px;
-    background: #27272a;
+    right: 8px;
+    background: var(--menu-hover-bg);
     border-radius: 8px;
     pointer-events: none;
     transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
-                width 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
-                height 0.18s cubic-bezier(0.25, 1, 0.5, 1),
                 opacity 0.12s ease,
                 background-color 0.15s ease;
     opacity: 0;
@@ -503,15 +508,16 @@ body {
 
 .menu-hover-pill.exit-hover {
     background: #ffffff; /* White background for exit/logout hover */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .menu-hover-indicator {
     position: absolute;
     top: 0;
-    left: 4px;
+    left: 8px;
     width: 3px;
     height: 16px;
-    background: #ffffff;
+    background: var(--menu-indicator-color);
     border-radius: 99px;
     pointer-events: none;
     transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
@@ -542,7 +548,7 @@ body {
 /* Divider styling */
 .menu-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--menu-divider);
     margin: 6px 8px;
 }
 
@@ -556,6 +562,19 @@ body {
     --aurora-gradient: var(--aurora-white-grad);
     --aurora-invert: 1;
     --aurora-opacity: 0.35;
+    
+    /* Light Theme Menu variables */
+    --menu-bg: #ffffff;
+    --menu-open-bg: #ffffff;
+    --menu-border: rgba(0, 0, 0, 0.08);
+    --menu-text: #71717a;
+    --menu-text-active: #18181b;
+    --menu-hover-bg: #f4f4f5;
+    --menu-active-bg: #f4f4f5;
+    --menu-divider: rgba(0, 0, 0, 0.06);
+    --menu-header-color: #a1a1aa;
+    --menu-dots-color: #71717a;
+    --menu-indicator-color: #18181b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -565,6 +584,19 @@ body {
         --aurora-gradient: var(--aurora-dark-grad);
         --aurora-invert: 0;
         --aurora-opacity: 0.45;
+        
+        /* Dark Theme Menu variables */
+        --menu-bg: #18181b;
+        --menu-open-bg: #121214;
+        --menu-border: rgba(255, 255, 255, 0.08);
+        --menu-text: #a1a1aa;
+        --menu-text-active: #ffffff;
+        --menu-hover-bg: #27272a;
+        --menu-active-bg: #1e1e20;
+        --menu-divider: rgba(255, 255, 255, 0.08);
+        --menu-header-color: #71717a;
+        --menu-dots-color: #e4e4e7;
+        --menu-indicator-color: #ffffff;
     }
 }
 
@@ -574,6 +606,19 @@ html.theme-light {
     --aurora-gradient: var(--aurora-white-grad);
     --aurora-invert: 1;
     --aurora-opacity: 0.35;
+    
+    /* Light Theme Menu variables */
+    --menu-bg: #ffffff;
+    --menu-open-bg: #ffffff;
+    --menu-border: rgba(0, 0, 0, 0.08);
+    --menu-text: #71717a;
+    --menu-text-active: #18181b;
+    --menu-hover-bg: #f4f4f5;
+    --menu-active-bg: #f4f4f5;
+    --menu-divider: rgba(0, 0, 0, 0.06);
+    --menu-header-color: #a1a1aa;
+    --menu-dots-color: #71717a;
+    --menu-indicator-color: #18181b;
 }
 
 html.theme-dark {
@@ -582,6 +627,19 @@ html.theme-dark {
     --aurora-gradient: var(--aurora-dark-grad);
     --aurora-invert: 0;
     --aurora-opacity: 0.45;
+    
+    /* Dark Theme Menu variables */
+    --menu-bg: #18181b;
+    --menu-open-bg: #121214;
+    --menu-border: rgba(255, 255, 255, 0.08);
+    --menu-text: #a1a1aa;
+    --menu-text-active: #ffffff;
+    --menu-hover-bg: #27272a;
+    --menu-active-bg: #1e1e20;
+    --menu-divider: rgba(255, 255, 255, 0.08);
+    --menu-header-color: #71717a;
+    --menu-dots-color: #e4e4e7;
+    --menu-indicator-color: #ffffff;
 }
 
 body {
