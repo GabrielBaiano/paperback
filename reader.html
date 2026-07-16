@@ -519,7 +519,7 @@ foliate-view {
 /* Fullscreen Multi-Screen Scroller Layout */
 #drop-target-scroller {
     height: 100%;
-    overflow-y: hidden; /* Hide scrollbars, scroll programmatically */
+    overflow-y: hidden !important; /* Hide scrollbars, disable manual scrolling entirely */
     scroll-behavior: smooth;
 }
 
@@ -543,6 +543,15 @@ foliate-view {
     text-align: center;
     position: relative;
     background: transparent;
+    box-sizing: border-box;
+}
+
+.drop-more-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 380px;
+    padding: 0 24px;
     box-sizing: border-box;
 }
 
