@@ -650,8 +650,17 @@ foliate-view {
     color: #8e8e93;
     opacity: 0.6;
     user-select: none;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: opacity 0.2s, color 0.2s;
     font-family: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.bc-copyright:hover {
+    opacity: 1;
+    color: var(--text-color);
 }
 </style>
 <input type="file" id="file-input" hidden>
@@ -918,7 +927,7 @@ foliate-view {
                 <h3>Credits & Copyright</h3>
                 <ul class="help-credits-list">
                     <li><strong>foliate-js</strong> &mdash; Core e-book rendering engine<br><span class="help-credit-sub">Copyright &copy; John Factotum &amp; contributors &mdash; <a href="https://github.com/johnfactotum/foliate-js/blob/main/LICENSE" target="_blank" rel="noopener">LGPL-3.0 License</a></span></li>
-                    <li><strong>Paperback Book Club</strong> &mdash; Collaborative layer<br><span class="help-credit-sub">Copyright &copy; 2024 Gabriel Baiano &mdash; All rights reserved</span></li>
+                    <li><strong>Paperback Book Club</strong> &mdash; Collaborative layer<br><span class="help-credit-sub">Copyright &copy; 2026 Gabriel Baiano &mdash; All rights reserved</span></li>
                 </ul>
             </div>
         </div>

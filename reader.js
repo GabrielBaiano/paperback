@@ -496,6 +496,18 @@ if (scroller && viewMoreBtn && viewBackBtn) {
     })
 }
 
+// Copyright Link opens Help & About Modal
+const copyrightLink = $('.bc-copyright')
+if (copyrightLink) {
+    copyrightLink.addEventListener('click', () => {
+        const overlay = document.getElementById('help-modal-overlay')
+        if (overlay) {
+            overlay.style.display = 'flex'
+            document.body.style.overflow = 'hidden'
+        }
+    })
+}
+
 const params = new URLSearchParams(location.search)
 const url = params.get('url')
 if (url) open(url).catch(e => console.error(e))
