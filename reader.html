@@ -796,14 +796,16 @@ foliate-view {
 
 /* --- STAGE 1: Text disappearing --- */
 #drop-target.loading-stage-1 #bc-landing-text,
-#drop-target.loading-stage-1 #bc-app-content {
-    transform: translateY(80px);
+#drop-target.loading-stage-1 #bc-app-content,
+#drop-target.loading-stage-1 #bc-view-more-btn {
+    transform: translateX(-50%) translateY(80px) !important;
     opacity: 0;
     pointer-events: none;
+    animation: none !important;
     transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease-out;
 }
 
-#bc-landing-text, #bc-app-content {
+#bc-landing-text, #bc-app-content, #bc-view-more-btn {
     transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease-out;
 }
 

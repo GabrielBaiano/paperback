@@ -1758,6 +1758,8 @@ async function checkAuth() {
             if (landingText) landingText.style.display = 'none';
             const appContent = $('#bc-app-content');
             if (appContent) appContent.style.display = 'flex';
+            const viewMoreBtn = $('#bc-view-more-btn');
+            if (viewMoreBtn) viewMoreBtn.style.display = 'inline-flex';
 
             // Check if we have a saved redirect room from localStorage
             const redirectRoom = localStorage.getItem('redirect_room');
@@ -1793,6 +1795,8 @@ async function checkAuth() {
             if (landingText) landingText.style.display = 'flex';
             const appContent = $('#bc-app-content');
             if (appContent) appContent.style.display = 'none';
+            const viewMoreBtn = $('#bc-view-more-btn');
+            if (viewMoreBtn) viewMoreBtn.style.display = 'none';
 
             // Store redirect room parameter to redirect_room so that they return to it after Discord OAuth!
             const params = new URLSearchParams(window.location.search);
