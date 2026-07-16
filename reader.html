@@ -321,6 +321,231 @@ body {
     filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .2));
 }
 
+/* Morphing Settings Menu */
+#menu-button-wrapper {
+    position: relative;
+    z-index: 1000;
+}
+
+.menu-morph {
+    position: absolute;
+    top: -22px; /* Center it vertically relative to toolbar items */
+    right: 0;
+    width: 44px;
+    height: 44px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                border-radius 0.3s ease,
+                background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* Hover style when closed */
+.menu-morph:not(.open):hover {
+    background: #27272a;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.menu-morph.open {
+    width: 220px;
+    height: 334px; /* Adjust height to fit the menu items perfectly */
+    background: #121214;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Dots Button style (visible when closed, fades out when open) */
+.menu-dots-btn {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    background: transparent;
+    border: none;
+    color: #e4e4e7;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.15s, height 0.15s;
+    flex-shrink: 0;
+}
+
+.menu-morph.open .menu-dots-btn {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    min-height: 0;
+}
+
+/* Menu Content styling */
+.menu-morph-content {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
+    transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    box-sizing: border-box;
+    width: 220px;
+    height: 100%;
+}
+
+.menu-morph.open .menu-morph-content {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+    transition: opacity 0.2s ease 0.1s, transform 0.2s cubic-bezier(0.25, 1, 0.5, 1) 0.1s;
+}
+
+/* Section Header (Layout and Theme) */
+.menu-section-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #71717a;
+    margin: 8px 8px 4px 8px;
+    user-select: none;
+}
+
+/* List container */
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Menu Items */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #a1a1aa;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: color 0.15s;
+    font-family: inherit;
+    z-index: 3; /* Render text and icons above the hover pill */
+    background: transparent;
+}
+
+.menu-item.hovered {
+    color: #ffffff;
+}
+
+/* Active indicator (white bar on the left) */
+.active-indicator {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%) scaleX(0);
+    width: 3px;
+    height: 16px;
+    background: #ffffff;
+    border-radius: 99px;
+    transition: transform 0.15s ease;
+    transform-origin: left center;
+}
+
+.menu-item.active {
+    color: #ffffff;
+}
+
+.menu-item.active .active-indicator {
+    transform: translateY(-50%) scaleX(1);
+}
+
+.menu-icon {
+    opacity: 0.7;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+.menu-item.hovered .menu-icon,
+.menu-item.active .menu-icon {
+    opacity: 1;
+}
+
+/* Sliding Hover Pill and Indicator */
+.menu-hover-pill {
+    position: absolute;
+    top: 0;
+    left: 8px;
+    background: #27272a;
+    border-radius: 8px;
+    pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
+                width 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
+                height 0.18s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.12s ease,
+                background-color 0.15s ease;
+    opacity: 0;
+    z-index: 1;
+}
+
+.menu-hover-pill.exit-hover {
+    background: #ffffff; /* White background for exit/logout hover */
+}
+
+.menu-hover-indicator {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    width: 3px;
+    height: 16px;
+    background: #ffffff;
+    border-radius: 99px;
+    pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), 
+                opacity 0.12s ease,
+                background-color 0.15s ease;
+    opacity: 0;
+    z-index: 2;
+}
+
+.menu-hover-indicator.exit-hover {
+    background: #ef4444; /* Red indicator for logout */
+}
+
+/* Exit/Logout Item Hover Text/Icon */
+.menu-item-exit {
+    transition: color 0.15s;
+}
+
+.menu-item-exit.hovered {
+    color: #ef4444 !important;
+}
+
+.menu-item-exit.hovered .menu-icon {
+    color: #ef4444 !important;
+    opacity: 1;
+}
+
+/* Divider styling */
+.menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 6px 8px;
+}
+
 /* Theme and Aurora Background variables */
 :root {
     --bg-color: #ffffff;
@@ -1001,13 +1226,99 @@ foliate-view {
             <path d="M 4 6 h 16 M 4 12 h 16 M 4 18 h 16"/>
         </svg>
     </button>
-    <div id="menu-button" class="menu-container">
-        <button aria-label="Show settings" aria-haspopup="true">
-            <svg class="icon" width="24" height="24" aria-hidden="true">
-                <path d="M5 12.7a7 7 0 0 1 0-1.4l-1.8-2 2-3.5 2.7.5a7 7 0 0 1 1.2-.7L10 3h4l.9 2.6 1.2.7 2.7-.5 2 3.4-1.8 2a7 7 0 0 1 0 1.5l1.8 2-2 3.5-2.7-.5a7 7 0 0 1-1.2.7L14 21h-4l-.9-2.6a7 7 0 0 1-1.2-.7l-2.7.5-2-3.4 1.8-2Z"/>
-                <circle cx="12" cy="12" r="3"/>
-            </svg>
-        </button>
+    <div id="menu-button-wrapper">
+        <div id="menu-button-morph" class="menu-morph">
+            <!-- Closed State: 3 Dots Button -->
+            <button id="menu-toggle-btn" aria-label="Show settings" aria-haspopup="true" class="menu-dots-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="19" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+            </button>
+            
+            <!-- Open State: Settings Dropdown Menu Content -->
+            <div class="menu-morph-content">
+                <!-- Sliding Hover Elements -->
+                <div id="menu-hover-pill" class="menu-hover-pill"></div>
+                <div id="menu-hover-indicator" class="menu-hover-indicator"></div>
+
+                <div class="menu-section-header">Layout</div>
+                <ul role="menu" class="menu-list">
+                    <li role="menuitemradio" id="menu-layout-paginated" class="menu-item">
+                        <span class="active-indicator"></span>
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                        <span class="menu-label">Paginated</span>
+                    </li>
+                    <li role="menuitemradio" id="menu-layout-scrolled" class="menu-item">
+                        <span class="active-indicator"></span>
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                        <span class="menu-label">Scrolled</span>
+                    </li>
+                </ul>
+                
+                <div class="menu-section-header">Theme</div>
+                <ul role="menu" class="menu-list">
+                    <li role="menuitemradio" id="menu-theme-light" class="menu-item">
+                        <span class="active-indicator"></span>
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.22" x2="5.64" y2="17.78"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <span class="menu-label">Light</span>
+                    </li>
+                    <li role="menuitemradio" id="menu-theme-dark" class="menu-item">
+                        <span class="active-indicator"></span>
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                        <span class="menu-label">Dark</span>
+                    </li>
+                    <li role="menuitemradio" id="menu-theme-system" class="menu-item">
+                        <span class="active-indicator"></span>
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/>
+                            <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        <span class="menu-label">System</span>
+                    </li>
+                </ul>
+                
+                <div class="menu-divider"></div>
+                
+                <ul role="menu" class="menu-list">
+                    <li role="menuitem" id="menu-action-home" class="menu-item menu-item-exit">
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="menu-label">Back to Home</span>
+                    </li>
+                    <li role="menuitem" id="menu-action-help" class="menu-item">
+                        <svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span class="menu-label">Help & About</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 

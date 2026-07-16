@@ -1,6 +1,5 @@
 import './view.js'
 import { createTOCView } from './ui/tree.js'
-import { createMenu } from './ui/menu.js'
 import { Overlayer } from './overlayer.js'
 
 // Initialize theme on load
@@ -143,80 +142,165 @@ class Reader {
         })
         $('#dimming-overlay').addEventListener('click', () => this.closeSideBar())
  
-        const menu = createMenu([
-            {
-                name: 'layout',
-                label: 'Layout',
-                type: 'radio',
-                items: [
-                    ['Paginated', 'paginated'],
-                    ['Scrolled', 'scrolled'],
-                ],
-                onclick: value => {
-                    this.view?.renderer.setAttribute('flow', value)
-                },
-            },
-            {
-                name: 'theme',
-                label: 'Theme',
-                type: 'radio',
-                items: [
-                    ['Light', 'light'],
-                    ['Dark', 'dark'],
-                    ['System', 'system'],
-                ],
-                onclick: value => {
-                    this.setTheme(value)
-                },
-            },
-        ])
-        menu.element.classList.add('menu')
- 
-        $('#menu-button').append(menu.element)
-        $('#menu-button > button').addEventListener('click', () =>
-            menu.element.classList.toggle('show'))
-        menu.groups.layout.select('paginated')
-        menu.groups.theme.select(this.style.theme)
+        // Morphing Menu Interaction and Settings
+        const menuMorph = $('#menu-button-morph')
+        const toggleBtn = $('#menu-toggle-btn')
+        const menuContent = $('.menu-morph-content')
+        const hoverPill = $('#menu-hover-pill')
+        const hoverIndicator = $('#menu-hover-indicator')
 
-        // Back to Home option inside settings dropdown
-        const homeItem = document.createElement('li')
-        homeItem.setAttribute('role', 'menuitem')
-        homeItem.innerText = 'Back to Home'
-        homeItem.style.cursor = 'pointer'
-        homeItem.style.borderTop = '1px solid rgba(128, 128, 128, 0.15)'
-        homeItem.style.marginTop = '6px'
-        homeItem.style.paddingTop = '6px'
-        homeItem.style.paddingBottom = '6px'
-        homeItem.style.userSelect = 'none'
+        if (toggleBtn && menuMorph) {
+            toggleBtn.addEventListener('click', e => {
+                e.stopPropagation()
+                menuMorph.classList.toggle('open')
+            })
 
-        homeItem.addEventListener('click', () => {
-            menu.element.classList.remove('show')
+            // Close menu when clicking outside
+            window.addEventListener('click', e => {
+                if (!menuMorph.contains(e.target)) {
+                    menuMorph.classList.remove('open')
+                }
+            })
+        }
+
+        // Layout settings
+        const layoutPaginated = $('#menu-layout-paginated')
+        const layoutScrolled = $('#menu-layout-scrolled')
+
+        const selectLayout = (flow) => {
+            this.view?.renderer.setAttribute('flow', flow)
+            if (flow === 'paginated') {
+                layoutPaginated?.classList.add('active')
+                layoutScrolled?.classList.remove('active')
+            } else {
+                layoutPaginated?.classList.remove('active')
+                layoutScrolled?.classList.add('active')
+            }
+        }
+
+        layoutPaginated?.addEventListener('click', () => {
+            selectLayout('paginated')
+            menuMorph?.classList.remove('open')
+        })
+        layoutScrolled?.addEventListener('click', () => {
+            selectLayout('scrolled')
+            menuMorph?.classList.remove('open')
+        })
+
+        // Theme settings
+        const themeLight = $('#menu-theme-light')
+        const themeDark = $('#menu-theme-dark')
+        const themeSystem = $('#menu-theme-system')
+
+        const selectThemeUI = (theme) => {
+            this.setTheme(theme)
+            themeLight?.classList.remove('active')
+            themeDark?.classList.remove('active')
+            themeSystem?.classList.remove('active')
+
+            if (theme === 'light') themeLight?.classList.add('active')
+            else if (theme === 'dark') themeDark?.classList.add('active')
+            else themeSystem?.classList.add('active')
+        }
+
+        themeLight?.addEventListener('click', () => {
+            selectThemeUI('light')
+            menuMorph?.classList.remove('open')
+        })
+        themeDark?.addEventListener('click', () => {
+            selectThemeUI('dark')
+            menuMorph?.classList.remove('open')
+        })
+        themeSystem?.addEventListener('click', () => {
+            selectThemeUI('system')
+            menuMorph?.classList.remove('open')
+        })
+
+        // Actions
+        const actionHome = $('#menu-action-home')
+        const actionHelp = $('#menu-action-help')
+
+        actionHome?.addEventListener('click', () => {
+            menuMorph?.classList.remove('open')
             if (typeof globalThis.leaveBookClubAndGoHome === 'function') {
                 globalThis.leaveBookClubAndGoHome()
             } else {
                 window.location.href = window.location.origin + window.location.pathname
             }
         })
-        menu.element.append(homeItem)
 
-        // Help & About option inside settings dropdown
-        const helpItem = document.createElement('li')
-        helpItem.setAttribute('role', 'menuitem')
-        helpItem.innerText = 'Help & About'
-        helpItem.style.cursor = 'pointer'
-        helpItem.style.paddingTop = '6px'
-        helpItem.style.paddingBottom = '6px'
-        helpItem.style.userSelect = 'none'
-
-        helpItem.addEventListener('click', () => {
-            menu.element.classList.remove('show')
+        actionHelp?.addEventListener('click', () => {
+            menuMorph?.classList.remove('open')
             const overlay = document.getElementById('help-modal-overlay')
             if (overlay) {
                 overlay.style.display = 'flex'
                 document.body.style.overflow = 'hidden'
             }
         })
-        menu.element.append(helpItem)
+
+        // Sliding Hover Interaction
+        const menuItems = document.querySelectorAll('.menu-item')
+        menuItems.forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                // Remove hovered class from all items and add to current
+                menuItems.forEach(mi => mi.classList.remove('hovered'))
+                item.classList.add('hovered')
+
+                // Calculate relative positions
+                const itemRect = item.getBoundingClientRect()
+                const contentRect = menuContent.getBoundingClientRect()
+                
+                const top = itemRect.top - contentRect.top
+                const left = itemRect.left - contentRect.left
+
+                // Update sliding hover pill
+                if (hoverPill) {
+                    hoverPill.style.transform = `translate3d(${left}px, ${top}px, 0)`
+                    hoverPill.style.width = `${itemRect.width}px`
+                    hoverPill.style.height = `${itemRect.height}px`
+                    hoverPill.style.opacity = '1'
+
+                    if (item.classList.contains('menu-item-exit')) {
+                        hoverPill.classList.add('exit-hover')
+                    } else {
+                        hoverPill.classList.remove('exit-hover')
+                    }
+                }
+
+                // Update sliding hover indicator
+                if (hoverIndicator) {
+                    // Hide indicator on currently selected items to avoid duplicate bars
+                    if (item.classList.contains('active')) {
+                        hoverIndicator.style.opacity = '0'
+                    } else {
+                        const indicatorTop = top + (itemRect.height - 16) / 2
+                        hoverIndicator.style.transform = `translate3d(0, ${indicatorTop}px, 0)`
+                        hoverIndicator.style.opacity = '1'
+                    }
+
+                    if (item.classList.contains('menu-item-exit')) {
+                        hoverIndicator.classList.add('exit-hover')
+                    } else {
+                        hoverIndicator.classList.remove('exit-hover')
+                    }
+                }
+            })
+
+            item.addEventListener('mouseleave', () => {
+                item.classList.remove('hovered')
+            })
+        })
+
+        // Reset hover states on menu leave
+        menuContent?.addEventListener('mouseleave', () => {
+            menuItems.forEach(mi => mi.classList.remove('hovered'))
+            if (hoverPill) hoverPill.style.opacity = '0'
+            if (hoverIndicator) hoverIndicator.style.opacity = '0'
+        })
+
+        // Initialize default active selections on load
+        selectLayout('paginated')
+        selectThemeUI(this.style.theme)
     }
     async open(file) {
         this.view = document.createElement('foliate-view')
