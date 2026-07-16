@@ -475,6 +475,27 @@ $('#file-input').addEventListener('change', e =>
     open(e.target.files[0]).catch(e => console.error(e)))
 $('#file-button').addEventListener('click', () => $('#file-input').click())
 
+// View More / Back Screen Scroller
+const scroller = $('#drop-target-scroller')
+const viewMoreBtn = $('#bc-view-more-btn')
+const viewBackBtn = $('#bc-view-back-btn')
+
+if (scroller && viewMoreBtn && viewBackBtn) {
+    viewMoreBtn.addEventListener('click', () => {
+        scroller.scrollTo({
+            top: window.innerHeight,
+            behavior: 'smooth'
+        })
+    })
+    
+    viewBackBtn.addEventListener('click', () => {
+        scroller.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        })
+    })
+}
+
 const params = new URLSearchParams(location.search)
 const url = params.get('url')
 if (url) open(url).catch(e => console.error(e))

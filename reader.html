@@ -28,10 +28,8 @@ body {
 }
 #drop-target {
     height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    position: relative;
+    overflow: hidden;
     visibility: hidden;
 }
 #drop-target h1 {
@@ -517,63 +515,188 @@ foliate-view {
     opacity: 0 !important;
     transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
+/* Fullscreen Multi-Screen Scroller Layout */
+#drop-target-scroller {
+    height: 100%;
+    overflow-y: hidden; /* Hide scrollbars, scroll programmatically */
+    scroll-behavior: smooth;
+}
+
+.drop-screen-home {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.drop-screen-more {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* View More & Back Link Buttons */
+.bc-link-btn {
+    background: none;
+    border: none;
+    color: #8e8e93; /* Premium gray */
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    transition: color 0.2s, transform 0.2s;
+    user-select: none;
+    font-family: inherit;
+}
+
+.bc-link-btn span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.bc-link-btn:hover {
+    color: var(--text-color);
+    transform: translateY(2px);
+}
+
+/* Align "view more" to the bottom of screen 1 */
+#bc-view-more-btn {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: pulse-bounce 2s infinite;
+}
+
+#bc-view-more-btn:hover {
+    transform: translateX(-50%) translateY(2px);
+    animation: none;
+}
+
+/* Align "back" to the top of screen 2 */
+#bc-view-back-btn {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+}
+
+#bc-view-back-btn:hover {
+    transform: translateX(-2px);
+}
+
+@keyframes pulse-bounce {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateX(-50%) translateY(4px);
+        opacity: 1;
+    }
+}
 </style>
 <input type="file" id="file-input" hidden>
 <div id="drop-target" class="filter">
     <div class="aurora-bg-container">
         <div class="aurora-bg-effect"></div>
     </div>
-    <div class="drop-target-inner">
-        <div class="logo-loading-wrapper">
-            <img src="ui/logo-white-solid.png" alt="Paperback Logo" class="empty-state-icon logo-base" aria-hidden="true">
-            <div class="liquid-fill">
-                <div class="liquid-water"></div>
+    
+    <div id="drop-target-scroller">
+        <div class="drop-screen-home">
+            <div class="drop-target-inner">
+                <div class="logo-loading-wrapper">
+                    <img src="ui/logo-white-solid.png" alt="Paperback Logo" class="empty-state-icon logo-base" aria-hidden="true">
+                    <div class="liquid-fill">
+                        <div class="liquid-water"></div>
+                    </div>
+                </div>
+                
+                <!-- Landing / Discord login welcome screen (mimics original welcome screen styling) -->
+                <div id="bc-landing-text" style="display: none; flex-direction: column; align-items: center;">
+                    <h1 style="margin-top: 16px;">Paperback</h1>
+                    <p style="color: GrayText; font-size: 0.9rem; margin-top: 4px; margin-bottom: 24px; max-width: 320px; line-height: 1.5; font-family: inherit;">
+                        Read books with your friends in real-time. Share highlights, take notes, and sync progress.
+                    </p>
+                    <a href="/api/auth/discord" class="bc-discord-login-btn-classic">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+                            <path d="M13.545 2.907a13.245 13.245 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.575-.407.837a12.09 12.09 0 0 0-3.658 0 8.284 8.284 0 0 0-.412-.837.052.052 0 0 0-.052-.025 13.228 13.228 0 0 0-3.258 1.011.051.051 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032c.001.014.01.028.021.037a13.276 13.276 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019c.308-.42.582-.863.818-1.329a.05.05 0 0 0-.01-.059.051.051 0 0 0-.018-.011 8.875 8.875 0 0 1-1.248-.595.05.05 0 0 1-.02-.066.051.051 0 0 1 .015-.019c.084-.063.168-.129.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.052.052 0 0 1 .053.007c.08.066.164.132.248.195a.051.051 0 0 1-.004.085 8.254 8.254 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.235 13.235 0 0 0 4.001-2.02.049.049 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.034.034 0 0 0-.02-.019Zm-7.72 8.924c-.788 0-1.437-.728-1.437-1.62 0-.89.64-1.619 1.437-1.619.797 0 1.44.73 1.437 1.619 0 .892-.64 1.62-1.438 1.62Zm5.016 0c-.788 0-1.438-.728-1.438-1.62 0-.89.64-1.619 1.438-1.619.797 0 1.44.73 1.438 1.619 0 .892-.64 1.62-1.438 1.62Z"/>
+                        </svg>
+                        Connect with Discord
+                    </a>
+                </div>
+
+                <!-- Main E-Book drop zone content (only shown if logged in) -->
+                <div id="bc-app-content" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                    <h1>Drop a book here!</h1>
+                    <p>Or <button id="file-button">choose a file</button> to open it.</p>
+                    <p style="font-size: 0.85rem; color: GrayText; margin-top: 8px; margin-bottom: 0;" id="bc-welcome-user-info"></p>
+
+                    <!-- Active Rooms shelf modal trigger button -->
+                    <button id="bc-home-shelf-btn" class="bc-btn bc-btn-secondary" style="display: none; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 320px; font-weight: 600; padding: 10px 16px; border-radius: 8px; margin-top: 16px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s, transform 0.15s;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.85; flex-shrink: 0;">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                        <span>My Reading Shelf</span>
+                        <span id="bc-home-shelf-badge" style="background: #ff4747; color: #fff; font-size: 0.72rem; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; box-sizing: border-box;">0</span>
+                    </button>
+
+                    <div class="drop-target-divider">
+                        <span>or join an existing room</span>
+                    </div>
+
+                    <div class="drop-target-join">
+                        <input type="text" id="drop-join-input" placeholder="Room code (e.g. a1b2c3d4e)">
+                        <button id="drop-join-btn" aria-label="Join room">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M13 6l6 6-6 6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
+            
+            <!-- View More Button -->
+            <button id="bc-view-more-btn" class="bc-link-btn" aria-label="View more details">
+                <span>view more</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+            </button>
         </div>
         
-        <!-- Landing / Discord login welcome screen (mimics original welcome screen styling) -->
-        <div id="bc-landing-text" style="display: none; flex-direction: column; align-items: center;">
-            <h1 style="margin-top: 16px;">Paperback</h1>
-            <p style="color: GrayText; font-size: 0.9rem; margin-top: 4px; margin-bottom: 24px; max-width: 320px; line-height: 1.5; font-family: inherit;">
-                Read books with your friends in real-time. Share highlights, take notes, and sync progress.
-            </p>
-            <a href="/api/auth/discord" class="bc-discord-login-btn-classic">
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
-                    <path d="M13.545 2.907a13.245 13.245 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.575-.407.837a12.09 12.09 0 0 0-3.658 0 8.284 8.284 0 0 0-.412-.837.052.052 0 0 0-.052-.025 13.228 13.228 0 0 0-3.258 1.011.051.051 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032c.001.014.01.028.021.037a13.276 13.276 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019c.308-.42.582-.863.818-1.329a.05.05 0 0 0-.01-.059.051.051 0 0 0-.018-.011 8.875 8.875 0 0 1-1.248-.595.05.05 0 0 1-.02-.066.051.051 0 0 1 .015-.019c.084-.063.168-.129.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.052.052 0 0 1 .053.007c.08.066.164.132.248.195a.051.051 0 0 1-.004.085 8.254 8.254 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.235 13.235 0 0 0 4.001-2.02.049.049 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.034.034 0 0 0-.02-.019Zm-7.72 8.924c-.788 0-1.437-.728-1.437-1.62 0-.89.64-1.619 1.437-1.619.797 0 1.44.73 1.437 1.619 0 .892-.64 1.62-1.438 1.62Zm5.016 0c-.788 0-1.438-.728-1.438-1.62 0-.89.64-1.619 1.438-1.619.797 0 1.44.73 1.438 1.619 0 .892-.64 1.62-1.438 1.62Z"/>
+        <div class="drop-screen-more">
+            <!-- Back Button at the top of Screen 2 -->
+            <button id="bc-view-back-btn" class="bc-link-btn bc-back-btn" aria-label="Go back to welcome screen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
-                Connect with Discord
-            </a>
-        </div>
-
-        <!-- Main E-Book drop zone content (only shown if logged in) -->
-        <div id="bc-app-content" style="display: none; flex-direction: column; align-items: center; width: 100%;">
-            <h1>Drop a book here!</h1>
-            <p>Or <button id="file-button">choose a file</button> to open it.</p>
-            <p style="font-size: 0.85rem; color: GrayText; margin-top: 8px; margin-bottom: 0;" id="bc-welcome-user-info"></p>
-
-            <!-- Active Rooms shelf modal trigger button -->
-            <button id="bc-home-shelf-btn" class="bc-btn bc-btn-secondary" style="display: none; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 320px; font-weight: 600; padding: 10px 16px; border-radius: 8px; margin-top: 16px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s, transform 0.15s;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.85; flex-shrink: 0;">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                </svg>
-                <span>My Reading Shelf</span>
-                <span id="bc-home-shelf-badge" style="background: #ff4747; color: #fff; font-size: 0.72rem; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; box-sizing: border-box;">0</span>
+                <span>back</span>
             </button>
-
-            <div class="drop-target-divider">
-                <span>or join an existing room</span>
+            
+            <!-- Placeholder content for the second screen -->
+            <div class="drop-more-content" style="opacity: 0.85; max-width: 380px; padding: 0 24px; box-sizing: border-box;">
+                <h2 style="font-weight: 800; font-size: 1.5rem; margin-bottom: 8px;">Explore More</h2>
+                <p style="color: var(--text-color); opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">
+                    Here we will show statistics, read history, and other collaborative paperback tools. Stay tuned!
+                </p>
             </div>
-
-            <div class="drop-target-join">
-                <input type="text" id="drop-join-input" placeholder="Room code (e.g. a1b2c3d4e)">
-                <button id="drop-join-btn" aria-label="Join room">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14M13 6l6 6-6 6"/>
-                    </svg>
-                </button>
-            </div>
-
         </div>
     </div>
 </div>
