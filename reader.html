@@ -639,6 +639,20 @@ foliate-view {
 .bc-bmc-btn:active {
     transform: translateY(0);
 }
+
+/* Copyright Text Styling */
+.bc-copyright {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #8e8e93;
+    opacity: 0.6;
+    user-select: none;
+    pointer-events: none;
+    font-family: inherit;
+}
 </style>
 <input type="file" id="file-input" hidden>
 <div id="drop-target" class="filter">
@@ -742,6 +756,10 @@ foliate-view {
                         <span>Buy me a coffee</span>
                     </a>
                 </div>
+            </div>
+            
+            <div class="bc-copyright">
+                &copy; 2026 Paperback. All rights reserved.
             </div>
         </div>
     </div>
