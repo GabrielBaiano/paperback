@@ -399,12 +399,15 @@ foliate-view {
 .aurora-bg-effect::after {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 300%;
+    height: 100%;
     background-image: var(--aurora-white-grad), var(--aurora-colors);
-    background-size: 200% 100%;
-    background-attachment: fixed;
+    background-size: 66.666% 100%;
     mix-blend-mode: difference;
-    animation: aurora 40s linear infinite;
+    animation: aurora-gpu 40s linear infinite;
+    will-change: transform;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -413,12 +416,30 @@ foliate-view {
     }
 }
 
-@keyframes aurora {
+@keyframes aurora-gpu {
     0% {
-        background-position: 50% 50%, 50% 50%;
+        transform: translate3d(0, 0, 0);
     }
     100% {
-        background-position: 350% 50%, 350% 50%;
+        transform: translate3d(-66.666%, 0, 0);
+    }
+}
+
+/* Mobile performance optimizations (CLL) */
+@media (max-width: 768px) {
+    .aurora-bg-effect {
+        filter: blur(6px) invert(var(--aurora-invert)); /* Smaller blur is significantly faster to paint on mobile */
+    }
+    .aurora-bg-effect::after {
+        animation-duration: 80s; /* Slow down the animation on mobile to save CPU/GPU cycles and battery */
+    }
+}
+
+/* Support prefers-reduced-motion to save resources and improve accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .aurora-bg-effect::after,
+    #bc-view-more-btn {
+        animation: none !important;
     }
 }
 
