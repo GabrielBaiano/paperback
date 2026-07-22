@@ -171,7 +171,8 @@ app.get('/api/auth/discord', async (req, res) => {
         res.cookie('token', sessionToken, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax'
+            sameSite: 'lax',
+            path: '/'
         });
         return res.redirect('/');
     }
@@ -251,7 +252,8 @@ app.get('/api/auth/discord/callback', async (req, res) => {
         res.cookie('token', sessionToken, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax'
+            sameSite: 'lax',
+            path: '/'
         });
 
         res.redirect('/');
@@ -272,7 +274,7 @@ app.get('/api/auth/me', async (req, res) => {
 
 // 4. Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('token');
+    res.clearCookie('token', { path: '/' });
     res.json({ success: true });
 });
 
