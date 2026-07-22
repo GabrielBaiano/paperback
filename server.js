@@ -19,6 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1);
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -28,14 +29,11 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
 }
 
 function getCookieOptions(req) {
-    const isHttps = req && (req.secure || req.headers['x-forwarded-proto'] === 'https');
-    const isProd = process.env.NODE_ENV === 'production';
     return {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000,
         sameSite: 'lax',
-        path: '/',
-        secure: Boolean(isProd && isHttps)
+        path: '/'
     };
 }
 let supabaseUrl = process.env.SUPABASE_URL;
