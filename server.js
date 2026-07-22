@@ -143,15 +143,19 @@ async function getAuthUser(req) {
 
 // --- Discord OAuth2 API Routes ---
 
-// 1. Redirect to Discord OAuth2 or login mock user if keys are missing
+// 1. Redirect to Discord OAuth2 or login mock user if running locally or keys are missing
 app.get('/api/auth/discord', async (req, res) => {
-    if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
-        console.log('[Auth] Discord credentials missing. Logging in as Mock User.');
+    const host = req.headers.host || '';
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1') || req.query.mock === 'true';
+    const forceReal = req.query.real === 'true';
+
+    if ((isLocalhost && !forceReal) || !DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
+        console.log('[Auth] Local mode or missing Discord credentials. Logging in as Local Tester.');
         const mockUser = {
-            discord_id: 'mock-id-123',
-            username: 'DiscordUser_Dev',
+            discord_id: 'mock-id-local',
+            username: 'Local_Tester',
             avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
-            color: '#7289da'
+            color: '#3b82f6'
         };
         
         await dbRun(`
@@ -164,11 +168,14 @@ app.get('/api/auth/discord', async (req, res) => {
         `, [mockUser.discord_id, mockUser.username, mockUser.avatar_url, mockUser.color, new Date().toISOString()]);
 
         const sessionToken = jwt.sign({ discord_id: mockUser.discord_id }, JWT_SECRET, { expiresIn: '7d' });
-        res.cookie('token', sessionToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('token', sessionToken, {
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: 'lax'
+        });
         return res.redirect('/');
     }
 
-    const host = req.headers.host;
     const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
     const redirectUri = process.env.DISCORD_REDIRECT_URI || `${protocol}://${host}/api/auth/discord/callback`;
 
