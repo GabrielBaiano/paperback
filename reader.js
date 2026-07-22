@@ -409,134 +409,49 @@ class Reader {
 const open = async file => {
     const dropTarget = $('#drop-target')
     
-    if (dropTarget) {
-        if (window.hideLoading) {
-            window.hideLoading()
-        }
-        
-        const icon = $('.logo-loading-wrapper')
-        
-        // Define a list of premium water gradient options to randomly select from
-        const gradients = [
-            'linear-gradient(to top, #f43f5e, #f97316)', // Sunset Red/Coral (original logo vibes)
-            'linear-gradient(to top, #3b82f6, #06b6d4)', // Electric Blue
-            'linear-gradient(to top, #0ea5e9, #10b981)', // Ocean Blue/Teal
-            'linear-gradient(to top, #d946ef, #8b5cf6)', // Neon Purple/Pink
-            'linear-gradient(to top, #10b981, #84cc16)', // Emerald Green
-            'linear-gradient(to top, #f59e0b, #ef4444)', // Warm Sunset Orange
-            'linear-gradient(to top, #8b5cf6, #ec4899)'  // Violet/Deep Pink
-        ]
-        const randomGradient = gradients[Math.floor(Math.random() * gradients.length)]
-        const waterEl = $('.liquid-water')
-        if (waterEl) {
-            waterEl.style.background = randomGradient
-        }
-
-        // --- STAGE 1: Text disappears ---
-        dropTarget.classList.add('loading-stage-1')
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
-        // --- STAGE 2: Icon glides down to center of device ---
-        if (icon) {
-            const rect = icon.getBoundingClientRect()
-            const parentRect = dropTarget.getBoundingClientRect()
-            const inner = $('.drop-target-inner')
-            const innerRect = inner.getBoundingClientRect()
-            
-            // Set starting absolute position matching static layout visually relative to its relative parent (.drop-target-inner)
-            icon.style.transition = 'none'
-            icon.style.position = 'absolute'
-            icon.style.top = `${rect.top - innerRect.top}px`
-            icon.style.left = '50%'
-            icon.style.transform = 'translate(-50%, 0)'
-            icon.style.margin = '0'
-            icon.offsetHeight // Reflow
-            
-            // Restore transition smoothly (takes exactly 800ms)
-            icon.style.transition = 'top 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)'
-            icon.offsetHeight // Reflow
-            
-            // Calculate the exact center of the screen relative to .drop-target-inner's coordinate space
-            const screenCenterY = parentRect.height / 2
-            const innerTopOffset = innerRect.top - parentRect.top
-            const targetTop = screenCenterY - innerTopOffset
-            
-            // Glide to the vertical center of the device
-            icon.style.top = `${targetTop}px`
-            icon.style.transform = 'translate(-50%, -50%)'
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
-        // --- STAGE 3: Liquid loading starts ---
-        dropTarget.classList.add('loading-stage-3')
-        
-        let progress = 0
-        const fillEl = $('.liquid-fill')
-        
-        // Progress animation interval (simulated progress from 0 to 100%)
-        const animPromise = new Promise(resolve => {
-            const interval = setInterval(() => {
-                progress += Math.random() * 8 + 2
-                if (progress >= 100) {
-                    progress = 100
-                    clearInterval(interval)
-                    if (fillEl) fillEl.style.height = '100%'
-                    setTimeout(resolve, 400) // let it settle
-                } else {
-                    if (fillEl) fillEl.style.height = `${progress}%`
-                }
-            }, 100)
-        })
-        
-        const reader = new Reader()
-        reader.currentFile = file
-        globalThis.reader = reader
-        
-        try {
-            // Await both the reader initialization and the progress animation
-            await Promise.all([animPromise, reader.open(file)])
-        } catch (err) {
-            dropTarget.className = 'filter'
-            if (icon) {
-                icon.removeAttribute('style')
-            }
-            if (fillEl) fillEl.style.height = '0%'
-            throw err
-        }
-        
-        // --- STAGE 4: Load finished (fade out lights and screen) ---
-        dropTarget.classList.add('loading-finished')
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        // Remove it from the DOM
-        try {
-            if (dropTarget.parentNode) {
-                dropTarget.parentNode.removeChild(dropTarget)
-            }
-        } catch (e) {
-            console.warn('Could not remove drop-target:', e)
-        }
-        
-        window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
-    } else {
-        // Fallback for when drop-target does not exist
-        if (window.showLoading) {
-            window.showLoading('Opening book...')
-        }
-        const reader = new Reader()
-        reader.currentFile = file
-        globalThis.reader = reader
-        try {
-            await reader.open(file)
-        } catch (err) {
-            if (window.hideLoading) {
-                window.hideLoading()
-            }
-            throw err
-        }
-        window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
+    if (window.showLoading) {
+        window.showLoading('Abrindo livro...', 15, 'Lendo arquivo...')
     }
+
+    const reader = new Reader()
+    reader.currentFile = file
+    globalThis.reader = reader
+
+    try {
+        if (window.updateLoadingProgress) {
+            window.updateLoadingProgress(45, 'Processando formato EPUB...')
+        }
+        
+        await reader.open(file)
+        
+        if (window.updateLoadingProgress) {
+            window.updateLoadingProgress(85, 'Renderizando páginas...')
+        }
+        await new Promise(resolve => setTimeout(resolve, 150))
+        
+        if (window.updateLoadingProgress) {
+            window.updateLoadingProgress(100, 'Livro aberto com sucesso!')
+        }
+        await new Promise(resolve => setTimeout(resolve, 200))
+    } catch (err) {
+        if (window.hideLoading) window.hideLoading()
+        if (dropTarget) dropTarget.style.display = 'block'
+        throw err
+    }
+
+    if (window.hideLoading) {
+        window.hideLoading()
+    }
+
+    try {
+        if (dropTarget && dropTarget.parentNode) {
+            dropTarget.parentNode.removeChild(dropTarget)
+        }
+    } catch (e) {
+        console.warn('Could not remove drop-target:', e)
+    }
+
+    window.dispatchEvent(new CustomEvent('book-opened', { detail: reader }))
 }
 globalThis.openBook = open
 

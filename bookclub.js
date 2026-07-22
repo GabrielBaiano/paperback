@@ -104,19 +104,41 @@ async function checkRoomParam() {
     }
 }
 
-// Global Loading Overlay Controls
-function showLoading(text) {
+// Global Loading Overlay Controls with Progress Bar
+function showLoading(text, percent = 0, subtext = '') {
     const overlay = document.getElementById('bc-loading-overlay');
     const textEl = document.getElementById('bc-loading-text');
-    if (overlay && textEl) {
-        textEl.innerText = text || 'Loading...';
-        overlay.style.display = 'flex';
-        // force reflow
-        overlay.offsetHeight;
-        overlay.style.opacity = '1';
+    const percentEl = document.getElementById('bc-loading-percent');
+    const barEl = document.getElementById('bc-loading-progress-bar');
+    const subtextEl = document.getElementById('bc-loading-subtext');
+    
+    if (overlay) {
+        if (textEl && text) textEl.innerText = text;
+        const p = Math.min(100, Math.max(0, percent));
+        if (percentEl) percentEl.innerText = `${Math.round(p)}%`;
+        if (barEl) barEl.style.width = `${p}%`;
+        if (subtextEl) subtextEl.innerText = subtext || (p > 0 ? `${Math.round(p)}% concluído` : 'Iniciando...');
+        
+        if (overlay.style.display !== 'flex') {
+            overlay.style.display = 'flex';
+            overlay.offsetHeight; // force reflow
+            overlay.style.opacity = '1';
+        }
     }
 }
 window.showLoading = showLoading;
+
+function updateLoadingProgress(percent, subtext = '') {
+    const percentEl = document.getElementById('bc-loading-percent');
+    const barEl = document.getElementById('bc-loading-progress-bar');
+    const subtextEl = document.getElementById('bc-loading-subtext');
+    
+    const p = Math.min(100, Math.max(0, percent));
+    if (percentEl) percentEl.innerText = `${Math.round(p)}%`;
+    if (barEl) barEl.style.width = `${p}%`;
+    if (subtextEl && subtext) subtextEl.innerText = subtext;
+}
+window.updateLoadingProgress = updateLoadingProgress;
 
 function hideLoading() {
     const overlay = document.getElementById('bc-loading-overlay');
@@ -125,11 +147,48 @@ function hideLoading() {
         setTimeout(() => {
             if (overlay.style.opacity === '0') {
                 overlay.style.display = 'none';
+                updateLoadingProgress(0, '');
             }
         }, 250);
     }
 }
 window.hideLoading = hideLoading;
+
+function uploadFileWithProgress(url, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+                const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+                onProgress(percent, loadedMB, totalMB);
+            }
+        };
+        
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    resolve(JSON.parse(xhr.responseText));
+                } catch (e) {
+                    resolve(xhr.responseText);
+                }
+            } else {
+                try {
+                    const err = JSON.parse(xhr.responseText);
+                    reject(new Error(err.error || 'Upload failed'));
+                } catch (e) {
+                    reject(new Error('Upload failed'));
+                }
+            }
+        };
+        
+        xhr.onerror = () => reject(new Error('Network error uploading file'));
+        xhr.send(formData);
+    });
+}
 
 // Show/Hide Panels
 function showSetupPanel() {
@@ -176,18 +235,16 @@ function initSetupEvents() {
         formData.append('title', title);
         formData.append('author', author);
 
-        showLoading('Creating your room and uploading book...');
+        showLoading('Criando sala e enviando livro...', 0, 'Iniciando upload...');
         $('#bc-create-room-btn').innerText = 'Creating Room...';
         $('#bc-create-room-btn').disabled = true;
 
         try {
-            const res = await fetch('/api/rooms', {
-                method: 'POST',
-                body: formData
+            const roomData = await uploadFileWithProgress('/api/rooms', formData, (percent, loadedMB, totalMB) => {
+                updateLoadingProgress(percent, `Enviando livro (${loadedMB} MB / ${totalMB} MB)`);
             });
 
-            if (res.ok) {
-                const roomData = await res.json();
+            if (roomData && roomData.roomId) {
                 roomId = roomData.roomId;
                 
                 // Update URL parameter
@@ -197,12 +254,11 @@ function initSetupEvents() {
                 showRoomPanel();
                 connectWebSocket();
             } else {
-                const errData = await res.json().catch(() => ({}));
-                alert(errData.error || 'Error creating room.');
+                alert('Error creating room.');
             }
         } catch (err) {
             console.error('[Book Club] Create room error:', err);
-            alert('Network error creating room.');
+            alert(err.message || 'Network error creating room.');
         } finally {
             hideLoading();
             $('#bc-create-room-btn').innerText = 'Create Room with Current Book';
