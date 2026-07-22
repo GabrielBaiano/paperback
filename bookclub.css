@@ -106,32 +106,38 @@
 /* Tab Layout */
 .sidebar-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-    background: Canvas;
+    padding: 4px;
+    gap: 4px;
+    margin: 12px 16px 8px 16px;
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.05));
+    border-radius: 10px;
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.06));
 }
 
 .tab-btn {
     flex: 1;
-    padding: 10px;
+    padding: 8px 12px;
     border: none;
-    background: none;
-    color: GrayText;
+    background: transparent;
+    color: var(--menu-text, #64748b);
     font-family: inherit;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
+    border-radius: 7px;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
     outline: none;
 }
 
 .tab-btn:hover {
-    color: CanvasText;
-    background: var(--active-bg);
+    color: var(--menu-text-active, #0f172a);
+    background: rgba(128, 128, 128, 0.08);
 }
 
 .tab-btn.active {
-    color: CanvasText;
-    border-bottom: 2px solid currentColor;
+    color: var(--menu-text-active, #0f172a);
+    background: var(--modal-bg, #ffffff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .tab-content {
@@ -150,24 +156,29 @@
 /* Utilities */
 .bc-btn {
     font-family: inherit;
-    font-size: 0.9rem;
-    padding: 8px 12px;
-    border: 1px solid rgba(128, 128, 128, 0.4);
-    background: Canvas;
-    color: CanvasText;
-    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.1));
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
+    outline: none;
 }
 
 .bc-btn:hover {
-    background: var(--active-bg);
+    background: var(--menu-hover-bg, #f1f5f9);
+    border-color: var(--menu-border, rgba(0, 0, 0, 0.2));
+    transform: translateY(-1px);
 }
 
 .bc-btn-primary {
-    background: CanvasText;
-    color: Canvas;
-    border-color: transparent;
+    background: var(--text-color, #0f172a);
+    color: var(--bg-color, #ffffff);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .bc-btn:disabled,
@@ -177,27 +188,34 @@
 }
 
 .bc-btn-primary:hover {
-    opacity: 0.9;
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .bc-btn-sm {
-    padding: 4px 8px;
-    font-size: 0.8rem;
+    padding: 5px 10px;
+    font-size: 0.78rem;
 }
 
 .bc-card {
-    background: var(--active-bg);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
+    background: var(--card-bg, rgba(0, 0, 0, 0.03));
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.08));
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .bc-divider {
     display: flex;
     align-items: center;
     text-align: center;
-    color: GrayText;
-    font-size: 0.8rem;
+    color: var(--menu-text, #94a3b8);
+    font-size: 0.78rem;
+    font-weight: 600;
     margin: 16px 0;
 }
 
@@ -205,7 +223,7 @@
 .bc-divider::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    border-bottom: 1px solid var(--menu-divider, rgba(128, 128, 128, 0.2));
 }
 
 .bc-divider span {
@@ -216,14 +234,17 @@
 #bc-setup-panel h3 {
     margin-top: 0;
     margin-bottom: 8px;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color, #0f172a);
 }
 
 #bc-setup-panel p {
-    color: GrayText;
-    font-size: 0.9rem;
+    color: var(--menu-text, #64748b);
+    font-size: 0.85rem;
     margin-top: 0;
     margin-bottom: 16px;
+    line-height: 1.45;
 }
 
 .bc-join-form {
@@ -234,56 +255,96 @@
 .bc-join-form input,
 .bc-input-group input {
     flex-grow: 1;
-    padding: 8px;
-    border: 1px solid rgba(128, 128, 128, 0.4);
-    background: Canvas;
-    color: CanvasText;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--menu-border, rgba(128, 128, 128, 0.4));
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border-radius: 8px;
     font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.bc-join-form input:focus,
+.bc-input-group input:focus {
+    border-color: var(--menu-indicator-color, #0f172a);
 }
 
 /* Room Panel */
 .bc-info-card {
-    background: var(--active-bg);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
+    background: var(--card-bg, rgba(0, 0, 0, 0.03));
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.08));
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid currentColor;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .bc-room-badge {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    font-weight: bold;
-    color: GrayText;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--menu-header-color, #94a3b8);
 }
 
 .bc-room-id-container {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
 }
 
-#bc-room-id-val {
-    font-family: monospace;
-    font-size: 1.1rem;
-    font-weight: bold;
+.bc-code-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-primary, #0f172a);
+    background: var(--bg-tertiary, rgba(0, 0, 0, 0.04));
+    border: 1px dashed var(--border-color, rgba(0, 0, 0, 0.15));
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: all;
 }
 
-#bc-copy-link-btn {
-    background: none;
+.bc-code-badge:hover {
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.08));
+    border-color: var(--menu-indicator-color, #0f172a);
+}
+
+.bc-leave-btn {
+    background-color: #ef4444;
+    color: #ffffff;
     border: none;
-    color: currentColor;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.8rem;
-    padding: 0;
-    text-decoration: underline;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    transition: all 0.15s ease;
+}
+
+.bc-leave-btn:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
 }
 
 .bc-input-group {
@@ -302,7 +363,7 @@
 
 .bc-color-picker-row label {
     font-size: 0.8rem;
-    color: GrayText;
+    color: var(--menu-text, #64748b);
     white-space: nowrap;
 }
 
@@ -330,7 +391,7 @@
 }
 
 .bc-color-swatch.selected {
-    border-color: CanvasText;
+    border-color: var(--text-color, #0f172a);
     transform: scale(1.15);
 }
 
@@ -344,9 +405,9 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 2px solid white;
+    border: 2px solid var(--modal-bg, #ffffff);
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     background-color: var(--my-color, #ff0055);
     outline: none;
     padding: 0;
@@ -355,7 +416,7 @@
 }
 
 .bc-color-dropdown-trigger:hover {
-    transform: scale(1.1);
+    transform: scale(1.12);
 }
 
 .bc-color-dropdown-menu {
@@ -363,14 +424,15 @@
     position: absolute;
     right: 0;
     top: calc(100% + 6px);
-    background: #232428;
-    border: 1px solid #3f4147;
-    border-radius: 8px;
+    background: var(--modal-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--modal-border, rgba(0, 0, 0, 0.12));
+    border-radius: 10px;
     padding: 8px;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     width: max-content;
 }
 
@@ -379,13 +441,13 @@
 }
 
 .bc-section-title {
-    font-size: 0.85rem;
-    font-weight: bold;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    color: GrayText;
-    margin-bottom: 8px;
-    margin-top: 16px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.08em;
+    color: var(--menu-header-color, #94a3b8);
+    margin-bottom: 10px;
+    margin-top: 18px;
 }
 
 /* Members List */
@@ -399,46 +461,61 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: var(--active-bg);
-    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--card-bg, rgba(0, 0, 0, 0.03));
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.06));
+    font-size: 0.88rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.bc-member-item:hover {
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.06));
+    border-color: var(--menu-border, rgba(0, 0, 0, 0.12));
 }
 
 .bc-member-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .bc-avatar {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px var(--modal-bg, #ffffff);
 }
 
 .bc-member-name {
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--text-color, #0f172a);
 }
 
 .bc-member-progress {
     font-size: 0.75rem;
-    color: GrayText;
+    font-weight: 600;
+    color: var(--menu-text, #64748b);
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.05));
+    padding: 2px 8px;
+    border-radius: 12px;
 }
 
 .bc-teleport-btn {
     background: none;
     border: none;
-    color: GrayText;
+    color: var(--menu-text, #64748b);
     cursor: pointer;
     font-size: 0.75rem;
     text-decoration: underline;
     padding: 0;
+    transition: color 0.15s ease;
 }
 
 .bc-teleport-btn:hover {
-    color: CanvasText;
+    color: var(--text-color, #0f172a);
 }
 
 /* Comment Thread & Highlights */
@@ -527,25 +604,26 @@
 .bc-comment-form textarea {
     width: 100%;
     height: 50px;
-    padding: 6px;
-    border: 1px solid rgba(128, 128, 128, 0.4);
-    background: Canvas;
-    color: CanvasText;
-    border-radius: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--menu-border, rgba(128, 128, 128, 0.4));
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border-radius: 8px;
     font-family: inherit;
     font-size: 0.85rem;
     resize: none;
     box-sizing: border-box;
     margin-bottom: 6px;
+    outline: none;
 }
 
 /* Floating Selection Menu */
 .bc-selection-menu {
     position: absolute;
     z-index: 9999;
-    background: Canvas;
-    color: CanvasText;
-    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: var(--modal-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--modal-border, rgba(0, 0, 0, 0.12));
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 4px;
@@ -560,9 +638,9 @@
     position: absolute;
     z-index: 10000;
     width: 280px;
-    background: Canvas;
-    color: CanvasText;
-    border: 1px solid rgba(128, 128, 128, 0.35);
+    background: var(--modal-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--modal-border, rgba(0, 0, 0, 0.12));
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
     border-radius: 10px;
     padding: 12px;
@@ -575,20 +653,20 @@
 .bc-floating-composer textarea {
     width: 100%;
     height: 70px;
-    padding: 8px;
+    padding: 8px 10px;
     font-family: inherit;
     font-size: 0.85rem;
-    border: 1px solid rgba(128, 128, 128, 0.3);
+    border: 1px solid var(--menu-border, rgba(128, 128, 128, 0.3));
     border-radius: 6px;
-    background: Canvas;
-    color: CanvasText;
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #0f172a);
     resize: none;
     outline: none;
     box-sizing: border-box;
 }
 
 .bc-floating-composer textarea:focus {
-    border-color: var(--my-color, CanvasText);
+    border-color: var(--my-color, var(--text-color));
 }
 
 .bc-composer-actions {
@@ -603,9 +681,9 @@
     z-index: 9998;
     max-width: 320px;
     width: 280px;
-    background: Canvas;
-    color: CanvasText;
-    border: 1px solid rgba(128, 128, 128, 0.35);
+    background: var(--modal-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--modal-border, rgba(0, 0, 0, 0.12));
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
     border-radius: 10px;
     padding: 10px 12px;
@@ -628,8 +706,8 @@
     align-items: center;
     gap: 6px;
     font-size: 0.75rem;
-    color: GrayText;
-    border-bottom: 1px solid rgba(128,128,128,0.15);
+    color: var(--menu-text, #64748b);
+    border-bottom: 1px solid var(--menu-border, rgba(128,128,128,0.15));
     padding-bottom: 4px;
 }
 
@@ -646,8 +724,8 @@
 .bc-popover-quote {
     font-size: 0.8rem;
     font-style: italic;
-    color: GrayText;
-    border-left: 2px solid rgba(128,128,128,0.3);
+    color: var(--menu-text, #64748b);
+    border-left: 2px solid var(--menu-border, rgba(128,128,128,0.3));
     padding-left: 6px;
     margin: 2px 0;
     display: -webkit-box;
@@ -668,7 +746,7 @@
 .bc-popover-comment {
     font-size: 0.8rem;
     line-height: 1.35;
-    background: rgba(128,128,128,0.06);
+    background: var(--menu-hover-bg, rgba(128,128,128,0.06));
     padding: 6px 8px;
     border-radius: 6px;
 }
@@ -683,7 +761,6 @@
     word-break: break-word;
 }
 
-
 .bc-menu-btn {
     background: none;
     border: none;
@@ -693,7 +770,7 @@
     padding: 5px 10px;
     border-radius: 6px;
     transition: background 0.15s;
-    color: CanvasText;
+    color: var(--text-color, #0f172a);
     display: flex;
     align-items: center;
     gap: 5px;
@@ -701,23 +778,22 @@
 }
 
 .bc-menu-btn:hover {
-    background: rgba(128, 128, 128, 0.12);
+    background: var(--menu-hover-bg, rgba(128, 128, 128, 0.12));
 }
 
 .bc-menu-btn-primary {
-    background: CanvasText;
-    color: Canvas;
+    background: var(--text-color, #0f172a);
+    color: var(--bg-color, #ffffff);
     font-weight: 600;
 }
 
 .bc-menu-btn-primary:hover {
-    background: CanvasText;
-    opacity: 0.85;
+    opacity: 0.88;
 }
 
 .bc-menu-btn-ghost {
     padding: 5px 7px;
-    opacity: 0.5;
+    opacity: 0.7;
 }
 
 .bc-menu-btn-ghost:hover {
@@ -901,10 +977,10 @@
 #help-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: var(--overlay-bg, rgba(0, 0, 0, 0.5));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    z-index: 99999;
+    z-index: 20000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -917,12 +993,13 @@
 }
 
 #help-modal {
-    background: #1e1f23;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--modal-bg, #ffffff);
+    color: var(--text-color, #0f172a);
+    border: 1px solid var(--modal-border, rgba(0, 0, 0, 0.1));
     border-radius: 16px;
     width: min(480px, 92vw);
     overflow: hidden;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
     animation: help-modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -937,7 +1014,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid var(--menu-border, rgba(0, 0, 0, 0.08));
 }
 
 #help-modal-logo {
@@ -947,11 +1024,11 @@
     font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: -0.3px;
-    color: #fff;
+    color: var(--text-color, #0f172a);
 }
 
 #help-modal-logo svg {
-    color: #7c8cf8;
+    color: #4f46e5;
     flex-shrink: 0;
 }
 
@@ -959,7 +1036,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--menu-text, #64748b);
     padding: 4px;
     border-radius: 6px;
     display: flex;
@@ -968,8 +1045,8 @@
 }
 
 #help-modal-close:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-color, #0f172a);
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.05));
 }
 
 /* Body */
@@ -982,9 +1059,9 @@
 
 #help-modal-version-badge {
     display: inline-block;
-    background: rgba(124, 140, 248, 0.15);
-    border: 1px solid rgba(124, 140, 248, 0.35);
-    color: #9aa8ff;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #4f46e5;
     font-size: 0.75rem;
     font-weight: 600;
     padding: 3px 10px;
@@ -995,7 +1072,7 @@
 
 #help-modal-tagline {
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--menu-text, #64748b);
     margin: 0;
     line-height: 1.5;
 }
@@ -1005,7 +1082,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--menu-header-color, #94a3b8);
     margin: 0 0 8px;
 }
 
@@ -1013,12 +1090,12 @@
 .help-modal-section ul {
     margin: 0;
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-color, #0f172a);
     line-height: 1.6;
 }
 
 .help-modal-section a {
-    color: #7c8cf8;
+    color: #4f46e5;
     text-decoration: none;
 }
 
@@ -1036,19 +1113,19 @@
 
 .help-credits-list li {
     padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: var(--card-bg, rgba(0, 0, 0, 0.03));
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.08));
     border-radius: 8px;
     line-height: 1.5;
 }
 
 .help-credit-sub {
     font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--menu-text, #64748b);
 }
 
 .help-credit-sub a {
-    color: rgba(124, 140, 248, 0.8);
+    color: #4f46e5;
 }
 
 .help-tech-pills {
@@ -1061,9 +1138,9 @@
     font-size: 0.76rem;
     padding: 4px 10px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.6);
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.05));
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.1));
+    color: var(--menu-text, #64748b);
     font-weight: 500;
 }
 
@@ -1072,7 +1149,7 @@
     display: flex;
     gap: 10px;
     padding: 16px 24px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid var(--menu-border, rgba(0, 0, 0, 0.08));
 }
 
 #help-issue-btn,
@@ -1091,24 +1168,24 @@
 }
 
 #help-issue-btn {
-    background: rgba(255, 68, 68, 0.12);
-    border: 1px solid rgba(255, 68, 68, 0.3);
-    color: #ff7070;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #dc2626;
 }
 
 #help-issue-btn:hover {
-    background: rgba(255, 68, 68, 0.22);
+    background: rgba(239, 68, 68, 0.18);
     transform: translateY(-1px);
 }
 
 #help-github-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--menu-hover-bg, rgba(0, 0, 0, 0.05));
+    border: 1px solid var(--menu-border, rgba(0, 0, 0, 0.12));
+    color: var(--text-color, #0f172a);
 }
 
 #help-github-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--menu-active-bg, rgba(0, 0, 0, 0.08));
     transform: translateY(-1px);
 }
 
@@ -1116,7 +1193,7 @@
 #bc-shelf-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: var(--overlay-bg, rgba(0, 0, 0, 0.65));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     z-index: 99999;
@@ -1131,10 +1208,11 @@
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    background: #1e1f23;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--modal-bg, #18181b);
+    color: var(--text-color, #f4f4f5);
+    border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.08));
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     overflow: hidden;
     animation: bc-modal-fade 0.2s ease-out;
 }
@@ -1160,24 +1238,24 @@
 
 /* Home Shelf Button Hover Effects */
 #bc-home-shelf-btn {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.15));
+    background: var(--menu-hover-bg, rgba(255, 255, 255, 0.05));
+    color: var(--text-color, #fff);
 }
 
 #bc-home-shelf-btn:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: var(--menu-active-bg, rgba(255, 255, 255, 0.09));
+    border-color: var(--menu-border, rgba(255, 255, 255, 0.25));
     transform: translateY(-1px);
 }
 
 .your-room-card {
     margin-bottom: 0 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.08));
+    background: var(--card-bg, rgba(255, 255, 255, 0.035));
     border-radius: 10px;
     padding: 16px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: background 0.15s, border-color 0.15s, transform 0.15s;
     cursor: pointer;
     text-align: left;
@@ -1186,14 +1264,14 @@
 }
 
 .your-room-card:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--menu-hover-bg, rgba(255, 255, 255, 0.06));
+    border-color: var(--menu-border, rgba(255, 255, 255, 0.15));
     transform: translateY(-1px);
 }
 
 .your-room-card-title {
     font-weight: 650;
-    color: #fff;
+    color: var(--text-color, #fff);
     margin-bottom: 2px;
     font-size: 0.95rem;
     line-height: 1.35;
@@ -1202,7 +1280,7 @@
 
 .your-room-card-author {
     font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--menu-text, rgba(255, 255, 255, 0.45));
     margin-bottom: 8px;
     word-break: break-word;
 }
@@ -1224,18 +1302,18 @@
     font-weight: 600;
     padding: 6px 8px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.12));
+    background: var(--menu-hover-bg, rgba(255, 255, 255, 0.04));
+    color: var(--menu-text, rgba(255, 255, 255, 0.7));
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
     outline: none;
 }
 
 .your-room-action-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.22);
+    background: var(--menu-active-bg, rgba(255, 255, 255, 0.08));
+    color: var(--text-color, #fff);
+    border-color: var(--menu-border, rgba(255, 255, 255, 0.22));
 }
 
 .your-room-action-btn.delete {
@@ -1265,3 +1343,4 @@
 @keyframes bc-spin {
     to { transform: rotate(360deg); }
 }
+

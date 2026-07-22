@@ -136,19 +136,16 @@ function showSetupPanel() {
     $('#bc-setup-panel').style.display = 'block';
     $('#bc-room-panel').style.display = 'none';
     $('#bc-reupload-panel').style.display = 'none';
-    const pill = $('#bc-members-pill');
-    if (pill) pill.style.display = 'none';
+    renderMembersPill();
 }
 
 function showReuploadPanel(title, author) {
     $('#bc-setup-panel').style.display = 'none';
     $('#bc-room-panel').style.display = 'none';
     $('#bc-reupload-panel').style.display = 'block';
-    const pill = $('#bc-members-pill');
-    if (pill) pill.style.display = 'none';
-    
     $('#bc-reupload-title-val').innerText = title || 'Untitled';
     $('#bc-reupload-author-val').innerText = author || 'Unknown';
+    renderMembersPill();
 }
 
 function showRoomPanel() {
@@ -225,18 +222,21 @@ function initSetupEvents() {
         window.location.href = newUrl;
     });
 
-    // Copy Invite Link Button
-    $('#bc-copy-link-btn').addEventListener('click', () => {
-        const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-        navigator.clipboard.writeText(inviteUrl).then(() => {
-            const btn = $('#bc-copy-link-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Copied!';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-            }, 2000);
+    // Copy Invite Link by clicking room code badge
+    const roomIdVal = $('#bc-room-id-val');
+    if (roomIdVal) {
+        roomIdVal.addEventListener('click', () => {
+            if (!roomId) return;
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            navigator.clipboard.writeText(inviteUrl).then(() => {
+                const originalText = roomIdVal.textContent;
+                roomIdVal.textContent = 'Copied!';
+                setTimeout(() => {
+                    roomIdVal.textContent = originalText;
+                }, 1800);
+            });
         });
-    });
+    }
 
     // Leave Room / Go Home Logic
     const leaveRoomAndGoHome = () => {
@@ -759,55 +759,193 @@ function renderMembersList() {
     });
 }
 
+let openUserMenu = null;
+
+// Close user context menu on outside click or escape
+document.addEventListener('click', (e) => {
+    if (openUserMenu && !openUserMenu.contains(e.target)) {
+        openUserMenu.remove();
+        openUserMenu = null;
+    }
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openUserMenu) {
+        openUserMenu.remove();
+        openUserMenu = null;
+    }
+});
+
 // Render the compact members pill in the header toolbar
 function renderMembersPill() {
     const pill = $('#bc-members-pill');
     if (!pill) return;
 
-    const members = Object.values(activeMembers);
+    // If no remote members, fall back to local user so avatar group is always rendered in reader view
     if (members.length === 0) {
-        pill.style.display = 'none';
-        return;
+        const uId = myId || (currentUser ? currentUser.id : 'local_me');
+        const uName = (currentUser ? currentUser.username : myName) || 'You';
+        const uAvatar = (currentUser && currentUser.avatar) ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : null;
+        members = [{
+            id: uId,
+            name: uName,
+            avatarUrl: uAvatar,
+            color: myColor || '#6366f1',
+            online: ws && ws.readyState === WebSocket.OPEN
+        }];
     }
-
-    const MAX_SHOWN = 5;
-    const shown = members.slice(0, MAX_SHOWN);
-    const extra = members.length - MAX_SHOWN;
 
     pill.innerHTML = '';
     pill.style.display = 'flex';
 
-    shown.forEach(member => {
+    if (members.length === 1) {
+        pill.classList.add('single-member');
+    } else {
+        pill.classList.remove('single-member');
+    }
+
+    const STACK_LIMIT = 4;
+
+    members.forEach((member, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bc-pill-avatar-wrapper';
+        if (index >= STACK_LIMIT) {
+            wrapper.classList.add('expanded-only');
+        }
+
+        // Determine border color: gray if offline/alone, user's color if online
+        const isOnline = member.online !== false;
+        const borderColor = isOnline ? (member.color || '#6366f1') : '#71717a';
+
+        let avatarEl;
         if (member.avatarUrl) {
             const img = document.createElement('img');
             img.className = 'bc-pill-avatar';
             img.src = member.avatarUrl;
             img.alt = member.name;
-            img.title = member.name;
+            img.style.borderColor = borderColor;
             img.onerror = () => {
-                // Fallback to colored circle if image fails
-                img.replaceWith(makeColorDot(member));
+                img.replaceWith(makeColorDot(member, borderColor));
             };
-            pill.appendChild(img);
+            avatarEl = img;
         } else {
-            pill.appendChild(makeColorDot(member));
+            avatarEl = makeColorDot(member, borderColor);
         }
+        wrapper.appendChild(avatarEl);
+
+        // Tooltip dropping below avatar with name & dot
+        const tooltip = document.createElement('div');
+        tooltip.className = 'bc-avatar-tooltip';
+        
+        const dot = document.createElement('span');
+        dot.style.width = '8px';
+        dot.style.height = '8px';
+        dot.style.borderRadius = '50%';
+        dot.style.backgroundColor = borderColor;
+        dot.style.display = 'inline-block';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = member.name;
+
+        tooltip.appendChild(dot);
+        tooltip.appendChild(nameSpan);
+        wrapper.appendChild(tooltip);
+
+        // Click handler to show user action context menu (e.g. Remove User)
+        wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (openUserMenu) {
+                openUserMenu.remove();
+                openUserMenu = null;
+            }
+
+            const menu = document.createElement('div');
+            menu.className = 'bc-user-context-menu';
+
+            const header = document.createElement('div');
+            header.className = 'bc-user-menu-header';
+            header.textContent = member.name;
+            menu.appendChild(header);
+
+            // Teleport / Jump to location button
+            if (member.cfi) {
+                const teleBtn = document.createElement('button');
+                teleBtn.className = 'bc-user-menu-btn';
+                teleBtn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>
+                    </svg>
+                    Go to location
+                `;
+                teleBtn.addEventListener('click', () => {
+                    teleportToMember(member.id);
+                    menu.remove();
+                    openUserMenu = null;
+                });
+                menu.appendChild(teleBtn);
+            }
+
+            // Remove User button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'bc-user-menu-btn remove';
+            removeBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                Remove User
+            `;
+            removeBtn.addEventListener('click', () => {
+                menu.remove();
+                openUserMenu = null;
+                confirmRemoveUser(member);
+            });
+            menu.appendChild(removeBtn);
+
+            wrapper.appendChild(menu);
+            openUserMenu = menu;
+        });
+
+        pill.appendChild(wrapper);
     });
 
-    if (extra > 0) {
-        const span = document.createElement('span');
-        span.className = 'bc-pill-extra';
-        span.textContent = `+${extra}`;
-        pill.appendChild(span);
+    // Plus N badge for 5+ members when collapsed
+    if (members.length > STACK_LIMIT) {
+        const extraCount = members.length - STACK_LIMIT;
+        const extraSpan = document.createElement('div');
+        extraSpan.className = 'bc-pill-extra';
+        extraSpan.textContent = `+${extraCount}`;
+        pill.appendChild(extraSpan);
     }
 }
 
-function makeColorDot(member) {
+function confirmRemoveUser(member) {
+    const isSelf = currentUser && member.id === currentUser.id;
+    const msg = isSelf ? "Do you want to leave this reading room?" : `Remove ${member.name} from this reading room?`;
+    if (confirm(msg)) {
+        if (isSelf) {
+            if (typeof globalThis.leaveBookClubAndGoHome === 'function') {
+                globalThis.leaveBookClubAndGoHome();
+            }
+        } else {
+            delete activeMembers[member.id];
+            renderMembersPill();
+            const membersList = $('#bc-members-list');
+            if (membersList) {
+                const item = membersList.querySelector(`[data-user-id="${member.id}"]`);
+                if (item) item.remove();
+            }
+            if (typeof showToast === 'function') {
+                showToast(`${member.name} was removed.`);
+            }
+        }
+    }
+}
+
+function makeColorDot(member, borderColor) {
     const dot = document.createElement('div');
     dot.className = 'bc-pill-avatar';
-    dot.style.backgroundColor = member.color;
+    dot.style.backgroundColor = member.color || '#6366f1';
+    dot.style.borderColor = borderColor || '#71717a';
     dot.title = member.name;
-    // Show first letter as fallback
     dot.style.display = 'flex';
     dot.style.alignItems = 'center';
     dot.style.justifyContent = 'center';

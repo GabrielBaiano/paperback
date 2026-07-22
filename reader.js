@@ -1,24 +1,34 @@
 import './view.js'
 import { createTOCView } from './ui/tree.js'
 import { Overlayer } from './overlayer.js'
+import { FoliateMenuBuilder } from './ui/menu-builder.js'
 
 // Initialize theme on load
 const savedTheme = localStorage.getItem('paperback-theme') || 'system'
 const htmlEl = document.documentElement
-htmlEl.classList.remove('theme-light', 'theme-dark')
+htmlEl.classList.remove('theme-light', 'theme-dark', 'theme-sepia')
 if (savedTheme === 'light') {
     htmlEl.classList.add('theme-light')
 } else if (savedTheme === 'dark') {
     htmlEl.classList.add('theme-dark')
+} else if (savedTheme === 'sepia') {
+    htmlEl.classList.add('theme-sepia')
 }
 
-const getCSS = ({ spacing, justify, hyphenate, theme }) => {
+const getCSS = ({ spacing, justify, hyphenate, theme, size = 100 }) => {
     let themeCSS = ''
     if (theme === 'dark') {
         themeCSS = `
             body {
                 background-color: #09090b !important;
                 color: #f4f4f5 !important;
+            }
+        `
+    } else if (theme === 'sepia') {
+        themeCSS = `
+            body {
+                background-color: #f4ebd0 !important;
+                color: #433422 !important;
             }
         `
     } else if (theme === 'light') {
@@ -48,7 +58,8 @@ const getCSS = ({ spacing, justify, hyphenate, theme }) => {
     return `
         @namespace epub "http://www.idpf.org/2007/ops";
         html {
-            color-scheme: ${theme === 'system' ? 'light dark' : theme};
+            color-scheme: ${theme === 'system' ? 'light dark' : (theme === 'sepia' ? 'light' : theme)};
+            font-size: ${size}% !important;
         }
         ${themeCSS}
         /* https://github.com/whatwg/html/issues/5426 */
@@ -112,7 +123,8 @@ class Reader {
         spacing: 1.4,
         justify: true,
         hyphenate: true,
-        theme: localStorage.getItem('paperback-theme') || 'system'
+        theme: localStorage.getItem('paperback-theme') || 'system',
+        size: parseInt(localStorage.getItem('paperback-font-size') || '100', 10)
     }
     annotations = new Map()
     annotationsByValue = new Map()
@@ -123,11 +135,13 @@ class Reader {
     setTheme(theme) {
         localStorage.setItem('paperback-theme', theme)
         const html = document.documentElement
-        html.classList.remove('theme-light', 'theme-dark')
+        html.classList.remove('theme-light', 'theme-dark', 'theme-sepia')
         if (theme === 'light') {
             html.classList.add('theme-light')
         } else if (theme === 'dark') {
             html.classList.add('theme-dark')
+        } else if (theme === 'sepia') {
+            html.classList.add('theme-sepia')
         }
         
         this.style.theme = theme
@@ -135,171 +149,151 @@ class Reader {
             this.view.renderer.setStyles?.(getCSS(this.style))
         }
     }
+
+    setFontSize(newSize) {
+        this.style.size = Math.min(200, Math.max(70, newSize))
+        localStorage.setItem('paperback-font-size', this.style.size)
+        const badge = $('#menu-zoom-val')
+        if (badge) badge.textContent = `${this.style.size}%`
+        if (this.view && this.view.renderer) {
+            this.view.renderer.setStyles?.(getCSS(this.style))
+        }
+    }
+
     constructor() {
         $('#side-bar-button').addEventListener('click', () => {
             $('#dimming-overlay').classList.add('show')
             $('#side-bar').classList.add('show')
         })
         $('#dimming-overlay').addEventListener('click', () => this.closeSideBar())
- 
-        // Morphing Menu Interaction and Settings
-        const menuMorph = $('#menu-button-morph')
-        const toggleBtn = $('#menu-toggle-btn')
-        const menuContent = $('.menu-morph-content')
-        const hoverPill = $('#menu-hover-pill')
-        const hoverIndicator = $('#menu-hover-indicator')
 
-        if (toggleBtn && menuMorph) {
-            toggleBtn.addEventListener('click', e => {
-                e.stopPropagation()
-                menuMorph.classList.toggle('open')
-            })
-
-            // Close menu when clicking outside
-            window.addEventListener('click', e => {
-                if (!menuMorph.contains(e.target)) {
-                    menuMorph.classList.remove('open')
-                }
-            })
-        }
-
-        // Layout settings
-        const layoutPaginated = $('#menu-layout-paginated')
-        const layoutScrolled = $('#menu-layout-scrolled')
-
-        const selectLayout = (flow) => {
-            this.view?.renderer.setAttribute('flow', flow)
-            if (flow === 'paginated') {
-                layoutPaginated?.classList.add('active')
-                layoutScrolled?.classList.remove('active')
-            } else {
-                layoutPaginated?.classList.remove('active')
-                layoutScrolled?.classList.add('active')
-            }
-        }
-
-        layoutPaginated?.addEventListener('click', () => {
-            selectLayout('paginated')
-            menuMorph?.classList.remove('open')
-        })
-        layoutScrolled?.addEventListener('click', () => {
-            selectLayout('scrolled')
-            menuMorph?.classList.remove('open')
-        })
-
-        // Theme settings
-        const themeLight = $('#menu-theme-light')
-        const themeDark = $('#menu-theme-dark')
-        const themeSystem = $('#menu-theme-system')
-
-        const selectThemeUI = (theme) => {
-            this.setTheme(theme)
-            themeLight?.classList.remove('active')
-            themeDark?.classList.remove('active')
-            themeSystem?.classList.remove('active')
-
-            if (theme === 'light') themeLight?.classList.add('active')
-            else if (theme === 'dark') themeDark?.classList.add('active')
-            else themeSystem?.classList.add('active')
-        }
-
-        themeLight?.addEventListener('click', () => {
-            selectThemeUI('light')
-            menuMorph?.classList.remove('open')
-        })
-        themeDark?.addEventListener('click', () => {
-            selectThemeUI('dark')
-            menuMorph?.classList.remove('open')
-        })
-        themeSystem?.addEventListener('click', () => {
-            selectThemeUI('system')
-            menuMorph?.classList.remove('open')
-        })
-
-        // Actions
-        const actionHome = $('#menu-action-home')
-        const actionHelp = $('#menu-action-help')
-
-        actionHome?.addEventListener('click', () => {
-            menuMorph?.classList.remove('open')
-            if (typeof globalThis.leaveBookClubAndGoHome === 'function') {
-                globalThis.leaveBookClubAndGoHome()
-            } else {
-                window.location.href = window.location.origin + window.location.pathname
-            }
-        })
-
-        actionHelp?.addEventListener('click', () => {
-            menuMorph?.classList.remove('open')
-            const overlay = document.getElementById('help-modal-overlay')
-            if (overlay) {
-                overlay.style.display = 'flex'
-                document.body.style.overflow = 'hidden'
-            }
-        })
-
-        // Sliding Hover Interaction
-        const menuItems = document.querySelectorAll('.menu-item')
-        menuItems.forEach(item => {
-            item.addEventListener('mouseenter', () => {
-                // Remove hovered class from all items and add to current
-                menuItems.forEach(mi => mi.classList.remove('hovered'))
-                item.classList.add('hovered')
-
-                // Calculate relative positions
-                const itemRect = item.getBoundingClientRect()
-                const contentRect = menuContent.getBoundingClientRect()
-                
-                const top = itemRect.top - contentRect.top
-                const left = itemRect.left - contentRect.left
-
-                // Update sliding hover pill
-                if (hoverPill) {
-                    hoverPill.style.transform = `translate3d(0, ${top}px, 0)`
-                    hoverPill.style.height = `${itemRect.height}px`
-                    hoverPill.style.opacity = '1'
-
-                    if (item.classList.contains('menu-item-exit')) {
-                        hoverPill.classList.add('exit-hover')
-                    } else {
-                        hoverPill.classList.remove('exit-hover')
+        // Build settings menu declaratively using FoliateMenuBuilder
+        this.menuBuilder = new FoliateMenuBuilder({
+            container: '#menu-button-morph',
+            trigger: '#menu-toggle-btn'
+        }).build([
+            {
+                header: 'Layout',
+                items: [
+                    {
+                        id: 'menu-layout-paginated',
+                        label: 'Paginated',
+                        type: 'radio',
+                        group: 'layout',
+                        checked: true,
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+                        onClick: () => {
+                            this.view?.renderer.setAttribute('flow', 'paginated')
+                            this.menuBuilder.close()
+                        }
+                    },
+                    {
+                        id: 'menu-layout-scrolled',
+                        label: 'Scrolled',
+                        type: 'radio',
+                        group: 'layout',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`,
+                        onClick: () => {
+                            this.view?.renderer.setAttribute('flow', 'scrolled')
+                            this.menuBuilder.close()
+                        }
                     }
-                }
-
-                // Update sliding hover indicator
-                if (hoverIndicator) {
-                    // Hide indicator on currently selected items to avoid duplicate bars
-                    if (item.classList.contains('active')) {
-                        hoverIndicator.style.opacity = '0'
-                    } else {
-                        const indicatorTop = top + (itemRect.height - 16) / 2
-                        hoverIndicator.style.transform = `translate3d(0, ${indicatorTop}px, 0)`
-                        hoverIndicator.style.opacity = '1'
+                ]
+            },
+            {
+                header: 'Text Size',
+                items: [
+                    {
+                        id: 'menu-zoom-control',
+                        label: '',
+                        isZoom: true,
+                        value: this.style.size,
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
+                        onZoomOut: () => {
+                            this.setFontSize((this.style.size || 100) - 10)
+                        },
+                        onZoomIn: () => {
+                            this.setFontSize((this.style.size || 100) + 10)
+                        }
                     }
-
-                    if (item.classList.contains('menu-item-exit')) {
-                        hoverIndicator.classList.add('exit-hover')
-                    } else {
-                        hoverIndicator.classList.remove('exit-hover')
+                ]
+            },
+            {
+                header: 'Theme',
+                items: [
+                    {
+                        id: 'menu-theme-light',
+                        label: 'Light',
+                        type: 'radio',
+                        group: 'theme',
+                        checked: this.style.theme === 'light',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.22" x2="5.64" y2="17.78"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+                        onClick: () => {
+                            this.setTheme('light')
+                            this.menuBuilder.close()
+                        }
+                    },
+                    {
+                        id: 'menu-theme-sepia',
+                        label: 'Sepia',
+                        type: 'radio',
+                        group: 'theme',
+                        checked: this.style.theme === 'sepia',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M12 7v10"/><path d="M12 12h5"/></svg>`,
+                        onClick: () => {
+                            this.setTheme('sepia')
+                            this.menuBuilder.close()
+                        }
+                    },
+                    {
+                        id: 'menu-theme-dark',
+                        label: 'Dark',
+                        type: 'radio',
+                        group: 'theme',
+                        checked: this.style.theme === 'dark',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+                        onClick: () => {
+                            this.setTheme('dark')
+                            this.menuBuilder.close()
+                        }
                     }
-                }
-            })
+                ]
+            },
+            {
+                items: [
+                    {
+                        id: 'menu-action-home',
+                        label: 'Back to Home',
+                        isExit: true,
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+                        onClick: () => {
+                            this.menuBuilder.close()
+                            if (typeof globalThis.leaveBookClubAndGoHome === 'function') {
+                                globalThis.leaveBookClubAndGoHome()
+                            } else {
+                                window.location.href = window.location.origin + window.location.pathname
+                            }
+                        }
+                    },
+                    {
+                        id: 'menu-action-help',
+                        label: 'Help & About',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+                        onClick: () => {
+                            this.menuBuilder.close()
+                            const overlay = document.getElementById('help-modal-overlay')
+                            if (overlay) {
+                                overlay.style.display = 'flex'
+                                document.body.style.overflow = 'hidden'
+                            }
+                        }
+                    }
+                ]
+            }
+        ])
 
-            item.addEventListener('mouseleave', () => {
-                item.classList.remove('hovered')
-            })
-        })
-
-        // Reset hover states on menu leave
-        menuContent?.addEventListener('mouseleave', () => {
-            menuItems.forEach(mi => mi.classList.remove('hovered'))
-            if (hoverPill) hoverPill.style.opacity = '0'
-            if (hoverIndicator) hoverIndicator.style.opacity = '0'
-        })
-
-        // Initialize default active selections on load
-        selectLayout('paginated')
-        selectThemeUI(this.style.theme)
+        // Initialize default active theme on load
+        this.setTheme(this.style.theme)
     }
     async open(file) {
         this.view = document.createElement('foliate-view')
