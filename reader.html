@@ -1056,12 +1056,26 @@ html.theme-sepia {
 }
 
 /* Home landing screen is ALWAYS in Dark Theme */
-#drop-target,
+#drop-target {
+    background-color: #09090b !important;
+    color: #f4f4f5 !important;
+}
+
 #drop-target-scroller,
 .drop-screen-home,
 .drop-screen-more {
-    background-color: #09090b !important;
+    background: transparent !important;
     color: #f4f4f5 !important;
+}
+
+#drop-target .aurora-bg-effect {
+    opacity: 0.45 !important;
+    filter: blur(12px) invert(0) !important;
+    background-image: var(--aurora-dark-grad), var(--aurora-colors) !important;
+}
+
+#drop-target .aurora-bg-effect::after {
+    background-image: var(--aurora-dark-grad), var(--aurora-colors) !important;
 }
 
 #drop-target h1,
