@@ -409,6 +409,15 @@ class Reader {
 const open = async file => {
     const dropTarget = $('#drop-target')
     
+    // Clean up previous reader view from DOM to free memory
+    if (globalThis.reader && globalThis.reader.view) {
+        try {
+            globalThis.reader.view.remove()
+        } catch (e) {
+            console.warn('Could not remove previous reader view:', e)
+        }
+    }
+
     if (window.showLoading) {
         window.showLoading('Abrindo livro...', 15, 'Lendo arquivo...')
     }

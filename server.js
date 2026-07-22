@@ -23,6 +23,21 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'foliate-jam-super-secret-key-12345';
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+    console.warn('[Security Warning] JWT_SECRET environment variable is not set in production! Using fallback secret.');
+}
+
+function getCookieOptions(req) {
+    const isHttps = req && (req.secure || req.headers['x-forwarded-proto'] === 'https');
+    const isProd = process.env.NODE_ENV === 'production';
+    return {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: 'lax',
+        path: '/',
+        secure: Boolean(isProd && isHttps)
+    };
+}
 let supabaseUrl = process.env.SUPABASE_URL;
 if (supabaseUrl && supabaseUrl.includes('/rest/v1')) {
     supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '');
@@ -168,12 +183,7 @@ app.get('/api/auth/discord', async (req, res) => {
         `, [mockUser.discord_id, mockUser.username, mockUser.avatar_url, mockUser.color, new Date().toISOString()]);
 
         const sessionToken = jwt.sign({ discord_id: mockUser.discord_id }, JWT_SECRET, { expiresIn: '7d' });
-        res.cookie('token', sessionToken, {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax',
-            path: '/'
-        });
+        res.cookie('token', sessionToken, getCookieOptions(req));
         return res.redirect('/');
     }
 
@@ -249,12 +259,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
         `, [userData.id, userData.username, avatarUrl, userColor, new Date().toISOString()]);
 
         const sessionToken = jwt.sign({ discord_id: userData.id }, JWT_SECRET, { expiresIn: '7d' });
-        res.cookie('token', sessionToken, {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax',
-            path: '/'
-        });
+        res.cookie('token', sessionToken, getCookieOptions(req));
 
         res.redirect('/');
     } catch (err) {

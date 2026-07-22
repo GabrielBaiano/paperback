@@ -472,6 +472,9 @@ function handlePeerMouseMove(data) {
     cursorTimeouts.set(wsId, timeoutId);
 }
 
+let reconnectAttempts = 0;
+let reconnectTimeout = null;
+
 // WebSocket connection management
 function connectWebSocket() {
     if (!roomId) return;
@@ -492,6 +495,7 @@ function connectWebSocket() {
 
     ws.onopen = () => {
         console.log('[Book Club] WS Connection established');
+        reconnectAttempts = 0; // Reset backoff on clean connection
         // Join room message
         ws.send(JSON.stringify({
             type: 'join',
@@ -513,8 +517,11 @@ function connectWebSocket() {
     ws.onclose = () => {
         console.log('[Book Club] WS Connection closed.');
         if (!intentionalClose && roomId) {
-            console.log('[Book Club] Unexpected close, reconnecting in 3s...');
-            setTimeout(() => connectWebSocket(), 3000);
+            reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 10000);
+            console.log(`[Book Club] Unexpected close, reconnecting in ${delay}ms (attempt #${reconnectAttempts})...`);
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => connectWebSocket(), delay);
         }
         intentionalClose = false;
     };
