@@ -143,13 +143,29 @@ function parseCookies(cookieStr) {
 
 // Helper middleware to get authenticated user from JWT cookie
 async function getAuthUser(req) {
-    const token = req.cookies?.token;
+    let token = req.cookies?.token;
+    if (!token && req.headers?.cookie) {
+        const cookies = parseCookies(req.headers.cookie);
+        token = cookies.token;
+    }
     if (!token) return null;
     try {
         const payload = jwt.verify(token, JWT_SECRET);
-        const user = await dbGet('SELECT * FROM users WHERE discord_id = ?', [payload.discord_id]);
+        let user = await dbGet('SELECT * FROM users WHERE discord_id = ?', [payload.discord_id]);
+        if (!user) {
+            const defaultName = payload.discord_id === 'mock-id-local' ? 'Local_Tester' : 'User_' + String(payload.discord_id).slice(-4);
+            const defaultAvatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
+            const defaultColor = '#3b82f6';
+            await dbRun(`
+                INSERT INTO users (discord_id, username, avatar_url, color, last_login)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(discord_id) DO UPDATE SET last_login = excluded.last_login
+            `, [payload.discord_id, defaultName, defaultAvatar, defaultColor, new Date().toISOString()]);
+            user = await dbGet('SELECT * FROM users WHERE discord_id = ?', [payload.discord_id]);
+        }
         return user || null;
     } catch (e) {
+        console.warn('[Auth Warning] JWT verification error:', e.message);
         return null;
     }
 }

@@ -1978,7 +1978,7 @@ function initAutoReconnect() {
 
 async function checkAuth() {
     try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
         const data = await res.json();
         
         if (data.loggedIn) {
