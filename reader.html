@@ -402,21 +402,21 @@ body {
 #bc-members-pill {
     display: none; /* shown by JS when in a room */
     align-items: center;
-    background: var(--bg-secondary, rgba(24, 24, 27, 0.85));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.16));
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
     border-radius: 9999px;
-    padding: 4px 8px;
+    padding: 4px 6px;
     gap: 4px;
     height: 36px;
     box-sizing: border-box;
     flex-shrink: 0;
+    margin-left: 6px;
+    margin-right: auto; /* Aligns pill right next to side-bar-button on the left */
     transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
     position: relative;
     cursor: pointer;
     user-select: none;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 /* Single member (round capsule container) */
@@ -425,14 +425,16 @@ body {
     padding: 4px 6px;
 }
 
-/* Hover state on pill container: background becomes visible & avatars unstack */
+/* Hover state on pill container: background becomes visible on hover & avatars unstack */
 #bc-members-pill:hover {
-    background: var(--modal-bg, #1e1f23);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.28));
+    background: var(--bg-secondary, rgba(24, 24, 27, 0.88));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.22));
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     padding: 4px 10px;
     gap: 6px;
     border-radius: 9999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .bc-pill-avatar-wrapper {
@@ -2024,5 +2026,5 @@ foliate-view {
     </div>
 </div>
 
-<script src="reader.js?v=20260722_6" type="module"></script>
-<script src="bookclub.js?v=20260722_6" type="module"></script>
+<script src="reader.js?v=20260722_7" type="module"></script>
+<script src="bookclub.js?v=20260722_7" type="module"></script>
