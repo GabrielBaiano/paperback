@@ -12,6 +12,10 @@ const PRESET_COLORS = [
 let ws = null;
 let roomId = null;
 let myId = null;
+let currentUser = null;
+let myDiscordId = null;
+let myAvatarUrl = null;
+let members = [];
 let myName = localStorage.getItem('bc-name') || 'Reader ' + Math.floor(Math.random() * 1000);
 let myColor = localStorage.getItem('bc-color') || PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
 let intentionalClose = false;
@@ -836,24 +840,30 @@ function renderMembersPill() {
     const pill = $('#bc-members-pill');
     if (!pill) return;
 
-    // If no remote members, fall back to local user so avatar group is always rendered in reader view
-    if (members.length === 0) {
-        const uId = myId || (currentUser ? currentUser.id : 'local_me');
-        const uName = (currentUser ? currentUser.username : myName) || 'You';
-        const uAvatar = (currentUser && currentUser.avatar) ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : null;
-        members = [{
+    // Ensure header bar is visible when avatar pill is rendered
+    const headerBar = $('#header-bar');
+    if (headerBar) {
+        headerBar.style.visibility = 'visible';
+    }
+
+    let displayMembers = (members && members.length > 0) ? members : [];
+    if (displayMembers.length === 0) {
+        const uId = myId || myDiscordId || 'local_me';
+        const uName = myName || (currentUser ? currentUser.username : 'You');
+        const uAvatar = myAvatarUrl || (currentUser ? (currentUser.avatar_url || (currentUser.avatar ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : null)) : null);
+        displayMembers = [{
             id: uId,
             name: uName,
             avatarUrl: uAvatar,
             color: myColor || '#6366f1',
-            online: ws && ws.readyState === WebSocket.OPEN
+            online: true
         }];
     }
 
     pill.innerHTML = '';
     pill.style.display = 'flex';
 
-    if (members.length === 1) {
+    if (displayMembers.length === 1) {
         pill.classList.add('single-member');
     } else {
         pill.classList.remove('single-member');
@@ -861,7 +871,7 @@ function renderMembersPill() {
 
     const STACK_LIMIT = 4;
 
-    members.forEach((member, index) => {
+    displayMembers.forEach((member, index) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'bc-pill-avatar-wrapper';
         if (index >= STACK_LIMIT) {
@@ -2043,6 +2053,7 @@ async function checkAuth() {
             initShelfModal();
             initIdleDetector();
             loadMyRooms();
+            renderMembersPill();
 
             setInterval(() => {
                 if (!roomId) {
@@ -2066,6 +2077,7 @@ async function checkAuth() {
             }
 
             initHelpModal();
+            renderMembersPill();
         }
     } catch (e) {
         console.error('[Book Club] Auth check failed:', e);
@@ -2074,6 +2086,7 @@ async function checkAuth() {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
+    renderMembersPill();
 
     // Listen for mouse movement in the main parent window
     window.addEventListener('mousemove', (e) => {
