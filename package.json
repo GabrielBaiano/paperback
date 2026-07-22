@@ -29,7 +29,8 @@
   },
   "scripts": {
     "build": "npx rollup -c",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.5",
