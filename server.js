@@ -141,6 +141,37 @@ function parseCookies(cookieStr) {
 }
 
 
+// Helper to construct Discord OAuth redirect URI dynamically
+function getRedirectUri(req) {
+    if (process.env.DISCORD_REDIRECT_URI) {
+        return process.env.DISCORD_REDIRECT_URI;
+    }
+    const host = req.headers.host || '';
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    return `${protocol}://${host}/api/auth/discord/callback`;
+}
+
+// Helper to insert or update user records in SQLite
+async function upsertUser({ discord_id, username, avatar_url, color }) {
+    const existing = await dbGet('SELECT * FROM users WHERE discord_id = ?', [discord_id]);
+    const finalName = username || existing?.username || (discord_id === 'mock-id-local' ? 'Local_Tester' : 'User_' + String(discord_id).slice(-4));
+    const finalAvatar = avatar_url || existing?.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const presets = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#03a9f4', '#00bcd4', '#009688', '#259b24', '#ff9800', '#ff5722'];
+    const finalColor = color || existing?.color || presets[Math.floor(Math.random() * presets.length)];
+
+    await dbRun(`
+        INSERT INTO users (discord_id, username, avatar_url, color, last_login)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(discord_id) DO UPDATE SET
+            username = excluded.username,
+            avatar_url = excluded.avatar_url,
+            color = excluded.color,
+            last_login = excluded.last_login
+    `, [discord_id, finalName, finalAvatar, finalColor, new Date().toISOString()]);
+
+    return await dbGet('SELECT * FROM users WHERE discord_id = ?', [discord_id]);
+}
+
 // Helper middleware to get authenticated user from JWT cookie
 async function getAuthUser(req) {
     let token = req.cookies?.token;
@@ -153,15 +184,7 @@ async function getAuthUser(req) {
         const payload = jwt.verify(token, JWT_SECRET);
         let user = await dbGet('SELECT * FROM users WHERE discord_id = ?', [payload.discord_id]);
         if (!user) {
-            const defaultName = payload.discord_id === 'mock-id-local' ? 'Local_Tester' : 'User_' + String(payload.discord_id).slice(-4);
-            const defaultAvatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
-            const defaultColor = '#3b82f6';
-            await dbRun(`
-                INSERT INTO users (discord_id, username, avatar_url, color, last_login)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(discord_id) DO UPDATE SET last_login = excluded.last_login
-            `, [payload.discord_id, defaultName, defaultAvatar, defaultColor, new Date().toISOString()]);
-            user = await dbGet('SELECT * FROM users WHERE discord_id = ?', [payload.discord_id]);
+            user = await upsertUser({ discord_id: payload.discord_id });
         }
         return user || null;
     } catch (e) {
@@ -180,30 +203,19 @@ app.get('/api/auth/discord', async (req, res) => {
 
     if ((isLocalhost && !forceReal) || !DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
         console.log('[Auth] Local mode or missing Discord credentials. Logging in as Local Tester.');
-        const mockUser = {
+        const mockUser = await upsertUser({
             discord_id: 'mock-id-local',
             username: 'Local_Tester',
             avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
             color: '#3b82f6'
-        };
-        
-        await dbRun(`
-            INSERT INTO users (discord_id, username, avatar_url, color, last_login)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(discord_id) DO UPDATE SET
-                username=excluded.username,
-                avatar_url=excluded.avatar_url,
-                last_login=excluded.last_login
-        `, [mockUser.discord_id, mockUser.username, mockUser.avatar_url, mockUser.color, new Date().toISOString()]);
+        });
 
         const sessionToken = jwt.sign({ discord_id: mockUser.discord_id }, JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', sessionToken, getCookieOptions(req));
         return res.redirect('/');
     }
 
-    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-    const redirectUri = process.env.DISCORD_REDIRECT_URI || `${protocol}://${host}/api/auth/discord/callback`;
-
+    const redirectUri = getRedirectUri(req);
     const authUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
     res.redirect(authUrl);
 });
@@ -215,9 +227,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
         return res.status(400).send('Authorization code missing');
     }
 
-    const host = req.headers.host;
-    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-    const redirectUri = process.env.DISCORD_REDIRECT_URI || `${protocol}://${host}/api/auth/discord/callback`;
+    const redirectUri = getRedirectUri(req);
 
     try {
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
@@ -253,24 +263,11 @@ app.get('/api/auth/discord/callback', async (req, res) => {
             ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
             : `https://cdn.discordapp.com/embed/avatars/${userData.discriminator % 5}.png`;
 
-        const presets = [
-            '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
-            '#03a9f4', '#00bcd4', '#009688', '#259b24', 
-            '#ff9800', '#ff5722'
-        ];
-        const randomColor = presets[Math.floor(Math.random() * presets.length)];
-
-        const existingUser = await dbGet('SELECT * FROM users WHERE discord_id = ?', [userData.id]);
-        const userColor = existingUser?.color || randomColor;
-
-        await dbRun(`
-            INSERT INTO users (discord_id, username, avatar_url, color, last_login)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(discord_id) DO UPDATE SET
-                username=excluded.username,
-                avatar_url=excluded.avatar_url,
-                last_login=excluded.last_login
-        `, [userData.id, userData.username, avatarUrl, userColor, new Date().toISOString()]);
+        await upsertUser({
+            discord_id: userData.id,
+            username: userData.username,
+            avatar_url: avatarUrl
+        });
 
         const sessionToken = jwt.sign({ discord_id: userData.id }, JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', sessionToken, getCookieOptions(req));
@@ -284,6 +281,9 @@ app.get('/api/auth/discord/callback', async (req, res) => {
 
 // 3. User profile endpoint
 app.get('/api/auth/me', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     const user = await getAuthUser(req);
     if (!user) {
         return res.json({ loggedIn: false });

@@ -847,10 +847,16 @@ function renderMembersPill() {
     const pill = $('#bc-members-pill');
     if (!pill) return;
 
-    // Ensure header bar is visible when avatar pill is rendered
+    // Ensure header bar is only visible when inside a book reader view, keeping home screen clean
     const headerBar = $('#header-bar');
     if (headerBar) {
-        headerBar.style.visibility = 'visible';
+        const dropTarget = $('#drop-target');
+        const isHome = dropTarget && dropTarget.style.display !== 'none';
+        if (isHome && !globalThis.reader?.view) {
+            headerBar.style.visibility = 'hidden';
+        } else {
+            headerBar.style.visibility = 'visible';
+        }
     }
 
     let displayMembers = (members && members.length > 0) ? members : [];
@@ -923,10 +929,15 @@ function renderMembersPill() {
         tooltip.appendChild(nameSpan);
         wrapper.appendChild(tooltip);
 
-        // Click handler to show user action context menu (e.g. Remove User)
+        // Click handler to show user action context menu with auto-close & click-outside support
         wrapper.addEventListener('click', (e) => {
             e.stopPropagation();
+
             if (openUserMenu) {
+                if (openUserMenu._timer) clearTimeout(openUserMenu._timer);
+                if (openUserMenu._clickOutsideHandler) {
+                    document.removeEventListener('click', openUserMenu._clickOutsideHandler);
+                }
                 openUserMenu.remove();
                 openUserMenu = null;
             }
@@ -934,9 +945,37 @@ function renderMembersPill() {
             const menu = document.createElement('div');
             menu.className = 'bc-user-context-menu';
 
+            const closeMenu = () => {
+                if (menu._timer) clearTimeout(menu._timer);
+                if (menu._clickOutsideHandler) {
+                    document.removeEventListener('click', menu._clickOutsideHandler);
+                }
+                menu.remove();
+                if (openUserMenu === menu) openUserMenu = null;
+            };
+
+            // Auto-close menu after 4 seconds of inactivity
+            const resetAutoCloseTimer = () => {
+                if (menu._timer) clearTimeout(menu._timer);
+                menu._timer = setTimeout(closeMenu, 4000);
+            };
+            resetAutoCloseTimer();
+
+            menu.addEventListener('mousemove', resetAutoCloseTimer);
+            menu.addEventListener('click', (evt) => evt.stopPropagation());
+
+            const clickOutsideHandler = (evt) => {
+                if (!menu.contains(evt.target)) {
+                    closeMenu();
+                }
+            };
+            menu._clickOutsideHandler = clickOutsideHandler;
+
+            const isMe = member.id === myId || member.id === myDiscordId || member.id === 'local_me';
+
             const header = document.createElement('div');
             header.className = 'bc-user-menu-header';
-            header.textContent = member.name;
+            header.textContent = isMe ? `${member.name} (You)` : member.name;
             menu.appendChild(header);
 
             // Teleport / Jump to location button
@@ -951,30 +990,34 @@ function renderMembersPill() {
                 `;
                 teleBtn.addEventListener('click', () => {
                     teleportToMember(member.id);
-                    menu.remove();
-                    openUserMenu = null;
+                    closeMenu();
                 });
                 menu.appendChild(teleBtn);
             }
 
-            // Remove User button
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'bc-user-menu-btn remove';
-            removeBtn.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-                Remove User
-            `;
-            removeBtn.addEventListener('click', () => {
-                menu.remove();
-                openUserMenu = null;
-                confirmRemoveUser(member);
-            });
-            menu.appendChild(removeBtn);
+            // Remove User button (only for OTHER users, never for yourself)
+            if (!isMe) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'bc-user-menu-btn remove';
+                removeBtn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Remove User
+                `;
+                removeBtn.addEventListener('click', () => {
+                    closeMenu();
+                    confirmRemoveUser(member);
+                });
+                menu.appendChild(removeBtn);
+            }
 
             wrapper.appendChild(menu);
             openUserMenu = menu;
+
+            setTimeout(() => {
+                document.addEventListener('click', clickOutsideHandler);
+            }, 0);
         });
 
         pill.appendChild(wrapper);
@@ -1609,10 +1652,6 @@ function initColorPicker() {
     });
 }
 
-// Check Discord login status
-let myDiscordId = null;
-let myAvatarUrl = null;
-
 // Load recent reading history from server
 async function loadHistoryList() {
     const historyPanel = $('#bc-history-panel');
@@ -1978,7 +2017,10 @@ function initAutoReconnect() {
 
 async function checkAuth() {
     try {
-        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        const res = await fetch(`/api/auth/me?_t=${Date.now()}`, { 
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
         const data = await res.json();
         
         if (data.loggedIn) {
@@ -1987,6 +2029,14 @@ async function checkAuth() {
             myName = user.username;
             myAvatarUrl = user.avatar_url;
             myColor = user.color;
+
+            // Show main app welcome screen, hide landing screen immediately
+            const landingText = $('#bc-landing-text');
+            if (landingText) landingText.style.display = 'none';
+            const appContent = $('#bc-app-content');
+            if (appContent) appContent.style.display = 'flex';
+            const viewMoreBtn = $('#bc-view-more-btn');
+            if (viewMoreBtn) viewMoreBtn.style.display = 'inline-flex';
 
             // Fill sidebar profile card
             const avatarImg = $('#bc-my-avatar');
@@ -2004,15 +2054,18 @@ async function checkAuth() {
             const colorInput = $('#bc-color-input');
             if (colorInput) colorInput.value = myColor;
 
+            // Helper for handling user logout
+            const handleLogout = async () => {
+                const logoutRes = await fetch('/api/auth/logout', { method: 'POST' });
+                if (logoutRes.ok) {
+                    window.location.reload();
+                }
+            };
+
             // Wire up logout button
             const logoutBtn = $('#bc-logout-btn');
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', async () => {
-                    const logoutRes = await fetch('/api/auth/logout', { method: 'POST' });
-                    if (logoutRes.ok) {
-                        window.location.reload();
-                    }
-                });
+                logoutBtn.addEventListener('click', handleLogout);
             }
 
             // Fill welcome screen info and logout button
@@ -2021,22 +2074,9 @@ async function checkAuth() {
                 welcomeUserInfo.innerHTML = `Connected as <strong>${user.username}</strong>. Not you? <button id="bc-welcome-logout-btn" style="background: none; border: none; color: #ff4444; text-decoration: underline; cursor: pointer; padding: 0; font: inherit;">Logout</button>`;
                 const welcomeLogoutBtn = $('#bc-welcome-logout-btn');
                 if (welcomeLogoutBtn) {
-                    welcomeLogoutBtn.addEventListener('click', async () => {
-                        const logoutRes = await fetch('/api/auth/logout', { method: 'POST' });
-                        if (logoutRes.ok) {
-                            window.location.reload();
-                        }
-                    });
+                    welcomeLogoutBtn.addEventListener('click', handleLogout);
                 }
             }
-
-            // Show main app welcome screen, hide landing screen
-            const landingText = $('#bc-landing-text');
-            if (landingText) landingText.style.display = 'none';
-            const appContent = $('#bc-app-content');
-            if (appContent) appContent.style.display = 'flex';
-            const viewMoreBtn = $('#bc-view-more-btn');
-            if (viewMoreBtn) viewMoreBtn.style.display = 'inline-flex';
 
             // Check if we have a saved redirect room from localStorage
             const redirectRoom = localStorage.getItem('redirect_room');
@@ -2091,9 +2131,15 @@ async function checkAuth() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAuth();
+        renderMembersPill();
+    });
+} else {
     checkAuth();
     renderMembersPill();
+}
 
     // Listen for mouse movement in the main parent window
     window.addEventListener('mousemove', (e) => {
@@ -2114,4 +2160,3 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }, true);
-});

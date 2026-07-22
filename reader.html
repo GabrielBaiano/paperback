@@ -402,12 +402,12 @@ body {
 #bc-members-pill {
     display: none; /* shown by JS when in a room */
     align-items: center;
-    background: transparent;
-    border: 1px solid transparent;
-    box-shadow: none;
-    border-radius: 999px;
-    padding: 2px 4px;
-    gap: 0;
+    background: var(--bg-secondary, rgba(24, 24, 27, 0.85));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.16));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    border-radius: 9999px;
+    padding: 4px 8px;
+    gap: 4px;
     height: 36px;
     box-sizing: border-box;
     flex-shrink: 0;
@@ -415,22 +415,24 @@ body {
     position: relative;
     cursor: pointer;
     user-select: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-/* Single member (round container) */
+/* Single member (round capsule container) */
 #bc-members-pill.single-member {
-    border-radius: 50%;
-    padding: 2px;
+    border-radius: 9999px;
+    padding: 4px 6px;
 }
 
 /* Hover state on pill container: background becomes visible & avatars unstack */
 #bc-members-pill:hover {
-    background: var(--modal-bg, #ffffff);
-    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    padding: 3px 10px;
+    background: var(--modal-bg, #1e1f23);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.28));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    padding: 4px 10px;
     gap: 6px;
-    border-radius: 999px;
+    border-radius: 9999px;
 }
 
 .bc-pill-avatar-wrapper {
@@ -451,8 +453,8 @@ body {
 }
 
 .bc-pill-avatar {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: 2px solid var(--avatar-border-color, #71717a);
     object-fit: cover;
@@ -2022,5 +2024,5 @@ foliate-view {
     </div>
 </div>
 
-<script src="reader.js?v=20260722_2" type="module"></script>
-<script src="bookclub.js?v=20260722_2" type="module"></script>
+<script src="reader.js?v=20260722_6" type="module"></script>
+<script src="bookclub.js?v=20260722_6" type="module"></script>
