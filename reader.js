@@ -704,7 +704,7 @@ const open = async file => {
     }
 
     if (window.showLoading) {
-        window.showLoading('Abrindo livro...', 15, 'Lendo arquivo...')
+        window.showLoading('Opening book...', 15, 'Reading file...')
     }
 
     const reader = new Reader()
@@ -713,18 +713,18 @@ const open = async file => {
 
     try {
         if (window.updateLoadingProgress) {
-            window.updateLoadingProgress(45, 'Processando formato EPUB...')
+            window.updateLoadingProgress(45, 'Processing EPUB format...')
         }
         
         await reader.open(file)
         
         if (window.updateLoadingProgress) {
-            window.updateLoadingProgress(85, 'Renderizando páginas...')
+            window.updateLoadingProgress(85, 'Rendering pages...')
         }
         await new Promise(resolve => setTimeout(resolve, 150))
         
         if (window.updateLoadingProgress) {
-            window.updateLoadingProgress(100, 'Livro aberto com sucesso!')
+            window.updateLoadingProgress(100, 'Book opened successfully!')
         }
         await new Promise(resolve => setTimeout(resolve, 200))
     } catch (err) {

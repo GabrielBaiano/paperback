@@ -121,7 +121,7 @@ function showLoading(text, percent = 0, subtext = '') {
         const p = Math.min(100, Math.max(0, percent));
         if (percentEl) percentEl.innerText = `${Math.round(p)}%`;
         if (barEl) barEl.style.width = `${p}%`;
-        if (subtextEl) subtextEl.innerText = subtext || (p > 0 ? `${Math.round(p)}% concluído` : 'Iniciando...');
+        if (subtextEl) subtextEl.innerText = subtext || (p > 0 ? `${Math.round(p)}% completed` : 'Starting...');
         
         if (overlay.style.display !== 'flex') {
             overlay.style.display = 'flex';
@@ -239,13 +239,13 @@ function initSetupEvents() {
         formData.append('title', title);
         formData.append('author', author);
 
-        showLoading('Criando sala e enviando livro...', 0, 'Iniciando upload...');
+        showLoading('Creating room and uploading book...', 0, 'Starting upload...');
         $('#bc-create-room-btn').innerText = 'Creating Room...';
         $('#bc-create-room-btn').disabled = true;
 
         try {
             const roomData = await uploadFileWithProgress('/api/rooms', formData, (percent, loadedMB, totalMB) => {
-                updateLoadingProgress(percent, `Enviando livro (${loadedMB} MB / ${totalMB} MB)`);
+                updateLoadingProgress(percent, `Uploading book (${loadedMB} MB / ${totalMB} MB)`);
             });
 
             if (roomData && roomData.roomId) {
