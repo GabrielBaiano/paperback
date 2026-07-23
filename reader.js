@@ -772,17 +772,21 @@ const viewBackBtn = $('#bc-view-back-btn')
 
 if (scroller && viewMoreBtn && viewBackBtn) {
     viewMoreBtn.addEventListener('click', () => {
-        scroller.scrollTo({
-            top: window.innerHeight,
-            behavior: 'smooth'
-        })
+        const moreScreen = document.querySelector('.drop-screen-more')
+        if (moreScreen) {
+            moreScreen.scrollIntoView({ behavior: 'smooth' })
+        } else {
+            scroller.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+        }
     })
     
     viewBackBtn.addEventListener('click', () => {
-        scroller.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        })
+        const homeScreen = document.querySelector('.drop-screen-home')
+        if (homeScreen) {
+            homeScreen.scrollIntoView({ behavior: 'smooth' })
+        } else {
+            scroller.scrollTo({ top: 0, behavior: 'smooth' })
+        }
     })
 }
 
