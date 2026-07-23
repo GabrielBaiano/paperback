@@ -147,6 +147,16 @@ export class FoliateMenuBuilder {
             } else {
                 li.setAttribute('aria-checked', 'false')
             }
+        } else if (itemConfig.type === 'toggle' || itemConfig.type === 'checkbox') {
+            li.setAttribute('role', 'menuitemcheckbox')
+            const toggleWrap = document.createElement('span')
+            toggleWrap.className = 'menu-toggle-switch' + (itemConfig.checked ? ' active' : '')
+            toggleWrap.style.marginLeft = 'auto'
+            const toggleKnob = document.createElement('span')
+            toggleKnob.className = 'menu-toggle-knob'
+            toggleWrap.appendChild(toggleKnob)
+            li.appendChild(toggleWrap)
+            li.setAttribute('aria-checked', itemConfig.checked ? 'true' : 'false')
         } else {
             li.setAttribute('role', 'menuitem')
         }
@@ -169,17 +179,17 @@ export class FoliateMenuBuilder {
         }
 
         if (itemConfig.isZoom) {
-            const zoomRow = document.createElement('div')
-            zoomRow.className = 'menu-zoom-row'
-            zoomRow.style.display = 'flex'
-            zoomRow.style.alignItems = 'center'
-            zoomRow.style.gap = '8px'
-            zoomRow.style.marginLeft = 'auto'
+            li.classList.add('menu-item-custom-row')
+            const zoomBox = document.createElement('div')
+            zoomBox.className = 'menu-segmented-control menu-zoom-box'
 
             const minusBtn = document.createElement('button')
-            minusBtn.className = 'menu-zoom-btn'
-            minusBtn.textContent = '-'
-            minusBtn.title = 'Zoom Out'
+            minusBtn.type = 'button'
+            minusBtn.className = 'menu-segmented-btn'
+            minusBtn.textContent = 'a'
+            minusBtn.style.fontSize = '13px'
+            minusBtn.style.fontWeight = '600'
+            minusBtn.title = 'Decrease Text Size'
             minusBtn.addEventListener('click', (e) => {
                 e.stopPropagation()
                 if (typeof itemConfig.onZoomOut === 'function') itemConfig.onZoomOut()
@@ -191,18 +201,76 @@ export class FoliateMenuBuilder {
             valBadge.textContent = `${itemConfig.value || 100}%`
 
             const plusBtn = document.createElement('button')
-            plusBtn.className = 'menu-zoom-btn'
-            plusBtn.textContent = '+'
-            plusBtn.title = 'Zoom In'
+            plusBtn.type = 'button'
+            plusBtn.className = 'menu-segmented-btn'
+            plusBtn.textContent = 'A'
+            plusBtn.style.fontSize = '17px'
+            plusBtn.style.fontWeight = '700'
+            plusBtn.title = 'Increase Text Size'
             plusBtn.addEventListener('click', (e) => {
                 e.stopPropagation()
                 if (typeof itemConfig.onZoomIn === 'function') itemConfig.onZoomIn()
             })
 
-            zoomRow.appendChild(minusBtn)
-            zoomRow.appendChild(valBadge)
-            zoomRow.appendChild(plusBtn)
-            li.appendChild(zoomRow)
+            zoomBox.appendChild(minusBtn)
+            zoomBox.appendChild(valBadge)
+            zoomBox.appendChild(plusBtn)
+            li.appendChild(zoomBox)
+        }
+
+        if (itemConfig.isThemeRow) {
+            li.classList.add('menu-item-custom-row')
+            const themeRow = document.createElement('div')
+            themeRow.className = 'menu-theme-circles-row'
+
+            const themes = [
+                { id: 'light', bg: '#FFFFFF', border: '#D0D0D5', label: 'Light' },
+                { id: 'sepia', bg: '#F7F0E0', border: '#E2D5C3', label: 'Sepia' },
+                { id: 'blue', bg: '#E0F2FE', border: '#BAE6FD', label: 'Sky Blue' },
+                { id: 'dark', bg: '#000000', border: '#2C2C2E', label: 'Dark' }
+            ]
+
+            themes.forEach(t => {
+                const circleBtn = document.createElement('button')
+                circleBtn.type = 'button'
+                circleBtn.className = `menu-theme-circle ${t.id}` + (itemConfig.activeTheme === t.id ? ' active' : '')
+                circleBtn.title = t.label
+                circleBtn.style.backgroundColor = t.bg
+                circleBtn.style.borderColor = t.border
+
+                circleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation()
+                    themeRow.querySelectorAll('.menu-theme-circle').forEach(c => c.classList.remove('active'))
+                    circleBtn.classList.add('active')
+                    if (typeof itemConfig.onSelectTheme === 'function') {
+                        itemConfig.onSelectTheme(t.id)
+                    }
+                })
+                themeRow.appendChild(circleBtn)
+            })
+            li.appendChild(themeRow)
+        }
+
+        if (itemConfig.isSegmented) {
+            li.classList.add('menu-item-custom-row')
+            const segContainer = document.createElement('div')
+            segContainer.className = 'menu-segmented-control'
+            itemConfig.options.forEach(opt => {
+                const segBtn = document.createElement('button')
+                segBtn.type = 'button'
+                segBtn.className = 'menu-segmented-btn' + (opt.value === itemConfig.selectedValue ? ' active' : '')
+                segBtn.textContent = opt.label
+                segBtn.addEventListener('click', (e) => {
+                    e.stopPropagation()
+                    segContainer.querySelectorAll('.menu-segmented-btn').forEach(b => b.classList.remove('active'))
+                    segBtn.classList.add('active')
+                    if (typeof itemConfig.onSelect === 'function') {
+                        itemConfig.onSelect(opt.value)
+                    }
+                })
+                segContainer.appendChild(segBtn)
+            })
+            li.appendChild(segContainer)
         }
 
         if (itemConfig.badge) {
@@ -214,6 +282,17 @@ export class FoliateMenuBuilder {
 
         li.addEventListener('click', (e) => {
             e.stopPropagation()
+            if (itemConfig.type === 'toggle' || itemConfig.type === 'checkbox') {
+                const isChecked = li.getAttribute('aria-checked') === 'true'
+                const newChecked = !isChecked
+                li.setAttribute('aria-checked', newChecked ? 'true' : 'false')
+                const toggleSwitch = li.querySelector('.menu-toggle-switch')
+                if (toggleSwitch) toggleSwitch.classList.toggle('active', newChecked)
+                if (typeof itemConfig.onClick === 'function') {
+                    itemConfig.onClick(newChecked, itemConfig, e)
+                }
+                return
+            }
             if (itemConfig.type === 'radio' && itemConfig.group) {
                 this.selectRadio(itemConfig.group, itemConfig.id)
             }
@@ -248,6 +327,12 @@ export class FoliateMenuBuilder {
             item.addEventListener('mouseenter', () => {
                 items.forEach(i => i.classList.remove('hovered'))
                 item.classList.add('hovered')
+
+                if (item.classList.contains('menu-item-custom-row')) {
+                    if (this.#hoverPill) this.#hoverPill.style.opacity = '0'
+                    if (this.#hoverIndicator) this.#hoverIndicator.style.opacity = '0'
+                    return
+                }
 
                 const itemRect = item.getBoundingClientRect()
                 const contentRect = this.#contentEl.getBoundingClientRect()

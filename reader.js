@@ -6,13 +6,15 @@ import { FoliateMenuBuilder } from './ui/menu-builder.js'
 // Initialize theme on load
 const savedTheme = localStorage.getItem('paperback-theme') || 'system'
 const htmlEl = document.documentElement
-htmlEl.classList.remove('theme-light', 'theme-dark', 'theme-sepia')
+htmlEl.classList.remove('theme-light', 'theme-dark', 'theme-sepia', 'theme-blue')
 if (savedTheme === 'light') {
     htmlEl.classList.add('theme-light')
 } else if (savedTheme === 'dark') {
     htmlEl.classList.add('theme-dark')
 } else if (savedTheme === 'sepia') {
     htmlEl.classList.add('theme-sepia')
+} else if (savedTheme === 'blue') {
+    htmlEl.classList.add('theme-blue')
 }
 
 const getCSS = ({ spacing, justify, hyphenate, theme, size = 100 }) => {
@@ -29,6 +31,13 @@ const getCSS = ({ spacing, justify, hyphenate, theme, size = 100 }) => {
             body {
                 background-color: #f4ebd0 !important;
                 color: #433422 !important;
+            }
+        `
+    } else if (theme === 'blue') {
+        themeCSS = `
+            body {
+                background-color: #e0f2fe !important;
+                color: #0f172a !important;
             }
         `
     } else if (theme === 'light') {
@@ -120,28 +129,38 @@ const formatContributor = contributor => Array.isArray(contributor)
 class Reader {
     #tocView
     style = {
-        spacing: 1.4,
+        spacing: parseFloat(localStorage.getItem('paperback-line-spacing') || '1.4'),
         justify: true,
-        hyphenate: true,
+        hyphenate: localStorage.getItem('paperback-hyphenate') !== 'false',
         theme: localStorage.getItem('paperback-theme') || 'system',
         size: parseInt(localStorage.getItem('paperback-font-size') || '100', 10)
     }
     annotations = new Map()
     annotationsByValue = new Map()
+
+    ttsActive = false
+    ttsPaused = false
+    selectedVoiceURI = localStorage.getItem('paperback-tts-voice') || ''
+    ttsRate = parseFloat(localStorage.getItem('paperback-tts-rate') || '1.0')
+    ttsCurrentAnnotation = null
+
     closeSideBar() {
         $('#dimming-overlay').classList.remove('show')
         $('#side-bar').classList.remove('show')
     }
+
     setTheme(theme) {
         localStorage.setItem('paperback-theme', theme)
         const html = document.documentElement
-        html.classList.remove('theme-light', 'theme-dark', 'theme-sepia')
+        html.classList.remove('theme-light', 'theme-dark', 'theme-sepia', 'theme-blue')
         if (theme === 'light') {
             html.classList.add('theme-light')
         } else if (theme === 'dark') {
             html.classList.add('theme-dark')
         } else if (theme === 'sepia') {
             html.classList.add('theme-sepia')
+        } else if (theme === 'blue') {
+            html.classList.add('theme-blue')
         }
         
         this.style.theme = theme
@@ -160,6 +179,268 @@ class Reader {
         }
     }
 
+    setHyphenate(hyphenate) {
+        this.style.hyphenate = hyphenate
+        localStorage.setItem('paperback-hyphenate', hyphenate)
+        if (this.view && this.view.renderer) {
+            this.view.renderer.setStyles?.(getCSS(this.style))
+        }
+    }
+
+    setLineSpacing(spacing) {
+        this.style.spacing = spacing
+        localStorage.setItem('paperback-line-spacing', spacing)
+        if (this.view && this.view.renderer) {
+            this.view.renderer.setStyles?.(getCSS(this.style))
+        }
+    }
+
+    initTTSVoices() {
+        if (!('speechSynthesis' in window)) return
+        const select = $('#tts-voice-select')
+
+        const populate = () => {
+            if (!select) return
+            const voices = window.speechSynthesis.getVoices()
+            if (!voices || !voices.length) return
+            select.innerHTML = ''
+
+            const userLang = (navigator.language || 'pt-BR').toLowerCase()
+            voices.sort((a, b) => {
+                const aMatch = a.lang.toLowerCase().startsWith(userLang.slice(0, 2))
+                const bMatch = b.lang.toLowerCase().startsWith(userLang.slice(0, 2))
+                if (aMatch && !bMatch) return -1
+                if (!aMatch && bMatch) return 1
+                return a.name.localeCompare(b.name)
+            })
+
+            voices.forEach(v => {
+                const opt = document.createElement('option')
+                opt.value = v.voiceURI
+                opt.textContent = `${v.name} (${v.lang})`
+                if (this.selectedVoiceURI === v.voiceURI || (!this.selectedVoiceURI && v.default)) {
+                    opt.selected = true
+                    this.selectedVoiceURI = v.voiceURI
+                }
+                select.appendChild(opt)
+            })
+        }
+
+        populate()
+        if ('onvoiceschanged' in window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = populate
+        }
+
+        select?.addEventListener('change', (e) => {
+            this.selectedVoiceURI = e.target.value
+            localStorage.setItem('paperback-tts-voice', this.selectedVoiceURI)
+            if (this.ttsActive && !this.ttsPaused) {
+                this.restartTTSBlock()
+            }
+        })
+
+        const rateSelect = $('#tts-rate-select')
+        if (rateSelect) {
+            rateSelect.value = this.ttsRate.toString()
+            rateSelect.addEventListener('change', (e) => {
+                this.ttsRate = parseFloat(e.target.value)
+                localStorage.setItem('paperback-tts-rate', this.ttsRate)
+                if (this.ttsActive && !this.ttsPaused) {
+                    this.restartTTSBlock()
+                }
+            })
+        }
+
+        $('#tts-play-btn')?.addEventListener('click', () => this.toggleTTSPlayPause())
+        $('#tts-prev-btn')?.addEventListener('click', () => this.prevTTSBlock())
+        $('#tts-next-btn')?.addEventListener('click', () => this.nextTTSBlock())
+        $('#tts-close-btn')?.addEventListener('click', () => this.stopTTS())
+    }
+
+    onTTSHighlight(range) {
+        if (this.ttsCurrentAnnotation) {
+            try { this.view?.deleteAnnotation(this.ttsCurrentAnnotation) } catch (e) {}
+            this.ttsCurrentAnnotation = null
+        }
+        if (!range) return
+        this.ttsCurrentAnnotation = {
+            range,
+            style: {
+                fill: 'rgba(255, 235, 59, 0.45)'
+            }
+        }
+        this.view?.addAnnotation(this.ttsCurrentAnnotation)
+        this.view?.renderer?.scrollToAnchor(range, true)
+    }
+
+    async startTTS() {
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported in this browser.')
+            return
+        }
+        if (!this.view) return
+
+        this.menuBuilder?.close()
+
+        const topBar = $('#tts-top-bar')
+        if (topBar) topBar.classList.add('show')
+
+        await this.view.initTTS('word', (range) => this.onTTSHighlight(range))
+        this.ttsActive = true
+        this.ttsPaused = false
+        this.speakTTSCurrentBlock()
+    }
+
+    speakTTSCurrentBlock(ssmlData) {
+        if (!this.ttsActive || !this.view?.tts) return
+        window.speechSynthesis.cancel()
+
+        const [ssml] = ssmlData || this.view.tts.start() || []
+        if (!ssml) {
+            this.stopTTS()
+            return
+        }
+
+        // Parse HTML/SSML into clean plain text without tags or XML artifacts
+        let text = ''
+        try {
+            const parser = new DOMParser()
+            const htmlDoc = parser.parseFromString(ssml, 'text/html')
+            htmlDoc.querySelectorAll('script, style, xml').forEach(el => el.remove())
+            text = htmlDoc.body.textContent || htmlDoc.body.innerText || ''
+        } catch (e) {
+            text = ssml.replace(/<[^>]+>/g, ' ')
+        }
+
+        text = (text || '').replace(/\s+/g, ' ').trim()
+        if (!text) {
+            this.nextTTSBlock()
+            return
+        }
+
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.rate = this.ttsRate
+
+        // Voice selection: prioritize natural human voices over robotic ones
+        const voices = window.speechSynthesis.getVoices()
+        if (voices && voices.length) {
+            let voice = null
+            if (this.selectedVoiceURI) {
+                voice = voices.find(v => v.voiceURI === this.selectedVoiceURI)
+            }
+            if (!voice) {
+                const lang = (navigator.language || 'pt-BR').toLowerCase()
+                voice = voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2)) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Luciana') || v.name.includes('Helena') || v.name.includes('Francisca') || v.name.includes('Daniel') || v.name.includes('Microsoft') || v.name.includes('Online')))
+                    || voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2)) && !v.name.toLowerCase().includes('espeak'))
+                    || voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2)))
+                    || voices[0]
+            }
+            if (voice) {
+                utter.voice = voice
+                this.selectedVoiceURI = voice.voiceURI
+            }
+        }
+
+        utter.onstart = () => {
+            this.updateTTSPlayButtonState(true)
+        }
+
+        utter.onend = () => {
+            if (this.ttsActive && !this.ttsPaused) {
+                this.nextTTSBlock()
+            }
+        }
+
+        utter.onerror = (e) => {
+            console.warn('TTS Speech error:', e)
+            if (this.ttsActive && !this.ttsPaused) {
+                this.nextTTSBlock()
+            }
+        }
+
+        this.ttsUtterance = utter
+        this.updateTTSPlayButtonState(true)
+        window.speechSynthesis.speak(utter)
+    }
+
+    nextTTSBlock() {
+        if (!this.view?.tts) return
+        window.speechSynthesis.cancel()
+        const res = this.view.tts.next(true)
+        if (!res) {
+            this.stopTTS()
+            return
+        }
+        this.speakTTSCurrentBlock(res)
+    }
+
+    prevTTSBlock() {
+        if (!this.view?.tts) return
+        window.speechSynthesis.cancel()
+        const res = this.view.tts.prev(true)
+        if (!res) return
+        this.speakTTSCurrentBlock(res)
+    }
+
+    restartTTSBlock() {
+        if (!this.view?.tts) return
+        window.speechSynthesis.cancel()
+        const res = this.view.tts.resume()
+        this.speakTTSCurrentBlock(res)
+    }
+
+    pauseTTS() {
+        if ('speechSynthesis' in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+            window.speechSynthesis.pause()
+            this.ttsPaused = true
+            this.updateTTSPlayButtonState(false)
+        }
+    }
+
+    resumeTTS() {
+        if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+            window.speechSynthesis.resume()
+            this.ttsPaused = false
+            this.updateTTSPlayButtonState(true)
+        } else {
+            this.startTTS()
+        }
+    }
+
+    toggleTTSPlayPause() {
+        if (!this.ttsActive) {
+            this.startTTS()
+        } else if (this.ttsPaused) {
+            this.resumeTTS()
+        } else {
+            this.pauseTTS()
+        }
+    }
+
+    stopTTS() {
+        this.ttsActive = false
+        this.ttsPaused = false
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel()
+        }
+        if (this.ttsCurrentAnnotation) {
+            try { this.view?.deleteAnnotation(this.ttsCurrentAnnotation) } catch (e) {}
+            this.ttsCurrentAnnotation = null
+        }
+        const topBar = $('#tts-top-bar')
+        if (topBar) topBar.classList.remove('show')
+        this.updateTTSPlayButtonState(false)
+    }
+
+    updateTTSPlayButtonState(isPlaying) {
+        const playIcon = $('#tts-play-icon')
+        const pauseIcon = $('#tts-pause-icon')
+        if (playIcon && pauseIcon) {
+            playIcon.style.display = isPlaying ? 'none' : 'block'
+            pauseIcon.style.display = isPlaying ? 'block' : 'none'
+        }
+    }
+
     constructor() {
         $('#side-bar-button').addEventListener('click', () => {
             $('#dimming-overlay').classList.add('show')
@@ -173,88 +454,73 @@ class Reader {
             trigger: '#menu-toggle-btn'
         }).build([
             {
-                header: 'Layout',
-                items: [
-                    {
-                        id: 'menu-layout-paginated',
-                        label: 'Paginated',
-                        type: 'radio',
-                        group: 'layout',
-                        checked: true,
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
-                        onClick: () => {
-                            this.view?.renderer.setAttribute('flow', 'paginated')
-                            this.menuBuilder.close()
-                        }
-                    },
-                    {
-                        id: 'menu-layout-scrolled',
-                        label: 'Scrolled',
-                        type: 'radio',
-                        group: 'layout',
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`,
-                        onClick: () => {
-                            this.view?.renderer.setAttribute('flow', 'scrolled')
-                            this.menuBuilder.close()
-                        }
-                    }
-                ]
-            },
-            {
-                header: 'Text Size',
                 items: [
                     {
                         id: 'menu-zoom-control',
                         label: '',
                         isZoom: true,
                         value: this.style.size,
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
-                        onZoomOut: () => {
-                            this.setFontSize((this.style.size || 100) - 10)
-                        },
-                        onZoomIn: () => {
-                            this.setFontSize((this.style.size || 100) + 10)
-                        }
+                        onZoomOut: () => this.setFontSize((this.style.size || 100) - 10),
+                        onZoomIn: () => this.setFontSize((this.style.size || 100) + 10)
                     }
                 ]
             },
             {
-                header: 'Theme',
                 items: [
                     {
-                        id: 'menu-theme-light',
-                        label: 'Light',
-                        type: 'radio',
-                        group: 'theme',
-                        checked: this.style.theme === 'light',
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.22" x2="5.64" y2="17.78"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-                        onClick: () => {
-                            this.setTheme('light')
-                            this.menuBuilder.close()
+                        id: 'menu-theme-circles',
+                        isThemeRow: true,
+                        activeTheme: this.style.theme,
+                        onSelectTheme: (theme) => this.setTheme(theme)
+                    }
+                ]
+            },
+            {
+                items: [
+                    {
+                        id: 'menu-line-spacing-seg',
+                        isSegmented: true,
+                        selectedValue: this.style.spacing,
+                        options: [
+                            { label: '1.2', value: 1.2 },
+                            { label: '1.4', value: 1.4 },
+                            { label: '1.6', value: 1.6 },
+                            { label: '1.8', value: 1.8 }
+                        ],
+                        onSelect: (val) => this.setLineSpacing(val)
+                    }
+                ]
+            },
+            {
+                items: [
+                    {
+                        id: 'menu-hyphenate-toggle',
+                        label: 'Auto-Hyphenation',
+                        type: 'toggle',
+                        checked: this.style.hyphenate,
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M5 6h7"/><path d="M5 18h10"/></svg>`,
+                        onClick: (checked) => this.setHyphenate(checked)
+                    },
+                    {
+                        id: 'menu-scrolled-toggle',
+                        label: 'Scrolling View',
+                        type: 'toggle',
+                        checked: this.view?.renderer?.getAttribute('flow') === 'scrolled',
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`,
+                        onClick: (checked) => {
+                            this.view?.renderer?.setAttribute('flow', checked ? 'scrolled' : 'paginated')
                         }
                     },
                     {
-                        id: 'menu-theme-sepia',
-                        label: 'Sepia',
-                        type: 'radio',
-                        group: 'theme',
-                        checked: this.style.theme === 'sepia',
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M12 7v10"/><path d="M12 12h5"/></svg>`,
-                        onClick: () => {
-                            this.setTheme('sepia')
+                        id: 'menu-action-tts',
+                        label: 'Read Aloud (TTS)',
+                        type: 'toggle',
+                        checked: this.ttsActive,
+                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`,
+                        onClick: (checked) => {
                             this.menuBuilder.close()
-                        }
-                    },
-                    {
-                        id: 'menu-theme-dark',
-                        label: 'Dark',
-                        type: 'radio',
-                        group: 'theme',
-                        checked: this.style.theme === 'dark',
-                        icon: `<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
-                        onClick: () => {
-                            this.setTheme('dark')
-                            this.menuBuilder.close()
+                            if (checked) this.startTTS()
+                            else this.stopTTS()
                         }
                     }
                 ]
@@ -294,6 +560,9 @@ class Reader {
 
         // Initialize default active theme on load
         this.setTheme(this.style.theme)
+
+        // Initialize TTS Voices & Control Bar listeners
+        this.initTTSVoices()
     }
     async open(file) {
         this.view = document.createElement('foliate-view')
@@ -333,8 +602,22 @@ class Reader {
         document.title = title
         $('#side-bar-title').innerText = title
         $('#side-bar-author').innerText = formatContributor(book.metadata?.author)
-        Promise.resolve(book.getCover?.())?.then(blob =>
-            blob ? $('#side-bar-cover').src = URL.createObjectURL(blob) : null)
+        Promise.resolve(book.getCover?.())?.then(blob => {
+            if (!blob) return
+            const url = URL.createObjectURL(blob)
+            const coverEl = $('#side-bar-cover')
+            if (coverEl) coverEl.src = url
+
+            try {
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                    if (reader.result && title) {
+                        try { localStorage.setItem(`paperback-cover-${title}`, reader.result) } catch (e) {}
+                    }
+                }
+                reader.readAsDataURL(blob)
+            } catch (e) {}
+        })
 
         const toc = book.toc
         if (toc) {

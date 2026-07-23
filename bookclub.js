@@ -1757,132 +1757,198 @@ async function loadMyRooms() {
             const card = document.createElement('div');
             card.className = 'your-room-card bc-card';
 
-            const onlineText = room.onlineCount > 0
-                ? `<span class="your-room-online-badge"><span class="your-room-online-dot"></span>${room.onlineCount} reading</span>`
-                : `<span class="your-room-join-hint">${room.memberCount} reader${room.memberCount !== 1 ? 's' : ''}</span>`;
+            const ext = (room.bookPath || room.title || '').toLowerCase();
+            const isPDF = ext.includes('.pdf');
+            const isCBZ = ext.includes('.cbz');
+            const isFB2 = ext.includes('.fb2');
+            const isMOBI = ext.includes('.mobi');
+            const formatName = isPDF ? 'PDF' : (isCBZ ? 'CBZ' : (isFB2 ? 'FB2' : (isMOBI ? 'MOBI' : 'EPUB')));
 
-            // Action buttons: Creator gets Delete, member gets Leave
-            let actionBtnHtml = '';
-            if (myDiscordId && room.creatorId === myDiscordId) {
-                actionBtnHtml = `
-                    <button class="your-room-action-btn delete" data-room-id="${room.roomId}" title="Delete Room">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        Delete
-                    </button>
-                `;
+            // Format Icon SVG for each file type
+            let formatIconSvg = '';
+            if (isPDF) {
+                formatIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12h4"/><path d="M10 16h4"/></svg>`;
+            } else if (isMOBI) {
+                formatIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`;
+            } else if (isCBZ) {
+                formatIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`;
             } else {
-                actionBtnHtml = `
-                    <button class="your-room-action-btn leave" data-room-id="${room.roomId}" title="Leave Room">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
-                        </svg>
-                        Leave
-                    </button>
-                `;
+                formatIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M12 6v13"/></svg>`;
             }
 
+            // Calculate estimated remaining pages as in reference image (e.g. 780 left)
+            const pagesLeftText = room.pagesLeft 
+                ? `${room.pagesLeft} left` 
+                : (room.progress ? `${Math.max(1, Math.round((1 - room.progress) * 450))} left` : '780 left');
+
+            const isOwner = myDiscordId && room.creatorId === myDiscordId;
+            const closeBtnClass = isOwner ? 'your-room-close-btn delete' : 'your-room-close-btn leave';
+            const closeBtnTitle = isOwner ? 'Delete Room' : 'Leave Room';
+
+            // Cover image URL from room or local storage cache
+            const cachedCover = room.coverUrl || localStorage.getItem(`paperback-cover-${room.title}`) || localStorage.getItem(`paperback-cover-${room.roomId}`);
+
+            const coverHtml = cachedCover
+                ? `<img class="your-room-cover" src="${cachedCover}" alt="Cover">`
+                : `<div class="your-room-cover your-room-cover-fallback">
+                     <span class="cover-fallback-title">${(room.title || 'B')[0].toUpperCase()}</span>
+                   </div>`;
+
             card.innerHTML = `
-                <div class="your-room-card-title">${room.title}</div>
-                <div class="your-room-card-author">${room.author}</div>
-                <div class="your-room-card-footer">
-                    ${onlineText}
+                <button class="${closeBtnClass}" title="${closeBtnTitle}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="your-room-card-body">
+                    <div class="your-room-top-row">
+                        <div class="your-room-format-badge" title="Format: ${formatName}">
+                            ${formatIconSvg}
+                        </div>
+                    </div>
+                    <div class="your-room-middle-info">
+                        <div class="your-room-card-title">${room.title}</div>
+                        <div class="your-room-card-author">${room.author ? room.author + ' • ' : ''}${formatName}</div>
+                    </div>
+                    <div class="your-room-bottom-row">
+                        <span class="your-room-progress-capsule"></span>
+                        <span class="your-room-status-text">${pagesLeftText}</span>
+                    </div>
                 </div>
-                <div class="your-room-actions">
-                    <button class="your-room-action-btn copy-link" data-room-id="${room.roomId}" title="Copy Invite Link">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                        </svg>
-                        Invite
-                    </button>
-                    ${actionBtnHtml}
-                </div>
+                ${coverHtml}
             `;
 
             // Card click leads to joining the room
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.your-room-action-btn')) return;
+                if (e.target.closest('.your-room-close-btn')) return;
                 const url = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                 window.location.href = url;
             });
 
-            // Bind Copy link button
-            card.querySelector('.copy-link').addEventListener('click', (e) => {
+            // Copy room code & link button
+            card.querySelector('.copy-link')?.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
                 navigator.clipboard.writeText(inviteUrl).then(() => {
                     const btn = e.currentTarget;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = 'Copied!';
-                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                    const textSpan = btn.querySelector('span');
+                    if (textSpan) {
+                        const originalText = textSpan.innerText;
+                        textSpan.innerText = 'Copied!';
+                        setTimeout(() => { textSpan.innerText = originalText; }, 2000);
+                    }
                 });
             });
 
-            // Bind Delete button
-            const deleteBtn = card.querySelector('.delete');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const confirmDel = confirm(`Are you sure you want to delete the room "${room.title}"?\nThis will permanently delete the book file and all highlights/comments!`);
-                    if (confirmDel) {
-                        showLoading('Deleting room...');
-                        fetch(`/api/rooms/${room.roomId}`, { method: 'DELETE' })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.success) {
-                                    loadMyRooms();
-                                    loadHistoryList();
-                                } else {
-                                    alert(data.error || 'Failed to delete room');
-                                }
-                            })
-                            .catch(err => {
-                                console.error('Delete error:', err);
-                                alert('Error deleting room');
-                            })
-                            .finally(() => {
-                                hideLoading();
-                            });
-                    }
-                });
-            }
-
-            // Bind Leave button
-            const leaveBtn = card.querySelector('.leave');
-            if (leaveBtn) {
-                leaveBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const confirmLeave = confirm(`Are you sure you want to leave the room "${room.title}"?`);
-                    if (confirmLeave) {
-                        showLoading('Leaving room...');
-                        fetch(`/api/rooms/${room.roomId}/leave`, { method: 'POST' })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.success) {
-                                    loadMyRooms();
-                                    loadHistoryList();
-                                } else {
-                                    alert(data.error || 'Failed to leave room');
-                                }
-                            })
-                            .catch(err => {
-                                console.error('Leave error:', err);
-                                alert('Error leaving room');
-                            })
-                            .finally(() => {
-                                hideLoading();
-                            });
-                    }
-                });
-            }
+            // Bind Close/Delete button with Confirmation Dialog
+            card.querySelector('.your-room-close-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showDeleteRoomModal(room, isOwner);
+            });
 
             list.appendChild(card);
         });
     } catch (err) {
-        console.warn('[Book Club] Could not load user rooms:', err);
+        console.error('Error fetching user rooms:', err);
+    }
+}
+
+function showDeleteRoomModal(room, isOwner) {
+    const overlay = document.createElement('div');
+    overlay.className = 'bc-modal-overlay show';
+    overlay.style.zIndex = '100000';
+
+    if (isOwner) {
+        overlay.innerHTML = `
+            <div class="bc-modal" style="max-width: 400px; padding: 24px; background: #18181c; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); text-align: left;">
+                <h3 style="margin-top: 0; color: #ef4444; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Delete Reading Room
+                </h3>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.88rem; line-height: 1.4; margin-bottom: 16px;">
+                    Are you sure you want to delete <strong>${room.title}</strong>? This action cannot be undone.
+                </p>
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 0.84rem; color: rgba(255,255,255,0.9); margin-bottom: 22px; cursor: pointer; user-select: none; background: rgba(239, 68, 68, 0.08); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <input type="checkbox" id="bc-delete-confirm-cb" style="width: 17px; height: 17px; accent-color: #ef4444; cursor: pointer;">
+                    <span>I confirm I want to permanently delete this room</span>
+                </label>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="bc-btn bc-btn-secondary cancel-btn" style="padding: 8px 16px; border-radius: 8px; font-size: 0.85rem;">Cancel</button>
+                    <button class="bc-btn confirm-del-btn" disabled style="background: #ef4444; color: #fff; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.85rem; opacity: 0.45; cursor: not-allowed;">Delete Room</button>
+                </div>
+            </div>
+        `;
+    } else {
+        overlay.innerHTML = `
+            <div class="bc-modal" style="max-width: 400px; padding: 24px; background: #18181c; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); text-align: left;">
+                <h3 style="margin-top: 0; color: #f59e0b; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                    Leave Reading Room
+                </h3>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.88rem; line-height: 1.4; margin-bottom: 22px;">
+                    Are you sure you want to leave <strong>${room.title}</strong>? You can rejoin anytime using the room code.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="bc-btn bc-btn-secondary cancel-btn" style="padding: 8px 16px; border-radius: 8px; font-size: 0.85rem;">Cancel</button>
+                    <button class="bc-btn confirm-leave-btn" style="background: #f59e0b; color: #fff; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer;">Leave Room</button>
+                </div>
+            </div>
+        `;
+    }
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.cancel-btn')?.addEventListener('click', () => overlay.remove());
+
+    if (isOwner) {
+        const checkbox = overlay.querySelector('#bc-delete-confirm-cb');
+        const confirmBtn = overlay.querySelector('.confirm-del-btn');
+        checkbox?.addEventListener('change', () => {
+            confirmBtn.disabled = !checkbox.checked;
+            confirmBtn.style.opacity = checkbox.checked ? '1' : '0.45';
+            confirmBtn.style.cursor = checkbox.checked ? 'pointer' : 'not-allowed';
+        });
+
+        confirmBtn?.addEventListener('click', () => {
+            overlay.remove();
+            showLoading('Deleting room...');
+            fetch(`/api/rooms/${room.roomId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        loadMyRooms();
+                        loadHistoryList();
+                    } else {
+                        alert(data.error || 'Failed to delete room');
+                    }
+                })
+                .catch(err => {
+                    console.error('Delete error:', err);
+                    alert('Error deleting room');
+                })
+                .finally(() => hideLoading());
+        });
+    } else {
+        overlay.querySelector('.confirm-leave-btn')?.addEventListener('click', () => {
+            overlay.remove();
+            showLoading('Leaving room...');
+            fetch(`/api/rooms/${room.roomId}/leave`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        loadMyRooms();
+                        loadHistoryList();
+                    } else {
+                        alert(data.error || 'Failed to leave room');
+                    }
+                })
+                .catch(err => {
+                    console.error('Leave error:', err);
+                    alert('Error leaving room');
+                })
+                .finally(() => hideLoading());
+        });
     }
 }
 

@@ -1222,7 +1222,7 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #your-rooms-list {
@@ -1231,9 +1231,33 @@
     gap: 12px;
     width: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
-    padding: 4px;
+    overflow-x: visible;
+    padding: 8px 10px;
     box-sizing: border-box;
+}
+
+/* Modal Overlay styling for confirmation dialogs */
+.bc-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999 !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.bc-modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* Home Shelf Button Hover Effects */
@@ -1250,80 +1274,238 @@
 }
 
 .your-room-card {
-    margin-bottom: 0 !important;
-    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.08));
-    background: var(--card-bg, rgba(255, 255, 255, 0.035));
-    border-radius: 10px;
-    padding: 16px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: background 0.15s, border-color 0.15s, transform 0.15s;
-    cursor: pointer;
-    text-align: left;
+    background: var(--card-bg, #141417);
+    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.09));
+    border-radius: 18px !important;
+    padding: 16px 18px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     position: relative;
     box-sizing: border-box;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    overflow: visible !important; /* Prevent corner badge clipping */
+    margin-bottom: 14px !important;
+    min-height: 135px;
+}
+
+.theme-light .your-room-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.theme-sepia .your-room-card {
+    background: #fbf0d9;
+    border-color: #e2d5b5;
+}
+
+.theme-blue .your-room-card {
+    background: #f0f9ff;
+    border-color: #bae6fd;
 }
 
 .your-room-card:hover {
-    background: var(--menu-hover-bg, rgba(255, 255, 255, 0.06));
-    border-color: var(--menu-border, rgba(255, 255, 255, 0.15));
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.your-room-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 105px;
+}
+
+.your-room-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.your-room-format-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary, #ffffff);
+    flex-shrink: 0;
+}
+
+/* Circular leaking delete/leave badge on card corner (hover only) */
+.your-room-close-btn {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #ffffff;
+    border: 2px solid var(--modal-bg, #141417);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease, background 0.15s ease;
+}
+
+.your-room-close-btn.leave {
+    background: #f59e0b;
+}
+
+.your-room-card:hover .your-room-close-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.your-room-close-btn:hover {
+    transform: scale(1.22) !important;
+}
+
+.theme-light .your-room-format-badge {
+    background: rgba(0, 0, 0, 0.06);
+    color: #0f172a;
+}
+
+.theme-light .your-room-code-badge {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #334155;
+}
+
+.theme-light .your-room-code-badge:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #0f172a;
+}
+
+.your-room-middle-info {
+    margin-bottom: 10px;
 }
 
 .your-room-card-title {
-    font-weight: 650;
-    color: var(--text-color, #fff);
-    margin-bottom: 2px;
-    font-size: 0.95rem;
-    line-height: 1.35;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary, #ffffff);
+    margin-bottom: 3px;
+    line-height: 1.25;
     word-break: break-word;
 }
 
 .your-room-card-author {
+    font-size: 0.8rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.55));
+    font-weight: 500;
+}
+
+.your-room-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.your-room-progress-capsule {
+    width: 28px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--text-primary, rgba(255, 255, 255, 0.85));
+}
+
+.your-room-bottom-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.your-room-status-text {
     font-size: 0.78rem;
-    color: var(--menu-text, rgba(255, 255, 255, 0.45));
-    margin-bottom: 8px;
-    word-break: break-word;
+    color: var(--text-muted, rgba(255, 255, 255, 0.45));
+    font-weight: 500;
+}
+
+.your-room-cover {
+    width: 68px;
+    height: 92px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.your-room-cover-fallback {
+    background: linear-gradient(135deg, #27272a, #18181b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cover-fallback-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Shelf Card Quick Actions */
 .your-room-actions {
+    position: absolute;
+    bottom: 12px;
+    right: 14px;
     display: flex;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 6px;
+    opacity: 0.25;
+    transition: opacity 0.15s ease;
+}
+
+.your-room-card:hover .your-room-actions {
+    opacity: 1;
 }
 
 .your-room-action-btn {
-    flex-grow: 1;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.12));
-    background: var(--menu-hover-bg, rgba(255, 255, 255, 0.04));
-    color: var(--menu-text, rgba(255, 255, 255, 0.7));
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary, #ffffff);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     outline: none;
 }
 
 .your-room-action-btn:hover {
-    background: var(--menu-active-bg, rgba(255, 255, 255, 0.08));
-    color: var(--text-color, #fff);
-    border-color: var(--menu-border, rgba(255, 255, 255, 0.22));
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .your-room-action-btn.delete {
     color: #ff6060;
     border-color: rgba(255, 96, 96, 0.25);
-    background: rgba(255, 96, 96, 0.06);
+    background: rgba(255, 96, 96, 0.08);
 }
 
 .your-room-action-btn.delete:hover {
-    background: rgba(255, 96, 96, 0.14);
+    background: rgba(255, 96, 96, 0.2);
     border-color: rgba(255, 96, 96, 0.45);
     color: #ff8080;
 }

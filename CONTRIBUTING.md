@@ -4,6 +4,8 @@ Thank you for your interest in contributing to Paperback! We welcome all contrib
 
 To help you get started, this guide explains how to open issues, submit Pull Requests (including rules for AI-assisted contributions), and support the project.
 
+Check out our [Reader Menu Roadmap & TODO](TODO.md) to see active feature tasks, roadmap items, and planned improvements for the reader menu.
+
 ---
 
 ## How to Create Issues

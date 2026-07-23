@@ -171,6 +171,287 @@ body {
     right: 0;
     padding-top: max(6px, env(safe-area-inset-top, 6px));
 }
+/* macOS Dynamic Island Top Bar for TTS */
+#bc-members-pill {
+    display: none !important;
+}
+
+.tts-top-bar {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-65px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.tts-top-bar.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tts-bar-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(22, 22, 26, 0.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+}
+
+.theme-light .tts-bar-content {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #1a1a1a;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.tts-bar-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: inherit;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.theme-light .tts-bar-btn {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.tts-bar-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.05);
+}
+
+.theme-light .tts-bar-btn:hover {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.tts-bar-btn-primary {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+.tts-bar-btn-primary:hover {
+    background: #2563eb !important;
+}
+
+.tts-bar-btn-close {
+    background: transparent;
+    opacity: 0.7;
+    margin-left: 2px;
+}
+
+.tts-bar-btn-close:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.tts-bar-separator {
+    width: 1px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.18);
+    margin: 0 4px;
+}
+
+.theme-light .tts-bar-separator {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.tts-bar-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: inherit;
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+}
+
+.theme-light .tts-bar-select {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.tts-voice-select {
+    max-width: 140px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.tts-bar-select option {
+    background: #1f1f23;
+    color: #ffffff;
+}
+
+.theme-light .tts-bar-select option {
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+/* iOS Style Toggle Switch */
+.menu-toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: rgba(120, 120, 128, 0.32);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.theme-light .menu-toggle-switch {
+    background: rgba(120, 120, 128, 0.24);
+}
+
+.menu-toggle-switch.active {
+    background: #34C759 !important; /* Authentic iOS Green */
+}
+
+.menu-toggle-knob {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.15);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menu-toggle-switch.active .menu-toggle-knob {
+    transform: translateX(20px);
+}
+
+/* Custom Item Rows */
+.menu-item-custom-row {
+    padding: 6px 8px !important;
+}
+
+/* Inline Theme Circles Row (Apple Books style) */
+.menu-theme-circles-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 2px 4px;
+    gap: 8px;
+}
+
+.menu-theme-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+    flex-shrink: 0;
+    outline: none;
+}
+
+.menu-theme-circle:hover {
+    transform: scale(1.08);
+}
+
+.menu-theme-circle.active {
+    border-color: #007AFF !important; /* iOS Blue selection ring */
+    box-shadow: 0 0 0 2.5px rgba(0, 122, 255, 0.45);
+    transform: scale(1.06);
+}
+
+/* Segmented Control (Apple Books style) */
+.menu-segmented-control {
+    display: flex;
+    align-items: center;
+    background: var(--menu-hover-bg, rgba(120, 120, 128, 0.18));
+    border-radius: 6px;
+    padding: 3px;
+    width: 100%;
+    gap: 3px;
+}
+
+.menu-segmented-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 6px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: inherit;
+    border-radius: 4px !important; /* Crisp rectangle / square shape */
+    cursor: pointer;
+    transition: background 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease, box-shadow 0.18s ease;
+    text-align: center;
+    opacity: 0.75;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-segmented-btn:hover {
+    opacity: 1;
+}
+
+.menu-segmented-btn.active {
+    background: var(--menu-indicator-color, #ffffff) !important;
+    color: var(--menu-bg, #000000) !important;
+    opacity: 1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.theme-dark .menu-segmented-btn.active {
+    background: #3A3A3C !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.theme-sepia .menu-segmented-btn.active {
+    background: #433422 !important;
+    color: #fbf0d9 !important;
+    box-shadow: 0 2px 6px rgba(67, 52, 34, 0.25);
+}
+
+.theme-blue .menu-segmented-btn.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+}
+
+.menu-zoom-val {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 8px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
 #nav-bar {
     bottom: 0;
     left: 0;
@@ -910,7 +1191,7 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
-    :root:not(.theme-light) {
+    :root:not(.theme-light):not(.theme-sepia):not(.theme-blue) {
         --bg-color: #09090b;
         --text-color: #f4f4f5;
         --bg-primary: #09090b;
@@ -1052,6 +1333,42 @@ html.theme-sepia {
     --menu-header-color: #967d5e;
     --menu-dots-color: #70583b;
     --menu-indicator-color: #433422;
+    --logo-src: url('ui/logo.png');
+}
+
+html.theme-blue {
+    --bg-color: #e0f2fe;
+    --text-color: #0f172a;
+    --bg-primary: #e0f2fe;
+    --bg-secondary: #f0f9ff;
+    --bg-tertiary: #bae6fd;
+    --modal-bg: #f0f9ff;
+    --modal-border: #bae6fd;
+    --border-color: #bae6fd;
+    --card-bg: #f0f9ff;
+    --text-primary: #0f172a;
+    --text-secondary: #0369a1;
+    --text-muted: #38bdf8;
+    --accent: #0284c7;
+    --accent-contrast: #ffffff;
+    --overlay-bg: rgba(15, 23, 42, 0.4);
+    
+    --aurora-gradient: var(--aurora-white-grad);
+    --aurora-invert: 1;
+    --aurora-opacity: 0.25;
+    
+    /* Blue Theme Menu variables */
+    --menu-bg: #f0f9ff;
+    --menu-open-bg: #f0f9ff;
+    --menu-border: #bae6fd;
+    --menu-text: #0369a1;
+    --menu-text-active: #0f172a;
+    --menu-hover-bg: #e0f2fe;
+    --menu-active-bg: #bae6fd;
+    --menu-divider: #bae6fd;
+    --menu-header-color: #0369a1;
+    --menu-dots-color: #0284c7;
+    --menu-indicator-color: #0f172a;
     --logo-src: url('ui/logo.png');
 }
 
@@ -1817,8 +2134,42 @@ foliate-view {
             <path d="M 3 5 h 12 M 3 9 h 12 M 3 13 h 12"/>
         </svg>
     </button>
-    <!-- Members pill: shown when inside a room -->
-    <div id="bc-members-pill"></div>
+    <!-- Members pill: hidden in favor of TTS top bar -->
+    <div id="bc-members-pill" style="display: none !important;"></div>
+
+    <!-- macOS Dynamic Island Top Central Bar for TTS -->
+    <div id="tts-top-bar" class="tts-top-bar">
+        <div class="tts-bar-content">
+            <button id="tts-prev-btn" class="tts-bar-btn" title="Anterior (Bloco)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+            </button>
+            <button id="tts-play-btn" class="tts-bar-btn tts-bar-btn-primary" title="Iniciar / Pausar Leitura">
+                <svg id="tts-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <svg id="tts-pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            </button>
+            <button id="tts-next-btn" class="tts-bar-btn" title="Próximo (Bloco)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+            </button>
+
+            <span class="tts-bar-separator"></span>
+
+            <select id="tts-rate-select" class="tts-bar-select" title="Velocidade de Leitura">
+                <option value="0.8">0.8x</option>
+                <option value="1.0" selected>1.0x</option>
+                <option value="1.2">1.2x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2.0">2.0x</option>
+            </select>
+
+            <select id="tts-voice-select" class="tts-bar-select tts-voice-select" title="Voz / Idioma">
+                <option value="">Carregando vozes...</option>
+            </select>
+
+            <button id="tts-close-btn" class="tts-bar-btn tts-bar-btn-close" title="Fechar Leitura em Voz Alta">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </div>
     <div id="menu-button-wrapper">
         <div id="menu-button-morph" class="menu-morph">
             <!-- Closed State: 3 Dots Button -->
