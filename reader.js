@@ -669,9 +669,11 @@ class Reader {
     #onLoad({ detail: { doc } }) {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
         doc.addEventListener('click', () => {
-            const menuMorph = document.getElementById('menu-button-morph')
-            if (menuMorph) {
-                menuMorph.classList.remove('open')
+            if (this.menuBuilder) {
+                this.menuBuilder.close()
+            } else {
+                const menuMorph = document.getElementById('menu-button-morph')
+                if (menuMorph) menuMorph.classList.remove('open')
             }
         })
     }

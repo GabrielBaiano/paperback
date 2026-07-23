@@ -46,7 +46,8 @@ export class FoliateMenuBuilder {
     }
 
     toggle() {
-        if (this.#isOpen) this.close()
+        const isCurrentlyOpen = this.#container ? this.#container.classList.contains('open') : this.#isOpen
+        if (isCurrentlyOpen) this.close()
         else this.open()
     }
 
